@@ -1,0 +1,72 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath.Range;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+
+public class KMath {
+
+	static DFEVar min(DFEVar x, DFEVar y) {
+		return KernelMath.min(x,y);
+	}
+
+	static DFEVar max(DFEVar x, DFEVar y) {
+		return KernelMath.max(x,y);
+	}
+
+	static DFEVar ceil(DFEVar x) {
+		return KernelMath.ceil(x);
+	}
+
+	static DFEVar sin(DFEVar x) {
+		return KernelMath.sin(x);
+	}
+
+	static DFEVar cos(DFEVar x) {
+		return KernelMath.cos(x);
+	}
+
+	static DFEVar exp(DFEVar x) {
+		return KernelMath.exp(x);
+	}
+
+	static DFEVar log(DFEVar x, Range inputRange) {
+		return KernelMath.log(inputRange , x, x.getType());
+	}
+
+	static DFEVar powSq(DFEVar x) {
+		return x*x;
+	}
+
+	static DFEVar pow(DFEVar x, double pow, double minX, double maxX) {
+		Range inputRange = new Range(pow * Math.min(minX,maxX), pow * Math.max(minX,maxX));
+		return exp(log(x, inputRange) * pow);
+	}
+
+	public static DFEVar abs(DFEVar x) {
+		return KernelMath.abs(x);
+	}
+
+	public static DFEVar sqrt(DFEVar x) {
+		return KernelMath.sqrt(x);
+	}
+
+	public static DFEVar sqrt2(DFEVar x, DFEType y) {
+		return KernelMath.sqrt(new Range(0, 100), x, y);
+	}
+
+	public static DFEVar ln(DFEVar x, DFEType y) {
+		return KernelMath.log(new Range(0, 1), x, y);
+	}
+
+	// Guassian random number generator
+	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, double std) {
+
+		UrandomCore urng = new UrandomCore(smc, seed);
+		NrandomCore nrng = new NrandomCore(smc, 8, 24, urng.getRandOut());
+
+		return nrng.getOutput()*std + mean;
+	}
+
+}

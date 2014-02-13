@@ -1,0 +1,115 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v0.utils.MathUtils;
+import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.WrapMode;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Mem.RamWriteMode;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.memory.Memory;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Stream.OffsetExpr;
+
+class SmcKernel extends Kernel {
+
+	protected SmcKernel(KernelParameters parameters) {
+		super(parameters);
+
+		// Setup counters
+		DFEVar itl_inner = io.scalarInput("itl_inner", dfeUInt(32)); // determined at run-time
+		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax))); // determined at run-time
+		OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
+		Counter a_counter = control.count.makeCounter(
+					control.count.makeParams(
+						MathUtils.bitsToRepresent(Def.NA))
+						.withMax(Def.NA)
+				);
+		DFEVar a = a_counter.getCount(); // agents
+		DFEVar p_counter_en = Def.NA==1 ? constant.var(dfeUInt(1),1) : a_counter.getWrap();
+		Counter p_counter = control.count.makeCounter(
+					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax))
+						.withEnable(p_counter_en)
+						.withWrapMode(WrapMode.STOP_AT_MAX)
+						.withMax(NP)
+				);
+		DFEVar p = p_counter.getCount(); // particles
+		Counter h_counter = control.count.makeCounter(
+					control.count.makeParams(MathUtils.bitsToRepresent(Def.H==1? 2 : Def.H))
+						.withEnable(p_counter.getWrap())
+						.withMax(Def.H)
+				);
+		DFEVar h = h_counter.getCount(); // horizon
+		Counter n_counter = control.count.makeCounter(
+					control.count.makeParams(32)
+						.withEnable(h_counter.getWrap())
+						.withMax(itl_inner)
+				);
+		DFEVar n = n_counter.getCount(); // itl_inner
+
+		// Setup inputs
+		DFEVar init = control.count.makeCounter(
+					control.count.makeParams(MathUtils.bitsToRepresent(3))
+						.withWrapMode(WrapMode.STOP_AT_MAX)
+						.withMax(3)
+				).getCount()<3;
+		DFEVector<DFEVar> seeds = io.input("seed_in", Def.seeds_t, init); // seeds for random number generators
+		DFEStruct s_in = io.input("state_in", Def.state_t, h===0); // state input, only the first horizon (h==0) is taken from the input
+		DFEStruct c_in = io.input("control_in", Def.control_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // control input, taken once per time step
+		DFEVar e_in = io.input("env_in", Def.compType, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // environment input
+
+		// Calculate weights
+		DFEVar w_in = Def.compType.newInstance(this);
+		DFEVar weight = Def.compType.newInstance(this);
+		DFEVector<DFEVar> weight_inner = Def.weight_inner_t.newInstance(this);
+		for(int c=0; c<Def.NC; c++)
+			weight_inner[c] <== SmcCore(s_in, c_in, e_in, w_in, seeds, n, h, p, a, offsetNP); // SMC core computation
+		if (Def.NC==1)
+			weight <== weight_inner[0];
+		else if (Def.NC==2)
+			weight <== weight_inner[0] * (itl_inner-1<=0 ? 1 : weight_inner[1]);
+		else if (Def.NC==3)
+			weight <== weight_inner[0] * (itl_inner-1<=0 ? 1 : weight_inner[1]) * (itl_inner-2<=0 ? 1 : weight_inner[2]);
+		else{
+			DFEVar weight_01 = weight_inner[0] * (itl_inner-1<=0 ? 1 : weight_inner[1]);	
+			DFEVar weight_23 = (itl_inner-2<=0 ? 1 : weight_inner[2]) * (itl_inner-3<=0 ? 1 : weight_inner[3]);	
+			weight <== weight_01 * weight_23;
+		}
+		w_in <== n===0 ? (1.0/NP.cast(Def.compType)) : stream.offset(weight, -1*Def.NA*Def.H*Def.NPMin-Def.NA*Def.H*offsetNP);
+		io.output("weight_out", Def.compType, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC*1.0))-1) & h===(Def.H-1)) <== weight;
+	}
+
+	private DFEVar SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVar e_in, DFEVar w_in, DFEVector<DFEVar> seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
+		DFEStruct state_in = s_in;
+		DFEStruct control_in = getControl(a, c_in, n===0 & h===0 & p===0);
+		DFEVar env_in = e_in;
+		DFEVar weight_in = w_in;
+
+		DFEStruct state_current = Def.state_t.newInstance(this);
+		DFEStruct state_next = Def.state_t.newInstance(this);
+
+		// Sampling: calculate next state using current state
+		// User please customises Func.maxj:sampling
+		state_current <== h===0 ? state_in : stream.offset(state_next, -1*Def.NA*Def.NPMin-Def.NA*offsetNP);
+		state_next <== Func.sampling(this, state_current, control_in, seeds);
+
+		// Weighting: calculate normalised weights of particles
+		// User please customises Func.maxj:weighting
+		DFEVar weight = Func.weighting(this, state_next, env_in, weight_in, n, h, p);
+
+		return weight;
+	}
+
+	private DFEStruct getControl(DFEVar a, DFEStruct c_in, DFEVar write) {
+		if (Def.NA>1){
+			Memory<DFEStruct> memo = mem.alloc(Def.control_t, Def.NA);
+			DFEVar address = a;
+			return memo.port(address, c_in, write, RamWriteMode.WRITE_FIRST);
+		}else{
+			DFEStruct controlHold = Reductions.streamHold(c_in, write);
+			return controlHold;
+		}
+	}
+}

@@ -1,0 +1,47 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v0.utils.MathUtils;
+import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.WrapMode;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+
+public class Weight2CDFKernel extends Kernel {
+
+	static int loopSize = Math.max(15, Def.NA);
+
+	protected Weight2CDFKernel(KernelParameters parameters) {
+		super(parameters);
+
+		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax))); // determined at run-time
+
+		Counter a_counter = control.count.makeCounter(
+					control.count.makeParams(
+						MathUtils.bitsToRepresent(loopSize))
+						.withMax(loopSize)
+				);
+		DFEVar a = a_counter.getCount();
+		DFEVar p = control.count.makeCounter(
+					control.count.makeParams(
+						MathUtils.bitsToRepresent(Def.NPMax))
+						.withEnable(a_counter.getWrap())
+						.withWrapMode(WrapMode.STOP_AT_MAX)
+						.withMax(NP)
+				).getCount();
+		DFEVar used = a < Def.NA;
+
+		DFEVar weight = io.input("weight_in", Def.compType, used);
+		DFEVar cdf = Def.compType.newInstance(this);
+		
+		cdf <== weight + (p===0 ? 0 : stream.offset(cdf, -loopSize));
+		DFEVar sum = Reductions.streamHold(cdf,p.cast(NP.getType())===(NP-1) & used);
+
+		io.output("cdf", Def.compType, used) <== cdf;
+		io.output("sum", Def.compType, p.cast(NP.getType())===(NP-1) & used) <== sum;
+
+		//debug.printf("CDF: %f Sum: %f\n", cdf, sum);
+	}
+
+}
