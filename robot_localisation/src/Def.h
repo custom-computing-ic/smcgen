@@ -17,8 +17,8 @@
 
 /* Number of particles */
 #ifndef NP
-#pragma message "NP has been set to 512 (4992)"
-#define NP	256
+#pragma message "NP has been set to 4992"
+#define NP	4096
 #endif
 
 /* Horizon length */

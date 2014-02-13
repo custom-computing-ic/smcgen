@@ -31,8 +31,8 @@ public class Def {
 	public static final DFEVectorType<DFEVar> seeds_t = new DFEVectorType<DFEVar>(KernelLib.dfeRawBits(128),seed_slot);
 
 	// Design Parameters
-	public static int NPMin = 256;
-	public static int NPMax = 512;
+	public static int NPMin = 2048;
+	public static int NPMax = 8192;
 	public static int NA = 1;
 	public static int H = 1;
 	public static double S = 0.5;

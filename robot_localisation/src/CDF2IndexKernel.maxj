@@ -11,7 +11,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
 public class CDF2IndexKernel extends Kernel {
 
-	static int loopSize = 50;
+	static int loopSize = 51;
 
 	protected CDF2IndexKernel(KernelParameters parameters) {
 		super(parameters);

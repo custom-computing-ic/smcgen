@@ -4,3 +4,4 @@
 
 # Ignore temporary files
 *~
+*.bak
