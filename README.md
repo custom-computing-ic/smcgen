@@ -35,7 +35,7 @@ public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct c_in, 
 }
 /* User customised weighting function */
 public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar e_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p){
-...
+	...
 }
 ```
 * Design and system parameters are described in `Def.maxj` and `Def.h`.
@@ -77,5 +77,5 @@ public class Def {
 #pragma message "NP has been set to 4992"
 #define NP	4096
 #endif
-	...
+...
 ```
