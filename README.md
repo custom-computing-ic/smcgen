@@ -67,6 +67,7 @@ public class Def {
 	// System Parameters
 	public static int NC = 2; // Between 1 and 4 inclusive
 	public static int Clk = 200;
+	...
 }
 ```
 ```
@@ -76,4 +77,5 @@ public class Def {
 #pragma message "NP has been set to 4992"
 #define NP	4096
 #endif
+	...
 ```
