@@ -38,8 +38,9 @@ public class Def {
 	public static double S = 0.5;
 
 	// System Parameters
-	public static int NC = 2; // Between 1 and 4 inclusive
-	public static int Clk = 200;
+	public static int NC = 1; // Between 1 and 4 inclusive
+	public static int Clk_core = 150;
+	public static int Clk_mem = 333;
 
 	// Weight vector for multiple cores
 	public static final DFEVectorType<DFEVar> weight_inner_t = new DFEVectorType<DFEVar>(compType,NC);

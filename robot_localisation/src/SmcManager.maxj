@@ -24,7 +24,7 @@ public class SmcManager extends CustomManager {
 		KernelBlock cdf2IndexBlock = addKernel(new CDF2IndexKernel(makeKernelParameters("CDF2IndexKernel")));
 
 		config.setAllowNonMultipleTransitions(true);
-		config.setDefaultStreamClockFrequency(Def.Clk);
+		config.setDefaultStreamClockFrequency(Def.Clk_core);
 
 		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
 		smcBlock.getInput("control_in") <== addStreamFromCPU("control_in");
@@ -116,7 +116,7 @@ public class SmcManager extends CustomManager {
 
 	public static void main(String[] args) {
 		SmcManager manager = new SmcManager(new SmcEngineParameters(args));
-		manager.config.setOnCardMemoryFrequency(300);
+		manager.config.setOnCardMemoryFrequency(Def.Clk_mem);
 		manager.build();
 	}
 }
