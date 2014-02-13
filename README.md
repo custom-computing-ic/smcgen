@@ -1,4 +1,4 @@
-## Sequential Monte Carlo (SMC) template for FPGA accelerators
+## Sequential Monte Carlo for FPGA accelerators
 
 This repository consist of a design flow for generating efficient implementation of reconfigurable SMC designs. 
 Users can use it to develop efficient multiple-FPGA SMC applications without any knowledge of FPGA/reconfigurable computing. 
@@ -19,7 +19,7 @@ Springer, 2001.
 	- MaxWorkstation with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
 	- MPC-C500 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
 	- MPC-X1000 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
-- MPC-X2000 with maia dataflow engines (Altera Stratix V GS 5SGSD8 FPGAs)
+	- MPC-X2000 with maia dataflow engines (Altera Stratix V GS 5SGSD8 FPGAs)
 
 ### Example applications
 
@@ -28,13 +28,19 @@ Springer, 2001.
 * Go to robot_localisation/src/
 * Application specific functions are described in `Func.maxj` and `Smc.c`.
 ```
+/* Func.maxj */
 /* User customised sampling function */
-public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct c_in, DFEVector<DFEVar> seeds);
+public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct c_in, DFEVector<DFEVar> seeds){
+	...
+}
 /* User customised weighting function */
-public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar e_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p);
+public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar e_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p){
+...
+}
 ```
 * Design and system parameters are described in `Def.maxj` and `Def.h`.
 ```
+/* Def.maxj */
 public class Def {
 	// State Type
 	public static final DFEStructType state_t = new DFEStructType(
@@ -62,4 +68,12 @@ public class Def {
 	public static int NC = 2; // Between 1 and 4 inclusive
 	public static int Clk = 200;
 }
+```
+```
+/* Def.h */
+/* Number of particles */
+#ifndef NP
+#pragma message "NP has been set to 4992"
+#define NP	4096
+#endif
 ```
