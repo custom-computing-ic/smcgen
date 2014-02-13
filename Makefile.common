@@ -51,16 +51,16 @@ $(SIMMAXDIR)/$(PRJ).max: $(ENGINEFILES)
 $(PRJ)_sim.o: $(SIMMAXDIR)/$(PRJ).max
 	$(SLICCOMPILE) $< $@  
 
-$(PRJ)_dSFMT.o: ../src/dSFMT-src-2.2.1/dSFMT.c
+$(PRJ)_dSFMT_sim.o: ../src/dSFMT-src-2.2.1/dSFMT.c
 	$(CC) $^ $(CFLAGS) -I$(SIMMAXDIR) -D__SIM__ -DDESIGN_NAME=$(PRJ) -c -o $@
 
-$(PRJ)_func.o: ../src/Func.c
+$(PRJ)_func_sim.o: ../src/Func.c
 	$(CC) $^ $(CFLAGS) -I$(SIMMAXDIR) -D__SIM__ -DDESIGN_NAME=$(PRJ) -c -o $@
 
 $(PRJ)_simc.o: ../src/Smc.c
 	$(CC) $^ $(CFLAGS) -I$(SIMMAXDIR) -D__SIM__ -DDESIGN_NAME=$(PRJ) -c -o $@
 
-$(PRJ)_sim: $(PRJ)_sim.o $(PRJ)_simc.o $(PRJ)_func.o $(PRJ)_dSFMT.o
+$(PRJ)_sim: $(PRJ)_sim.o $(PRJ)_simc.o $(PRJ)_func_sim.o $(PRJ)_dSFMT_sim.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS) 
 
 runsim: $(PRJ)_sim
@@ -81,10 +81,16 @@ $(DFEMAXDIR)/$(PRJ).max: $(ENGINEFILES)
 $(PRJ)_dfe.o: $(DFEMAXDIR)/$(PRJ).max
 	$(SLICCOMPILE) $< $@  
 
-$(PRJ)_dfec.o: $(CPUFILES)
+$(PRJ)_dSFMT_dfe.o: ../src/dSFMT-src-2.2.1/dSFMT.c
+	$(CC) $^ $(CFLAGS) -I$(DFEMAXDIR) -DDESIGN_NAME=$(PRJ) -c -o $@
+
+$(PRJ)_func_dfe.o: ../src/Func.c
+	$(CC) $^ $(CFLAGS) -I$(DFEMAXDIR) -DDESIGN_NAME=$(PRJ) -c -o $@
+
+$(PRJ)_dfec.o: ../src/Smc.c
 	$(CC) $< $(CFLAGS) -I$(DFEMAXDIR) -DDESIGN_NAME=$(PRJ) -c -o $@
 
-$(PRJ)_dfe: $(PRJ)_dfe.o $(PRJ)_dfec.o
+$(PRJ)_dfe: $(PRJ)_dfe.o $(PRJ)_dfec.o $(PRJ)_func_dfe.o $(PRJ)_dSFMT_dfe.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS) 
 
 build: $(PRJ)_dfe
@@ -116,3 +122,6 @@ distclean: distcleansim distcleandfe
 
 debug:
 	maxdebug -v -g $(PRJ)Graph -s $(PRJ)Graph -c -k $(KERNEL) -d $(USER)a0:$(USER)a $(SIMMAXDIR)/$(PRJ).max
+
+debughw:
+	maxdebug -v -g $(PRJ)Graph -s $(PRJ)Graph -c -k $(KERNEL) -d /dev/maxeler0 $(DFEMAXDIR)/$(PRJ).max

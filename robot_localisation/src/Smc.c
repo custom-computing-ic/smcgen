@@ -20,7 +20,7 @@ void update(float state[], float control[]);
 
 int main(int argc, char *argv[]){
 
-	if (argc!=4){
+	if (argc<3 || argc>4){
 		printf("Usage: %s [sensor file] [control file]\n", argv[0]);
 		return 0;
 	}
