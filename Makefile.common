@@ -119,6 +119,8 @@ distcleandfe: cleandfe
 distclean: distcleansim distcleandfe
 
 # ---- Debug ----
+# make debug -- debug the main kernel
+# make debug KERNEL=kernel name -- debug a specific kernel
 
 debug:
 	maxdebug -v -g $(PRJ)Graph -s $(PRJ)Graph -c -k $(KERNEL) -d $(USER)a0:$(USER)a $(SIMMAXDIR)/$(PRJ).max
