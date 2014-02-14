@@ -109,11 +109,11 @@ cleandfe:
 clean: cleansim cleandfe
 
 distcleansim: cleansim
-	rm -f Maxfiles.h *.class *.o
+	rm -f Maxfiles.h *.class *sim.o *simc.o
 	rm -rf $(PRJ)_$(DFEModel)_DFE_SIM
 
 distcleandfe: cleandfe
-	rm -f Maxfiles.h *.class *.o
+	rm -f Maxfiles.h *.class *.o *dfe.o *dfec.o
 	rm -rf $(PRJ)_$(DFEModel)_DFE
 
 distclean: distcleansim distcleandfe
