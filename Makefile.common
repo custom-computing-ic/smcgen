@@ -41,6 +41,8 @@ LFLAGS=-L${MAXCOMPILERDIR}/lib -L${MAXELEROSDIR}/lib -lmaxeleros -lslic -lm -lpt
 
 all: runsim build
 
+.PHONY: stopsim run cleansim cleandfe debug debughw
+
 # ---- Simulation ----
 
 $(SIMMAXDIR)/$(PRJ).max: $(ENGINEFILES)
