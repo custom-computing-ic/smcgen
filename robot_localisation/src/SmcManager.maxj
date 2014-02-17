@@ -82,7 +82,7 @@ public class SmcManager extends CustomManager {
 				itl_inner * NP * Def.NA * Def.state_slot * size,
 				engine_interface.addConstant(0));
 
-		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC*1.0)).cast(CPUTypes.INT32) * NP * Def.NA * Def.H);
+		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
 		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + NP);
 		//engine_interface.setTicks("NormalisationKernel", Def.NA * NP);
 		engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
@@ -90,7 +90,7 @@ public class SmcManager extends CustomManager {
 		// General inputs
 		engine_interface.setStream("state_in", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
 		engine_interface.setStream("control_in", CPUTypes.FLOAT, Def.NA * Def.control_slot * size * (Def.NA==1 ? 2 : 1));
-		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC * Def.seed_slot * 16 * 3);
+		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC_inner * Def.seed_slot * 16 * 3);
 		engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 		engine_interface.setStream("index", CPUTypes.INT32, Def.NA * NP * size);
 

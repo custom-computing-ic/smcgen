@@ -3,6 +3,7 @@
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType.StructFieldType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
@@ -39,12 +40,14 @@ public class Def {
 
 	// System Parameters
 	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
-	public static int NC_P = 1; // Parallelisation along NP
+	public static int NC_P = 2; // Parallelisation along NP
 	public static int Clk_core = 150;
 	public static int Clk_mem = 333;
 
-	// Weight vector for multiple cores
-	public static final DFEVectorType<DFEVar> weight_inner_t = new DFEVectorType<DFEVar>(compType,NC_inner);
+	// Vectors for multiple cores
+	public static final DFEVectorType<DFEStruct> state_input_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
+	public static final DFEVectorType<DFEVar> weight_inner_t = new DFEVectorType<DFEVar>(compType,NC_inner*NC_P);
+	public static final DFEVectorType<DFEVar> weight_P_t = new DFEVectorType<DFEVar>(compType,NC_P);
 
 	// Application Parameters
 

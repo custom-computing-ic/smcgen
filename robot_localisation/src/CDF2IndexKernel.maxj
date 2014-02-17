@@ -16,10 +16,10 @@ public class CDF2IndexKernel extends Kernel {
 	protected CDF2IndexKernel(KernelParameters parameters) {
 		super(parameters);
 
-		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax))); // determined at run-time
+		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
 
 		DFEVar y = control.count.makeCounter(
-					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax*Def.NA))
+					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax*Def.NA-1))
 						.withWrapMode(WrapMode.STOP_AT_MAX)
 						.withMax(NP*Def.NA)
 				).getCount();
@@ -35,7 +35,7 @@ public class CDF2IndexKernel extends Kernel {
 				);
 		DFEVar pa = pa_counter.getCount();
 		Counter p_counter = control.count.makeCounter(
-					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax*3))
+					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax*3-1))
 						.withEnable(pa_counter.getWrap())
 						.withWrapMode(WrapMode.STOP_AT_MAX)
 				);
