@@ -5,6 +5,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.WrapMode;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.memory.Memory;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
@@ -32,14 +33,17 @@ public class Weight2CDFKernel extends Kernel {
 				).getCount();
 		DFEVar used = a < Def.NA;
 
-		DFEVar weight = io.input("weight_in", Def.compType, used);
+		DFEVar weight = io.input("weight_in", Def.compType, used & p!==NP);
 		DFEVar cdf = Def.compType.newInstance(this);
-		
 		cdf <== weight + (p===0 ? 0 : stream.offset(cdf, -loopSize));
-		DFEVar sum = Reductions.streamHold(cdf,p.cast(NP.getType())===(NP-1) & used);
+		DFEVar sum = Reductions.streamHold(cdf, p===NP-1);
 
-		io.output("cdf", Def.compType, used) <== cdf;
-		io.output("sum", Def.compType, p.cast(NP.getType())===(NP-1) & used) <== sum;
+		Memory<DFEVar> cdfmemo = mem.alloc(Def.compType, Def.NPMax*Def.NA);
+		DFEVar addr = (Def.NA==1) ? p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) : p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) # a;
+		cdfmemo.write(addr, cdf, p!==NP);
+		DFEVar cdf_scaled = cdfmemo.read(addr)/sum;
+
+		io.output("cdf", Def.compType, p===NP) <== cdf_scaled;
 
 		//debug.printf("CDF: %f Sum: %f\n", cdf, sum);
 	}

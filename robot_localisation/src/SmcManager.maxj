@@ -20,7 +20,7 @@ public class SmcManager extends CustomManager {
 
 		KernelBlock smcBlock = addKernel(new SmcKernel(makeKernelParameters("SmcKernel")));
 		KernelBlock weight2cdfBlock = addKernel(new Weight2CDFKernel(makeKernelParameters("Weight2CDFKernel")));
-		KernelBlock normalisationBlock = addKernel(new NormalisationKernel(makeKernelParameters("NormalisationKernel")));
+		//KernelBlock normalisationBlock = addKernel(new NormalisationKernel(makeKernelParameters("NormalisationKernel")));
 		KernelBlock cdf2IndexBlock = addKernel(new CDF2IndexKernel(makeKernelParameters("CDF2IndexKernel")));
 
 		config.setAllowNonMultipleTransitions(true);
@@ -33,9 +33,10 @@ public class SmcManager extends CustomManager {
 
 		weight2cdfBlock.getInput("weight_in") <== smcBlock.getOutput("weight_out");
 
-		normalisationBlock.getInput("sum_in") <== weight2cdfBlock.getOutput("sum");
-		normalisationBlock.getInput("cdf_in") <== weight2cdfBlock.getOutput("cdf");
-		cdf2IndexBlock.getInput("cdf") <== normalisationBlock.getOutput("cdf_out");
+		//normalisationBlock.getInput("sum_in") <== weight2cdfBlock.getOutput("sum");
+		//normalisationBlock.getInput("cdf_in") <== weight2cdfBlock.getOutput("cdf");
+		//cdf2IndexBlock.getInput("cdf") <== normalisationBlock.getOutput("cdf_out");
+		cdf2IndexBlock.getInput("cdf") <== weight2cdfBlock.getOutput("cdf");
 		cdf2IndexBlock.getInput("rand") <== addStreamFromCPU("rand");
 		addStreamToCPU("index") <== cdf2IndexBlock.getOutput("index");
 
@@ -82,8 +83,8 @@ public class SmcManager extends CustomManager {
 				engine_interface.addConstant(0));
 
 		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC*1.0)).cast(CPUTypes.INT32) * NP * Def.NA * Def.H);
-		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP);
-		engine_interface.setTicks("NormalisationKernel", Def.NA * NP);
+		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + NP);
+		//engine_interface.setTicks("NormalisationKernel", Def.NA * NP);
 		engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
 		
 		// General inputs
