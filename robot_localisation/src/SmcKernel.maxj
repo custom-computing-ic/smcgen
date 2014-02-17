@@ -64,13 +64,13 @@ class SmcKernel extends Kernel {
 		DFEVar w_in = Def.compType.newInstance(this);
 		DFEVar weight = Def.compType.newInstance(this);
 		DFEVector<DFEVar> weight_inner = Def.weight_inner_t.newInstance(this);
-		for(int c=0; c<Def.NC; c++)
+		for(int c=0; c<Def.NC_inner; c++)
 			weight_inner[c] <== SmcCore(s_in, c_in, e_in, w_in, seeds, n, h, p, a, offsetNP); // SMC core computation
-		if (Def.NC==1)
+		if (Def.NC_inner==1)
 			weight <== weight_inner[0];
-		else if (Def.NC==2)
+		else if (Def.NC_inner==2)
 			weight <== weight_inner[0] * (itl_inner-1<=0 ? 1 : weight_inner[1]);
-		else if (Def.NC==3)
+		else if (Def.NC_inner==3)
 			weight <== weight_inner[0] * (itl_inner-1<=0 ? 1 : weight_inner[1]) * (itl_inner-2<=0 ? 1 : weight_inner[2]);
 		else{
 			DFEVar weight_01 = weight_inner[0] * (itl_inner-1<=0 ? 1 : weight_inner[1]);	
@@ -78,7 +78,7 @@ class SmcKernel extends Kernel {
 			weight <== weight_01 * weight_23;
 		}
 		w_in <== n===0 ? (1.0/NP.cast(Def.compType)) : stream.offset(weight, -1*Def.NA*Def.H*Def.NPMin-Def.NA*Def.H*offsetNP);
-		io.output("weight_out", Def.compType, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC*1.0))-1) & h===(Def.H-1)) <== weight;
+		io.output("weight_out", Def.compType, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== weight;
 	}
 
 	private DFEVar SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVar e_in, DFEVar w_in, DFEVector<DFEVar> seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
