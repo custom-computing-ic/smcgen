@@ -33,7 +33,7 @@ MANAGER=$(PRJ)Manager
 OTHERCFLAGS=-I../src/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1 
 
 # Runtime arguments
-ARGS=../src/sensor.txt ../src/control.txt 
+ARGS=../src/obsrv.txt ../src/control.txt 
 
 
 # Using known hardware settings
