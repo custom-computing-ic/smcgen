@@ -67,7 +67,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> seeds = io.input("seed_in", Def.seeds_input_t, init); // seeds for random number generators
 		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_input_t, h===0); // state input, only the first horizon (h==0) is taken from the input
 		DFEStruct c_in = io.input("control_in", Def.control_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // control input, taken once per time step
-		DFEVar e_in = io.input("env_in", Def.compType, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // environment input
+		DFEVar o_in = io.input("obsrv_in", Def.compType, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
 
 		// Calculate weights
 		DFEVector<DFEVar> w_in = Def.weight_P_t.newInstance(this);
@@ -75,7 +75,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEVar> weight_inner = Def.weight_inner_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				weight_inner[i*Def.NC_P+j] <== SmcCore(s_in[j], c_in, e_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP); // SMC core computation
+				weight_inner[i*Def.NC_P+j] <== SmcCore(s_in[j], c_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
 			if (Def.NC_inner==1)
 				weight[j] <== weight_inner[j];
@@ -93,10 +93,10 @@ class SmcKernel extends Kernel {
 		io.output("weight_out", Def.weight_P_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== weight;
 	}
 
-	private DFEVar SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVar e_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
+	private DFEVar SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
 		DFEStruct state_in = s_in;
 		DFEStruct control_in = getControl(a, c_in, n===0 & h===0 & p===0);
-		DFEVar env_in = e_in;
+		DFEVar obsrv_in = o_in;
 		DFEVar weight_in = w_in;
 
 		DFEStruct state_current = Def.state_t.newInstance(this);
@@ -109,7 +109,7 @@ class SmcKernel extends Kernel {
 
 		// Weighting: calculate normalised weights of particles
 		// User please customises Func.maxj:weighting
-		DFEVar weight = Func.weighting(this, state_next, env_in, weight_in, n, h, p);
+		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p);
 
 		return weight;
 	}

@@ -35,22 +35,22 @@ public class Func{
 	}
 
 	/* User customised weighting function */
-	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar e_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
+	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
 
-		// Sensor input
-		DFEVar sensor = e_in;
-		DFEVar sensorHold = Reductions.streamHold(sensor, n===0 & h===0 & p===0);
+		// Observation input
+		DFEVar obsrv = o_in;
+		DFEVar obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
 
 		// Score calculation
-		DFEVar sensorEst = est(smc,s_in);
-		DFEVar score = KMath.exp(-1*KMath.powSq(sensorEst-sensorHold)/(Def.S*0.5));
+		DFEVar obsrvEst = est(smc,s_in);
+		DFEVar score = KMath.exp(-1*KMath.powSq(obsrvEst-obsrvHold)/(Def.S*0.5));
 		// Constaint handling
-		DFEVar succeed = sensorEst >= 0 ? smc.constant.var(true) : smc.constant.var(false);
+		DFEVar succeed = obsrvEst >= 0 ? smc.constant.var(true) : smc.constant.var(false);
 		// Weight accumulation
 		DFEVar weight = succeed ? score*w_in : 0;
 
 		// Uncomment the line below for debugging
-		//smc.debug.printf("Score: %f\n", sensorEst);
+		//smc.debug.printf("Score: %f\n", obsrvEst);
 		//smc.debug.printf("Weight %f\n", weight);
 
 		return weight;
@@ -58,7 +58,7 @@ public class Func{
 
 	/* Other user functions */
 	
-	// Calculate sensor value based on state
+	// Calculate observation value based on state
 	private static DFEVar est(SmcKernel smc, DFEStruct s_in) {
 
 		DFEVar x = s_in.get("x");

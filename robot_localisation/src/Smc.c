@@ -12,8 +12,8 @@
 
 dsfmt_t dsfmt[NP];
 
-void init(char *sensorFile, float sensor[], char *controlFile, float control[], float state[]);
-void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_num[], int seed[], float sensor[], int index[]);
+void init(char *obsrvFile, float obsrv[], char *controlFile, float control[], float state[]);
+void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_num[], int seed[], float obsrv[], int index[]);
 void resample(float state_out[], int index[]);
 void output(int step, float state[]);
 void update(float state[], float control[]);
@@ -21,16 +21,16 @@ void update(float state[], float control[]);
 int main(int argc, char *argv[]){
 
 	if (argc<3 || argc>4){
-		printf("Usage: %s [sensor file] [control file]\n", argv[0]);
+		printf("Usage: %s [observation file]\n", argv[0]);
 		return 0;
 	}
 
-	// Read sensor and control readings
+	// Read observation and control
 	// Initialise states
-	float sensor[NT];
+	float obsrv[NT];
 	float control[NT*CS];
 	float state[NA*NP*SS];
-	init(argv[1], sensor, argv[2], control, state);
+	init(argv[1], obsrv, argv[2], control, state);
 
 	// Other array values
 	float *state_in;
@@ -46,9 +46,9 @@ int main(int argc, char *argv[]){
 #endif
 	int seed[NC*SS*16*3];
 #if defined NA==1 || defined NA==2 || defined NA==3
-	float sensor_in[4];
+	float obsrv_in[4];
 #else
-	float sensor_in[NA];
+	float obsrv_in[NA];
 #endif
 	int index[NA*NP];
 
@@ -75,13 +75,13 @@ int main(int argc, char *argv[]){
 			// Setup seeds for FPGA random number generators
 			for(int j=0; j<NC*SS*16*3; j++)
 				seed[j] = 7-j;
-			// Allocate sensor value of the current time step
+			// Allocate observation value of the current time step
 			for(int a=0; a<NA; a++){
-				sensor_in[a] = sensor[NA*t+a];
+				obsrv_in[a] = obsrv[NA*t+a];
 			}
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcKernel(itl_inner,state_in,control_in,rand_num,seed,sensor_in,index);
+			smcKernel(itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index);
 			printf("FPGA kernel finished...\n");
 
 #ifdef debug
@@ -101,16 +101,16 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void init(char *sensorFile, float sensor[NT], char *controlFile, float control[NT], float state[NA*NP]){
+void init(char *obsrvFile, float obsrv[NT], char *controlFile, float control[NT], float state[NA*NP]){
 	
-	// Read sensor values
-	FILE *fpSensor = fopen(sensorFile, "r");
+	// Read observations
+	FILE *fpSensor = fopen(obsrvFile, "r");
 	if(!fpSensor) {
-		printf("Failed to open the sensor file.\n");
+		printf("Failed to open the observation file.\n");
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpSensor, "%f\n", &sensor[t]);
+		fscanf(fpSensor, "%f\n", &obsrv[t]);
 	}
 	fclose(fpSensor);
 
@@ -141,13 +141,13 @@ void init(char *sensorFile, float sensor[NT], char *controlFile, float control[N
 	}
 }
 
-void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_num[], int seed[], float sensor[], int index[]){
+void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_num[], int seed[], float obsrv[], int index[]){
 
 	// Copy states to LMEM
 	Smc_ram(NP, state_in);
 
 	// Invoke FPGA kernel
-	Smc(NP, itl_inner, control_in, sensor, rand_num, seed, index);
+	Smc(NP, itl_inner, control_in, obsrv, rand_num, seed, index);
 }
 
 void resample(float state[], int index[]){

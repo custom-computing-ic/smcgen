@@ -29,7 +29,7 @@ public class SmcManager extends CustomManager {
 		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
 		smcBlock.getInput("control_in") <== addStreamFromCPU("control_in");
 		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
-		smcBlock.getInput("env_in") <== addStreamFromCPU("env_in");
+		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
 
 		weight2cdfBlock.getInput("weight_in") <== smcBlock.getOutput("weight_out");
 
@@ -95,7 +95,7 @@ public class SmcManager extends CustomManager {
 		engine_interface.setStream("index", CPUTypes.INT32, Def.NA * NP * size);
 
 		// Application specific inputs
-		engine_interface.setStream("env_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
+		engine_interface.setStream("obsrv_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 
 
 		engine_interface.ignoreLMem("particle_mem");
