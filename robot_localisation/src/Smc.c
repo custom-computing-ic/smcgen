@@ -147,7 +147,7 @@ void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_n
 	Smc_ram(NP, state_in);
 
 	// Invoke FPGA kernel
-	Smc(NP, itl_inner, control_in, rand_num, seed, sensor, index);
+	Smc(NP, itl_inner, control_in, sensor, rand_num, seed, index);
 }
 
 void resample(float state[], int index[]){

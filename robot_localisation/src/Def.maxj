@@ -28,8 +28,12 @@ public class Def {
 	public static int control_slot = 2;
 
 	// Seeds Type
+	public static final DFEStructType seeds_t = new DFEStructType(
+		new StructFieldType("a", KernelLib.dfeRawBits(128)),
+		new StructFieldType("b", KernelLib.dfeRawBits(128)),
+		new StructFieldType("c", KernelLib.dfeRawBits(128))
+	);
 	public static int seed_slot = 3;
-	public static final DFEVectorType<DFEVar> seeds_t = new DFEVectorType<DFEVar>(KernelLib.dfeRawBits(128),seed_slot);
 
 	// Design Parameters
 	public static int NPMin = 2048;
@@ -45,6 +49,7 @@ public class Def {
 	public static int Clk_mem = 333;
 
 	// Vectors for multiple cores
+	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);
 	public static final DFEVectorType<DFEStruct> state_input_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
 	public static final DFEVectorType<DFEVar> weight_inner_t = new DFEVectorType<DFEVar>(compType,NC_inner*NC_P);
 	public static final DFEVectorType<DFEVar> weight_P_t = new DFEVectorType<DFEVar>(compType,NC_P);
