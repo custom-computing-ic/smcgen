@@ -107,7 +107,7 @@ class SmcKernel extends Kernel {
 				weight_out[j] <== weight_01 * weight_23;
 				state_out[j] <== temp_s;
 			}
-			w_in[j] <== n===0 ? (1.0/NP.cast(Def.compType)) : stream.offset(weight_out[j], -1*Def.NA*Def.H*Def.NPMin-Def.NA*Def.H*offsetNP);
+			w_in[j] <== n===0 ? 1.0 : stream.offset(weight_out[j], -1*Def.NA*Def.H*Def.NPMin-Def.NA*Def.H*offsetNP);
 		}
 		io.output("weight_out", Def.weight_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== weight_out;
 		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;

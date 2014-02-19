@@ -79,7 +79,7 @@ public class SmcManager extends CustomManager {
 				engine_interface.addConstant(0));
 
 		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
-		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + NP);
+		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + Def.NA * NP);
 		engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
 		
 		// General inputs and outputs
