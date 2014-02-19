@@ -79,3 +79,9 @@ public class Def {
 #endif
 ...
 ```
+
+2. Stochastic volatility
+
+* Go to stochastic_volatility/src/
+* Application specific functions are described in `Func.maxj` and `Smc.c`.
+* Design and system parameters are described in `Def.maxj` and `Def.h`.
