@@ -20,7 +20,6 @@ public class SmcManager extends CustomManager {
 
 		KernelBlock smcBlock = addKernel(new SmcKernel(makeKernelParameters("SmcKernel")));
 		KernelBlock weight2cdfBlock = addKernel(new Weight2CDFKernel(makeKernelParameters("Weight2CDFKernel")));
-		//KernelBlock normalisationBlock = addKernel(new NormalisationKernel(makeKernelParameters("NormalisationKernel")));
 		KernelBlock cdf2IndexBlock = addKernel(new CDF2IndexKernel(makeKernelParameters("CDF2IndexKernel")));
 
 		config.setAllowNonMultipleTransitions(true);
@@ -32,12 +31,10 @@ public class SmcManager extends CustomManager {
 
 		weight2cdfBlock.getInput("weight_in") <== smcBlock.getOutput("weight_out");
 
-		//normalisationBlock.getInput("sum_in") <== weight2cdfBlock.getOutput("sum");
-		//normalisationBlock.getInput("cdf_in") <== weight2cdfBlock.getOutput("cdf");
-		//cdf2IndexBlock.getInput("cdf") <== normalisationBlock.getOutput("cdf_out");
 		cdf2IndexBlock.getInput("cdf") <== weight2cdfBlock.getOutput("cdf");
 		cdf2IndexBlock.getInput("rand") <== addStreamFromCPU("rand");
-		addStreamToCPU("index") <== cdf2IndexBlock.getOutput("index");
+		addStreamToCPU("index_out") <== cdf2IndexBlock.getOutput("index_out");
+		addStreamToCPU("state_out") <== smcBlock.getOutput("state_out");
 
 		createSLiCinterface(modeDefault());
 		createSLiCinterface(modeLMem());
@@ -72,7 +69,6 @@ public class SmcManager extends CustomManager {
 		engine_interface.setScalar("SmcKernel", "NP", NP);
 		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
 		engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
-		engine_interface.setScalar("NormalisationKernel", "NP", NP);
 		engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
 
 		engine_interface.setLMemLinearWrapped("particle_mem_to_kernel",
@@ -83,14 +79,14 @@ public class SmcManager extends CustomManager {
 
 		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
 		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + NP);
-		//engine_interface.setTicks("NormalisationKernel", Def.NA * NP);
 		engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
 		
 		// General inputs
 		engine_interface.setStream("state_in", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
 		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC_inner * Def.seed_slot * 16 * Def.NC_inner * Def.NC_P * 3); // 16: byte of a 128-bit seed; 3: init in the first 3 cycles
 		engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
-		engine_interface.setStream("index", CPUTypes.INT32, Def.NA * NP * size);
+		engine_interface.setStream("index_out", CPUTypes.INT32, Def.NA * NP * size);
+		engine_interface.setStream("state_out", CPUTypes.INT32, Def.NA * NP * size);
 
 		// Application specific inputs
 		engine_interface.setStream("obsrv_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));

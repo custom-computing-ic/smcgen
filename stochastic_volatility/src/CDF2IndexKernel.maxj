@@ -76,7 +76,7 @@ public class CDF2IndexKernel extends Kernel {
 
 		// Output weights from cycle 3NP to 4NP-1
 		DFEVar imemoRdAddr = (Def.NA==1) ? (p-NP2_long).cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) : (p-NP2_long).cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) # a;
-		io.output("index", dfeUInt(32), p >= NP2_long & notLooping) <== imemo.read(imemoRdAddr).cast(dfeUInt(32));
+		io.output("index_out", dfeUInt(32), p >= NP2_long & notLooping) <== imemo.read(imemoRdAddr).cast(dfeUInt(32));
 
 		//debug.printf(p >= NP2_long & notLooping, "p: %d addr: %d data: %d\n", p, imemoRdAddr, imemo.read(imemoRdAddr).cast(dfeUInt(32)));
 

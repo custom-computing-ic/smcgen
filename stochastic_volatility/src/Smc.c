@@ -12,10 +12,11 @@
 
 dsfmt_t dsfmt[NP];
 
-void init(char *obsrvFile, float obsrv[], float state[]);
-void smcKernel(int itl_inner, float state_in[], float rand_num[], int seed[], float obsrv[], int index[]);
-void resample(float state_out[], int index[]);
-void output(int step, float state[]);
+void init(char *obsrvFile, float* obsrv, float* state);
+void smcKernel(int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
+void resample(float* state_out, int* index);
+void output(int step, float* state);
+void update(float* state, float* control);
 
 int main(int argc, char *argv[]){
 
@@ -26,24 +27,25 @@ int main(int argc, char *argv[]){
 
 	// Read observation and control
 	// Initialise states
-	float obsrv[NT];
-	float state[NA*NP*SS];
+	float *obsrv = (float *)malloc(NT*sizeof(float));
+	float *state = (float *)malloc(NA*NP*SS*sizeof(float));
 	init(argv[1], obsrv, state);
 
 	// Other array values
-	float *state_in;
+	float *state_in = state;
+	float *state_out = (float *)malloc(NA*NP*SS*sizeof(float));
 #if defined NA==1 || defined NA==2 || defined NA==3
-	float rand_num[4];
+	float *rand_num = (float *)malloc(4*sizeof(float));
 #else
-	float rand_num[NA];
+	float *rand_num = (float *)malloc(NA*sizeof(float));
 #endif
-	int seed[NC*SS*16*3];
+	int *seed = (int *)malloc(NC*SS*16*3*sizeof(int));
 #if defined NA==1 || defined NA==2 || defined NA==3
-	float obsrv_in[4];
+	float *obsrv_in = (float *)malloc(4*sizeof(float));
 #else
-	float obsrv_in[NA];
+	float *obsrv_in = (float *)malloc(NA*sizeof(float));
 #endif
-	int index[NA*NP];
+	int *index_out = (int *)malloc(NA*NP*sizeof(int));
 
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
@@ -69,24 +71,25 @@ int main(int argc, char *argv[]){
 			}
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcKernel(itl_inner,state_in,rand_num,seed,obsrv_in,index);
+			smcKernel(itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
 			printf("FPGA kernel finished...\n");
 
 #ifdef debug
 			for(int j=0; j<NP; j++)
-				printf("Resampled particle %d index: %d\n", j, index[j]);
+				printf("Resampled particle %d index: %d\n", j, index_out[j]);
 #endif
 
 			// Resampling particles
-			resample(state_in, index);
+			resample(state_in, index_out);
 		}
+		update(state_in, state_out);
 		output(t, state_in);
 	}
 
 	return 0;
 }
 
-void init(char *obsrvFile, float obsrv[NT], float state[NA*NP]){
+void init(char *obsrvFile, float* obsrv, float* state){
 	
 	// Read observations
 	FILE *fpSensor = fopen(obsrvFile, "r");
@@ -113,16 +116,16 @@ void init(char *obsrvFile, float obsrv[NT], float state[NA*NP]){
 	}
 }
 
-void smcKernel(int itl_inner, float state_in[], float rand_num[], int seed[], float obsrv[], int index[]){
+void smcKernel(int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	// Copy states to LMEM
 	Smc_ram(NP, state_in);
 
 	// Invoke FPGA kernel
-	Smc(NP, itl_inner, obsrv, rand_num, seed, index);
+	Smc(NP, itl_inner, obsrv, rand_num, seed, index_out, state_out);
 }
 
-void resample(float state[], int index[]){
+void resample(float* state, int* index){
 
 	float temp[NA*NP*SS];
 
@@ -137,7 +140,7 @@ void resample(float state[], int index[]){
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
 }
 
-void output(int step, float state[]){
+void output(int step, float* state){
 	for(int a=0; a<NA; a++){
 		float sum_x = 0;
 		for(int p=0; p<NP; p++){
@@ -147,3 +150,11 @@ void output(int step, float state[]){
 	}
 }
 
+void update(float* state_current, float* state_next){
+	for(int a=0; a<NA; a++){
+		for(int p=0; p<NP; p++){
+			for(int s=0; s<SS; s++)
+				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
+		}
+	}
+}

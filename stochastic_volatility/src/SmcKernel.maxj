@@ -65,34 +65,56 @@ class SmcKernel extends Kernel {
 				.withMax(3)
 				).getCount()<3;
 		DFEVector<DFEStruct> seeds = io.input("seed_in", Def.seeds_input_t, init); // seeds for random number generators
-		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_input_t, h===0); // state input, only the first horizon (h==0) is taken from the input
+		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_io_t, h===0); // state input, only the first horizon (h==0) is taken from the input
 		DFEVar o_in = io.input("obsrv_in", Def.compType, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
 
 		// Calculate weights
-		DFEVector<DFEVar> w_in = Def.weight_P_t.newInstance(this);
-		DFEVector<DFEVar> weight = Def.weight_P_t.newInstance(this);
-		DFEVector<DFEVar> weight_inner = Def.weight_inner_t.newInstance(this);
+		DFEVector<DFEStruct> particle = Def.particle_array_t.newInstance(this);
+		DFEVector<DFEVar> w_in = Def.weight_io_t.newInstance(this);
+		DFEVector<DFEVar> weight_out = Def.weight_io_t.newInstance(this);
+		DFEVector<DFEStruct> state_out = Def.state_io_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				weight_inner[i*Def.NC_P+j] <== SmcCore(s_in[j], o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP); // SMC core computation
+				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
-			if (Def.NC_inner==1)
-				weight[j] <== weight_inner[j];
-			else if (Def.NC_inner==2)
-				weight[j] <== weight_inner[j] * (itl_inner-1<=0 ? 1 : weight_inner[Def.NC_P+j]);
-			else if (Def.NC_inner==3)
-				weight[j] <== weight_inner[j] * (itl_inner-1<=0 ? 1 : weight_inner[Def.NC_P+j]) * (itl_inner-2<=0 ? 1 : weight_inner[2*Def.NC_P+j]);
-			else{
-				DFEVar weight_01 = weight_inner[j] * (itl_inner-1<=0 ? 1 : weight_inner[Def.NC_P+j]);	
-				DFEVar weight_23 = (itl_inner-2<=0 ? 1 : weight_inner[2*Def.NC_P+j]) * (itl_inner-3<=0 ? 1 : weight_inner[3*Def.NC_P+j]);	
-				weight[j] <== weight_01 * weight_23;
+			if (Def.NC_inner==1){
+				DFEVar temp_w = particle[j].get("w");
+				DFEStruct temp_s = particle[j].get("s");
+				weight_out[j] <== temp_w;
+				state_out[j] <== temp_s;
+			}else if (Def.NC_inner==2){
+				DFEVar temp_w_1 = particle[j].get("w");
+				DFEVar temp_w_2 = particle[Def.NC_P+j].get("w");
+				DFEStruct temp_s = particle[j].get("s");
+				weight_out[j] <== temp_w_1 * (itl_inner-1<=0 ? 1 : temp_w_2);
+				state_out[j] <== temp_s;
+			}else if (Def.NC_inner==3){
+				DFEVar temp_w_1 = particle[j].get("w");
+				DFEVar temp_w_2 = particle[Def.NC_P+j].get("w");
+				DFEVar temp_w_3 = particle[2*Def.NC_P+j].get("w");
+				DFEStruct temp_s = particle[j].get("s");
+				weight_out[j] <== temp_w_1 * (itl_inner-1<=0 ? 1 : temp_w_2) * (itl_inner-2<=0 ? 1 : temp_w_3);
+				state_out[j] <== temp_s;
+			}else{
+				DFEVar temp_w_1 = particle[j].get("w");
+				DFEVar temp_w_2 = particle[Def.NC_P+j].get("w");
+				DFEVar temp_w_3 = particle[2*Def.NC_P+j].get("w");
+				DFEVar temp_w_4 = particle[3*Def.NC_P+j].get("w");
+				DFEStruct temp_s = particle[j].get("s");
+				DFEVar weight_01 = temp_w_1 * (itl_inner-1<=0 ? 1 : temp_w_2);	
+				DFEVar weight_23 = itl_inner-2<=0 ? 1 : temp_w_3 * (itl_inner-3<=0 ? 1 : temp_w_4);	
+				weight_out[j] <== weight_01 * weight_23;
+				state_out[j] <== temp_s;
 			}
-			w_in[j] <== n===0 ? (1.0/NP.cast(Def.compType)) : stream.offset(weight[j], -1*Def.NA*Def.H*Def.NPMin-Def.NA*Def.H*offsetNP);
+			w_in[j] <== n===0 ? (1.0/NP.cast(Def.compType)) : stream.offset(weight_out[j], -1*Def.NA*Def.H*Def.NPMin-Def.NA*Def.H*offsetNP);
 		}
-		io.output("weight_out", Def.weight_P_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== weight;
+		io.output("weight_out", Def.weight_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== weight_out;
+		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;
 	}
 
-	private DFEVar SmcCore(DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
+	private DFEStruct SmcCore(DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
+
+		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
 		DFEVar obsrv_in = o_in;
 		DFEVar weight_in = w_in;
@@ -109,7 +131,10 @@ class SmcKernel extends Kernel {
 		// User please customises Func.maxj:weighting
 		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p);
 
-		return weight;
+		particle.get("w") <== weight;
+		particle.get("s") <== state_next;
+
+		return particle;
 	}
 
 }

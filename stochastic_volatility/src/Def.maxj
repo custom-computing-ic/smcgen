@@ -12,17 +12,23 @@ public class Def {
 
 	static final DFEType compType = KernelLib.dfeFloat(8, 24);
 
+	// Seeds Type
+	public static final DFEStructType seeds_t = new DFEStructType(
+		new StructFieldType("a", KernelLib.dfeRawBits(128))
+	);
+	public static int seed_slot = 1;
+
 	// State Type
 	public static final DFEStructType state_t = new DFEStructType(
 		new StructFieldType("x", compType)
 	);
 	public static int state_slot = 1;
 
-	// Seeds Type
-	public static final DFEStructType seeds_t = new DFEStructType(
-		new StructFieldType("a", KernelLib.dfeRawBits(128))
+	// Particle Type
+	public static final DFEStructType particle_t = new DFEStructType(
+		new StructFieldType("w", compType),
+		new StructFieldType("s", state_t)
 	);
-	public static int seed_slot = 1;
 
 	// Design Parameters
 	public static int NPMin = 2048;
@@ -39,9 +45,9 @@ public class Def {
 
 	// Vectors for multiple cores
 	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);
-	public static final DFEVectorType<DFEStruct> state_input_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
-	public static final DFEVectorType<DFEVar> weight_inner_t = new DFEVectorType<DFEVar>(compType,NC_inner*NC_P);
-	public static final DFEVectorType<DFEVar> weight_P_t = new DFEVectorType<DFEVar>(compType,NC_P);
+	public static final DFEVectorType<DFEStruct> particle_array_t = new DFEVectorType<DFEStruct>(particle_t,NC_inner*NC_P);
+	public static final DFEVectorType<DFEVar> weight_io_t = new DFEVectorType<DFEVar>(compType,NC_P);
+	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
 
 	// Application Parameters
 
