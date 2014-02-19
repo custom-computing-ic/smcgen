@@ -1,0 +1,47 @@
+/* vim: set filetype=java : */
+/* User has to customise this file */
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+
+public class Func{
+
+	/* User customised sampling function */
+	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct seeds) {
+
+		DFEStruct s_out = Def.state_t.newInstance(smc);
+
+		DFEVar x = s_in.get("x");
+
+		DFEVar seed_a = seeds.get("a");
+		
+		s_out.get("x") <== KMath.nrand(smc, seed_a, 0.91*x, Def.S*1.0);
+
+		return s_out;
+	}
+
+	/* User customised weighting function */
+	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
+
+		// State input
+		DFEVar state = s_in.get("x");
+		
+		// Observation input
+		DFEVar obsrv = o_in;
+		DFEVar obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
+
+		// Score calculation
+		DFEVar score = KMath.exp(-0.5*(state+KMath.powSq(obsrvHold)/KMath.exp(state)));
+		// Constaint handling
+		// Weight accumulation
+		DFEVar weight = score*w_in;
+
+		return weight;
+	}
+
+	/* Other user functions */
+	
+}

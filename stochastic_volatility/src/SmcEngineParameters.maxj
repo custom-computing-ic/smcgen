@@ -1,0 +1,58 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v2.build.EngineParameters;
+
+public class SmcEngineParameters extends EngineParameters {
+
+	public SmcEngineParameters(String[] args) {
+		super(args);
+	}
+
+	/*
+	private static final String s_itl_outer = "itl_outer";
+	private static final String s_itl_inner = "itl_inner";
+	private static final String s_NP = "NP";
+	private static final String s_NA = "NA";
+	private static final String s_H = "H";
+	private static final String s_S = "S";
+	private static final String s_NC = "NC";
+	private static final String s_Clk = "Clk";
+
+	@Override
+	protected void declarations() {
+		declareParam(s_itl_outer, DataType.INT);
+		declareParam(s_itl_inner, DataType.INT);
+		declareParam(s_NP, DataType.INT);
+		declareParam(s_NA, DataType.INT);
+		declareParam(s_H, DataType.INT);
+		declareParam(s_S, DataType.INT);
+		declareParam(s_NC, DataType.INT);
+		declareParam(s_Clk, DataType.INT);
+	}
+
+	public int getOuter() {
+		return getParam(s_itl_outer);
+	}
+	public int getInner() {
+		return getParam(s_itl_inner);
+	}
+	public int getNP() {
+		return getParam(s_NP);
+	}
+	public int getNA() {
+		return getParam(s_NA);
+	}
+	public int getH() {
+		return getParam(s_H);
+	}
+	public int getS() {
+		return getParam(s_S);
+	}
+	public int getNC() {
+		return getParam(s_NC);
+	}
+	public int getClk() {
+		return getParam(s_Clk);
+	}
+	*/
+}

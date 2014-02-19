@@ -1,0 +1,121 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
+import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
+import com.maxeler.maxcompiler.v2.managers.custom.stdlib.MemoryControlGroup.MemoryAccessPattern;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface.Direction;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.GeneratedInterface;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParam;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceMath;
+import com.maxeler.maxcompiler.v2.managers.BuildConfig;
+
+public class SmcManager extends CustomManager {
+
+	public SmcManager(SmcEngineParameters engineParameters) {
+		super(engineParameters);
+
+		addStreamToOnCardMemory("particle_mem", MemoryAccessPattern.LINEAR_1D) <== addStreamFromCPU("particle_mem_from_cpu");
+
+		KernelBlock smcBlock = addKernel(new SmcKernel(makeKernelParameters("SmcKernel")));
+		KernelBlock weight2cdfBlock = addKernel(new Weight2CDFKernel(makeKernelParameters("Weight2CDFKernel")));
+		//KernelBlock normalisationBlock = addKernel(new NormalisationKernel(makeKernelParameters("NormalisationKernel")));
+		KernelBlock cdf2IndexBlock = addKernel(new CDF2IndexKernel(makeKernelParameters("CDF2IndexKernel")));
+
+		config.setAllowNonMultipleTransitions(true);
+		config.setDefaultStreamClockFrequency(Def.Clk_core);
+
+		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
+		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
+		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
+
+		weight2cdfBlock.getInput("weight_in") <== smcBlock.getOutput("weight_out");
+
+		//normalisationBlock.getInput("sum_in") <== weight2cdfBlock.getOutput("sum");
+		//normalisationBlock.getInput("cdf_in") <== weight2cdfBlock.getOutput("cdf");
+		//cdf2IndexBlock.getInput("cdf") <== normalisationBlock.getOutput("cdf_out");
+		cdf2IndexBlock.getInput("cdf") <== weight2cdfBlock.getOutput("cdf");
+		cdf2IndexBlock.getInput("rand") <== addStreamFromCPU("rand");
+		addStreamToCPU("index") <== cdf2IndexBlock.getOutput("index");
+
+		createSLiCinterface(modeDefault());
+		createSLiCinterface(modeLMem());
+
+		configBuild(engineParameters);
+	}
+
+	private GeneratedInterface modeLMem() {
+		EngineInterface engine_interface = new EngineInterface("ram");
+		CPUTypes   type = CPUTypes.FLOAT;
+		int        size = type.sizeInBytes();
+
+		InterfaceParam NP = engine_interface.addParam("NP", CPUTypes.INT);
+
+		engine_interface.setLMemLinear("particle_mem", engine_interface.addConstant(0), NP * Def.NA * Def.H * Def.state_slot * size);
+		engine_interface.setStream("particle_mem_from_cpu", type, NP * Def.NA * Def.H * Def.state_slot * size);
+
+		engine_interface.ignoreAll(Direction.IN_OUT);
+
+		return engine_interface;
+	}
+
+	private static EngineInterface modeDefault() {
+		EngineInterface engine_interface = new EngineInterface();
+
+		int size = CPUTypes.FLOAT.sizeInBytes();
+		InterfaceParam itl_inner = engine_interface.addParam("itl_inner", CPUTypes.INT);
+		InterfaceParam NP = engine_interface.addParam("NP", CPUTypes.INT);
+
+
+		engine_interface.setScalar("SmcKernel", "itl_inner", itl_inner);
+		engine_interface.setScalar("SmcKernel", "NP", NP);
+		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
+		engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
+		engine_interface.setScalar("NormalisationKernel", "NP", NP);
+		engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
+
+		engine_interface.setLMemLinearWrapped("particle_mem_to_kernel",
+				engine_interface.addConstant(0),
+				NP * Def.NA * Def.state_slot * size,
+				itl_inner * NP * Def.NA * Def.state_slot * size,
+				engine_interface.addConstant(0));
+
+		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
+		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + NP);
+		//engine_interface.setTicks("NormalisationKernel", Def.NA * NP);
+		engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
+		
+		// General inputs
+		engine_interface.setStream("state_in", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
+		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC_inner * Def.seed_slot * 16 * Def.NC_inner * Def.NC_P * 3); // 16: byte of a 128-bit seed; 3: init in the first 3 cycles
+		engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
+		engine_interface.setStream("index", CPUTypes.INT32, Def.NA * NP * size);
+
+		// Application specific inputs
+		engine_interface.setStream("obsrv_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
+
+
+		engine_interface.ignoreLMem("particle_mem");
+		engine_interface.ignoreStream("particle_mem_from_cpu");
+
+		return engine_interface;
+	}
+
+
+	private void configBuild(SmcEngineParameters params) {
+		BuildConfig buildConfig = getBuildConfig();
+		buildConfig.setMPPRCostTableSearchRange(params.getMPPRStartCT(), params.getMPPREndCT());
+		buildConfig.setMPPRParallelism(params.getMPPRThreads());
+		buildConfig.setMPPRRetryNearMissesThreshold(params.getMPPRRetryThreshold());
+		buildConfig.setBuildEffort(BuildConfig.Effort.HIGH);
+		buildConfig.setMPPRCostTableSearchRange(1, 6);        // set to enable MPPR
+		buildConfig.setMPPRParallelism(6);
+	}
+
+	public static void main(String[] args) {
+		SmcManager manager = new SmcManager(new SmcEngineParameters(args));
+		manager.config.setOnCardMemoryFrequency(Def.Clk_mem);
+		manager.build();
+	}
+}

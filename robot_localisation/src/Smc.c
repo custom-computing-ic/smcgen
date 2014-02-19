@@ -12,11 +12,11 @@
 
 dsfmt_t dsfmt[NP];
 
-void init(char *obsrvFile, float obsrv[], char *controlFile, float control[], float state[]);
-void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_num[], int seed[], float obsrv[], int index[]);
-void resample(float state_out[], int index[]);
-void output(int step, float state[]);
-void update(float state[], float control[]);
+void init(char *obsrvFile, float* obsrv, char *controlFile, float* control, float* state);
+void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv, int* index);
+void resample(float* state_out, int* index);
+void output(int step, float* state);
+void update(float* state, float* control);
 
 int main(int argc, char *argv[]){
 
@@ -27,30 +27,29 @@ int main(int argc, char *argv[]){
 
 	// Read observation and control
 	// Initialise states
-	float obsrv[NT];
-	float control[NT*CS];
-	float state[NA*NP*SS];
+	float *obsrv = (float *)malloc(NT*sizeof(float));
+	float *control = (float *)malloc(NT*CS*sizeof(float));
+	float *state = (float *)malloc(NA*NP*SS*sizeof(float));
 	init(argv[1], obsrv, argv[2], control, state);
 
 	// Other array values
-	float *state_in;
-#ifdef NA==1
-	float control_in[NA*CS*2];
+#if defined NA==1
+	float *control_in = (float *)malloc(NA*CS*2*sizeof(float));
 #else
-	float control_in[NA*CS];
+	float *control_in = (float *)malloc(NA*CS*sizeof(float));
 #endif
 #if defined NA==1 || defined NA==2 || defined NA==3
-	float rand_num[4];
+	float *rand_num = (float *)malloc(4*sizeof(float));
 #else
-	float rand_num[NA];
+	float *rand_num = (float *)malloc(NA*sizeof(float));
 #endif
-	int seed[NC*SS*16*3];
+	int *seed = (int *)malloc(NC*SS*16*3*sizeof(int));
 #if defined NA==1 || defined NA==2 || defined NA==3
-	float obsrv_in[4];
+	float *obsrv_in = (float *)malloc(4*sizeof(float));
 #else
-	float obsrv_in[NA];
+	float *obsrv_in = (float *)malloc(NA*sizeof(float));
 #endif
-	int index[NA*NP];
+	int *index = (int *)malloc(NA*NP*sizeof(int));
 
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
@@ -62,8 +61,6 @@ int main(int argc, char *argv[]){
 
 			// Determine inner loop iteration, a number divisible by NC
 			int itl_inner = 1;
-			// Allocate state (from initialisation or resampling)
-			state_in = state;
 			// Allocate control of the current time step
 			for(int a=0; a<NA; a++){
 				control_in[a*CS] = control[NA*CS*t+a*CS];
@@ -81,7 +78,7 @@ int main(int argc, char *argv[]){
 			}
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcKernel(itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index);
+			smcKernel(itl_inner,state,control_in,rand_num,seed,obsrv_in,index);
 			printf("FPGA kernel finished...\n");
 
 #ifdef debug
@@ -89,19 +86,17 @@ int main(int argc, char *argv[]){
 				printf("Resampled particle %d index: %d\n", j, index[j]);
 #endif
 
-			if (i==itl_outer-1)
-				continue;
 			// Resampling particles
-			resample(state_in, index);
+			resample(state, index);
 		}
-		output(t, state_in);
-		update(state_in, control_in);
+		output(t, state);
+		update(state, control_in);
 	}
 
 	return 0;
 }
 
-void init(char *obsrvFile, float obsrv[NT], char *controlFile, float control[NT], float state[NA*NP]){
+void init(char* obsrvFile, float* obsrv, char* controlFile, float* control, float* state){
 	
 	// Read observations
 	FILE *fpSensor = fopen(obsrvFile, "r");
@@ -136,12 +131,12 @@ void init(char *obsrvFile, float obsrv[NT], char *controlFile, float control[NT]
 		for(int p=0; p<NP; p++){
 			state[p*SS*NA+a*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
 			state[p*SS*NA+a*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
-			state[p*SS*NA+a*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS*NA+a*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
 }
 
-void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_num[], int seed[], float obsrv[], int index[]){
+void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv, int* index){
 
 	// Copy states to LMEM
 	Smc_ram(NP, state_in);
@@ -150,7 +145,7 @@ void smcKernel(int itl_inner, float state_in[], float control_in[], float rand_n
 	Smc(NP, itl_inner, control_in, obsrv, rand_num, seed, index);
 }
 
-void resample(float state[], int index[]){
+void resample(float* state, int* index){
 
 	float temp[NA*NP*SS];
 
@@ -165,7 +160,7 @@ void resample(float state[], int index[]){
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
 }
 
-void output(int step, float state[]){
+void output(int step, float* state){
 	for(int a=0; a<NA; a++){
 		float sum_x = 0;
 		float sum_y = 0;
@@ -179,7 +174,7 @@ void output(int step, float state[]){
 	}
 }
 
-void update(float state[], float control[]){
+void update(float* state, float* control){
 	for(int a=0; a<NA; a++){
 		for(int p=0; p<NP; p++){
 			state[p*SS*NA+a*SS] += control[a*CS] * cos(state[p*SS*NA+a*SS+2]);

@@ -1,0 +1,48 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType.StructFieldType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
+
+public class Def {
+
+	static final DFEType compType = KernelLib.dfeFloat(8, 24);
+
+	// State Type
+	public static final DFEStructType state_t = new DFEStructType(
+		new StructFieldType("x", compType)
+	);
+	public static int state_slot = 1;
+
+	// Seeds Type
+	public static final DFEStructType seeds_t = new DFEStructType(
+		new StructFieldType("a", KernelLib.dfeRawBits(128))
+	);
+	public static int seed_slot = 1;
+
+	// Design Parameters
+	public static int NPMin = 2048;
+	public static int NPMax = 8192;
+	public static int NA = 1;
+	public static int H = 1;
+	public static double S = 1;
+
+	// System Parameters
+	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
+	public static int NC_P = 1; // Parallelisation along NP
+	public static int Clk_core = 150;
+	public static int Clk_mem = 333;
+
+	// Vectors for multiple cores
+	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);
+	public static final DFEVectorType<DFEStruct> state_input_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
+	public static final DFEVectorType<DFEVar> weight_inner_t = new DFEVectorType<DFEVar>(compType,NC_inner*NC_P);
+	public static final DFEVectorType<DFEVar> weight_P_t = new DFEVectorType<DFEVar>(compType,NC_P);
+
+	// Application Parameters
+
+}
