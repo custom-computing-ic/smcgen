@@ -13,7 +13,7 @@
 dsfmt_t dsfmt[NP];
 
 void init(char *obsrvFile, float* obsrv, char *controlFile, float* control, float* state);
-void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv, int* index);
+void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
 void resample(float* state_out, int* index);
 void output(int step, float* state);
 void update(float* state, float* control);
@@ -33,6 +33,8 @@ int main(int argc, char *argv[]){
 	init(argv[1], obsrv, argv[2], control, state);
 
 	// Other array values
+	float *state_in = state;
+	float *state_out = (float *)malloc(NA*NP*SS*sizeof(float));
 #if defined NA==1
 	float *control_in = (float *)malloc(NA*CS*2*sizeof(float));
 #else
@@ -49,7 +51,7 @@ int main(int argc, char *argv[]){
 #else
 	float *obsrv_in = (float *)malloc(NA*sizeof(float));
 #endif
-	int *index = (int *)malloc(NA*NP*sizeof(int));
+	int *index_out = (int *)malloc(NA*NP*sizeof(int));
 
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
@@ -78,19 +80,19 @@ int main(int argc, char *argv[]){
 			}
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcKernel(itl_inner,state,control_in,rand_num,seed,obsrv_in,index);
+			smcKernel(itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
 			printf("FPGA kernel finished...\n");
 
 #ifdef debug
 			for(int j=0; j<NP; j++)
-				printf("Resampled particle %d index: %d\n", j, index[j]);
+				printf("Resampled particle %d index: %d\n", j, index_out[j]);
 #endif
 
 			// Resampling particles
-			resample(state, index);
+			resample(state_in, index_out);
 		}
-		update(state, control_in);
-		output(t, state);
+		update(state_in, state_out);
+		output(t, state_in);
 	}
 
 	return 0;
@@ -136,13 +138,13 @@ void init(char* obsrvFile, float* obsrv, char* controlFile, float* control, floa
 	}
 }
 
-void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv, int* index){
+void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	// Copy states to LMEM
 	Smc_ram(NP, state_in);
 
 	// Invoke FPGA kernel
-	Smc(NP, itl_inner, control_in, obsrv, rand_num, seed, index);
+	Smc(NP, itl_inner, control_in, obsrv_in, rand_num, seed, index_out, state_out);
 }
 
 void resample(float* state, int* index){
@@ -174,12 +176,11 @@ void output(int step, float* state){
 	}
 }
 
-void update(float* state, float* control){
+void update(float* state_current, float* state_next){
 	for(int a=0; a<NA; a++){
 		for(int p=0; p<NP; p++){
-			state[p*SS*NA+a*SS] += control[a*CS] * cos(state[p*SS*NA+a*SS+2]);
-			state[p*SS*NA+a*SS+1] += control[a*CS] * sin(state[p*SS*NA+a*SS+2]);
-			state[p*SS*NA+a*SS+2] += control[a*CS+1];
+			for(int s=0; s<SS; s++)
+				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
 		}
 	}
 }
