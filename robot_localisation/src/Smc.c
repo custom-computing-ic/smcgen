@@ -89,8 +89,8 @@ int main(int argc, char *argv[]){
 			// Resampling particles
 			resample(state, index);
 		}
-		output(t, state);
 		update(state, control_in);
+		output(t, state);
 	}
 
 	return 0;
