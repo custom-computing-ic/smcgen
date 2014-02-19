@@ -111,7 +111,7 @@ void init(char *obsrvFile, float* obsrv, float* state){
 	// Initialise states
 	for(int a=0; a<NA; a++){
 		for(int p=0; p<NP; p++){
-			state[p*SS*NA+a*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS*NA+a*SS] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
 		}
 	}
 }
@@ -122,7 +122,7 @@ void smcKernel(int itl_inner, float* state_in, float* rand_num, int* seed, float
 	Smc_ram(NP, state_in);
 
 	// Invoke FPGA kernel
-	Smc(NP, itl_inner, obsrv, rand_num, seed, index_out, state_out);
+	Smc(NP, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
 }
 
 void resample(float* state, int* index){
