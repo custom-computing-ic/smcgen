@@ -79,7 +79,6 @@ public class Def {
 #endif
 ...
 ```
-
 2. Stochastic volatility
 
 * Go to stochastic_volatility/src/
