@@ -3,8 +3,6 @@
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
-import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
-import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
 public class Func{
@@ -39,7 +37,10 @@ public class Func{
 		// Weight accumulation
 		DFEVar weight = score*w_in;
 
+		smc.debug.printf("Obsrv_in: %f State: %f Var: %f Score: %f\n", obsrvHold, state, KMath.exp(state/2.0), score);
+		
 		return weight;
+
 	}
 
 	/* Other user functions */

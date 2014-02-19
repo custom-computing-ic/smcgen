@@ -89,7 +89,10 @@ int main(int argc, char *argv[]){
 #endif
 
 			// Resampling particles
-			resample(state_in, index_out);
+			if(i==itl_outer-1)
+				resample(state_out, index_out);
+			else
+				resample(state_in, index_out);
 		}
 		update(state_in, state_out);
 		output(t, state_in);

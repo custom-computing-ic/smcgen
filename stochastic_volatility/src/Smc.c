@@ -80,7 +80,10 @@ int main(int argc, char *argv[]){
 #endif
 
 			// Resampling particles
-			resample(state_in, index_out);
+			if(i==itl_outer-1)
+				resample(state_out, index_out);
+			else
+				resample(state_in, index_out);
 		}
 		update(state_in, state_out);
 		output(t, state_in);
@@ -146,7 +149,7 @@ void output(int step, float* state){
 		for(int p=0; p<NP; p++){
 			sum_x += state[p*SS*NA+a*SS];
 		}
-		printf("At step %d, state is %f, observation is %f.\n", step, sum_x/(NP*1.0), exp(sum_x/(NP*2.0)));
+		printf("At step %d, state is %f.\n", step, sum_x/(NP*1.0));
 	}
 }
 
