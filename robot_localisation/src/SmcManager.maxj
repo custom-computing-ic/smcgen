@@ -70,7 +70,6 @@ public class SmcManager extends CustomManager {
 		engine_interface.setScalar("SmcKernel", "NP", NP);
 		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
 		engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
-		engine_interface.setScalar("NormalisationKernel", "NP", NP);
 		engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
 
 		engine_interface.setLMemLinearWrapped("particle_mem_to_kernel",
@@ -81,7 +80,6 @@ public class SmcManager extends CustomManager {
 
 		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
 		engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + NP);
-		//engine_interface.setTicks("NormalisationKernel", Def.NA * NP);
 		engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
 		
 		// General inputs and outputs
