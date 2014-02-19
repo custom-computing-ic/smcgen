@@ -1,7 +1,7 @@
 #ifndef SMC_HEADER
 #define SMC_HEADER
 
-#define debug
+//#define debug
 
 /* Number of CPU threads */
 #ifndef THREADS
