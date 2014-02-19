@@ -23,7 +23,7 @@ Springer, 2001.
 
 ### Example applications
 
-1. Robot localisation
+#### Robot localisation
 
 * Go to robot_localisation/src/
 * Application specific functions are described in `Func.maxj` and `Smc.c`.
@@ -79,7 +79,8 @@ public class Def {
 #endif
 ...
 ```
-2. Stochastic volatility
+
+#### Stochastic volatility
 
 * Go to stochastic_volatility/src/
 * Application specific functions are described in `Func.maxj` and `Smc.c`.
