@@ -46,6 +46,7 @@
 #endif
 
 /* Number of FPGA cores */
+/* NC_inner * NC_P */
 #ifndef NC
 #pragma message "NC has been set to 2"
 #define NC	2

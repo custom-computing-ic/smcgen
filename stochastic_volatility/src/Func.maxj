@@ -32,7 +32,7 @@ public class Func{
 		DFEVar obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
 
 		// Score calculation
-		DFEVar score = KMath.exp(-0.5*(state+KMath.powSq(obsrvHold)/KMath.exp(state)));
+		DFEVar score = KMath.exp(-0.5*(state+KMath.powSq(obsrvHold)*KMath.exp(-state)));
 		// Constaint handling
 		// Weight accumulation
 		DFEVar weight = score*w_in;
