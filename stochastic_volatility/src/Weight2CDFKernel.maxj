@@ -40,14 +40,7 @@ public class Weight2CDFKernel extends Kernel {
 				).getCount();
 
 		// Counter for alighing NC_P parallel weights
-		DFEVar c = dfeUInt(MathUtils.bitsToRepresent(Def.NC_P-1)).newInstance(this);
-		if (Def.NC_P>1){
-			c <== control.count.makeCounter(
-					control.count.makeParams(MathUtils.bitsToRepresent(Def.NC_P-1))
-					.withMax(Def.NC_P)
-					).getCount();
-		}else
-			c <== constant.var(dfeUInt(1),0);
+		DFEVar c = (Def.NC_P>1) ? control.count.makeCounter(control.count.makeParams(MathUtils.bitsToRepresent(Def.NC_P-1)).withMax(Def.NC_P)).getCount() : constant.var(dfeUInt(1),0);
 
 		DFEVector<DFEVar> weight = io.input("weight_in", Def.weight_io_t, used & p!==NP & c===0);
 		ArrayList<DFEVar> list = new ArrayList<DFEVar>();

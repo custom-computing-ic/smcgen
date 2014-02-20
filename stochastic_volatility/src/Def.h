@@ -48,7 +48,7 @@
 /* Number of FPGA cores */
 #ifndef NC
 #pragma message "NC has been set to 4"
-#define NC	4
+#define NC	1
 #endif
 
 /* Number of state slots */
