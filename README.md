@@ -25,7 +25,7 @@ Springer, 2001.
 
 #### Robot localisation
 
-* Go to robot_localisation/src/
+##### To view the source code, go to robot_localisation/src/
 * Application specific functions are described in `Func.maxj` and `Smc.c`.
 ```
 /* Func.maxj */
@@ -79,9 +79,20 @@ public class Def {
 #endif
 ...
 ```
+##### To simulate, build and run the design, got to robot_localisation/build/
+* Type `make runsim` to simulate.
+* Type `make build` to compile, it can take several hours.
+* Type `make run` to run, enjoy!
+
 
 #### Stochastic volatility
 
-* Go to stochastic_volatility/src/
+##### To view the source code, go to stochastic_volatility/src/
 * Application specific functions are described in `Func.maxj` and `Smc.c`.
 * Design and system parameters are described in `Def.maxj` and `Def.h`.
+
+##### To simulate, build and run the design, got to stochastic_volatility/build/
+* Type `make runsim` to simulate.
+* Type `make build` to compile, it can take several hours.
+* Type `make run` to run, enjoy!
+
