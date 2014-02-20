@@ -13,7 +13,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
 public class Weight2CDFKernel extends Kernel {
 
-	static int loopSize = Math.max(15, Def.NA);
+	static int loopSize = Math.max(15, Def.NA); // Architecture dependent, can optimise
 
 	protected Weight2CDFKernel(KernelParameters parameters) {
 		super(parameters);
