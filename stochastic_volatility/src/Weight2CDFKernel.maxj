@@ -21,13 +21,12 @@ public class Weight2CDFKernel extends Kernel {
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
 
 		Counter a_counter = control.count.makeCounter(
-					control.count.makeParams(
-						MathUtils.bitsToRepresent(loopSize))
+					control.count.makeParams(MathUtils.bitsToRepresent(loopSize))
 						.withMax(loopSize)
 				);
 		DFEVar a = a_counter.getCount();
 		Counter p_counter = control.count.makeCounter(
-					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax-1))
+					control.count.makeParams(MathUtils.bitsToRepresent(Def.NPMax)) // need one more bit for the last cycle
 						.withEnable(a_counter.getWrap())
 						.withWrapMode(WrapMode.STOP_AT_MAX)
 						.withMax(NP)
@@ -36,32 +35,32 @@ public class Weight2CDFKernel extends Kernel {
 		DFEVar used = a < Def.NA;
 		DFEVar raddr = control.count.makeCounter(
 					control.count.makeParams(MathUtils.bitsToRepresent(Def.NA*Def.NPMax-1))
-						.withEnable((p===NP-1 & p_counter.getWrap()) | p===NP)
+						.withEnable((p===(NP-1).cast(p.getType()) & p_counter.getWrap()) | p===NP.cast(p.getType()))
 				).getCount();
 
 		// Counter for alighing NC_P parallel weights
 		DFEVar c = (Def.NC_P>1) ? control.count.makeCounter(control.count.makeParams(MathUtils.bitsToRepresent(Def.NC_P-1)).withMax(Def.NC_P)).getCount() : constant.var(dfeUInt(1),0);
 
-		DFEVector<DFEVar> weight = io.input("weight_in", Def.weight_io_t, used & p!==NP & c===0);
+		DFEVector<DFEVar> weight = io.input("weight_in", Def.weight_io_t, used & p!==NP.cast(p.getType()) & c===0);
 		ArrayList<DFEVar> list = new ArrayList<DFEVar>();
 		for(int i=0; i<Def.NC_P; i++)
 			list.add(weight[i]);
 		DFEVar weight_selected = (Def.NC_P==1) ? weight[0] : control.mux(c, list);
 		DFEVar cdf = Def.compType.newInstance(this);
 		cdf <== weight_selected + (p===0 ? 0 : stream.offset(cdf, -loopSize));
-		DFEVar sum = Reductions.streamHold(cdf, p===NP-1);
+		DFEVar sum = Reductions.streamHold(cdf, p===(NP-1).cast(p.getType()));
 
 		Memory<DFEVar> cdfmemo = mem.alloc(Def.compType, Def.NPMax*Def.NA);
 		DFEVar waddr = (Def.NA==1) ? p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) : p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) # a;
-		cdfmemo.write(waddr, cdf, p!==NP & used);
+		cdfmemo.write(waddr, cdf, p!==NP.cast(p.getType()) & used);
 
 		DFEVar cdf_scaled = cdfmemo.read(raddr)/sum;
 
-		io.output("cdf", Def.compType, p===NP) <== cdf_scaled;
+		io.output("cdf", Def.compType, p===NP.cast(p.getType())) <== cdf_scaled;
 
 		//debug.printf("CDF: %f Sum: %f\n", cdf, sum);
-		//debug.printf(p!==NP & used, "waddr: %d cdf: %f\n", waddr, cdf);
-		//debug.printf(p===NP, "raddr: %d cdf read: %f\n", raddr, cdfmemo.read(raddr));
+		//debug.printf(p!==NP.cast(p.getType()) & used, "waddr: %d cdf: %f\n", waddr, cdf);
+		//debug.printf(p===NP.cast(p.getType()), "raddr: %d cdf read: %f\n", raddr, cdfmemo.read(raddr));
 	}
 
 }
