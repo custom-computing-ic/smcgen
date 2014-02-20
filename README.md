@@ -85,7 +85,7 @@ public class Def {
 * Type `make run` to run, enjoy!
 
 
-#### 2. 2. Stochastic volatility
+#### 2. Stochastic volatility
 
 ##### To view the source code, go to stochastic_volatility/src/
 * Application specific functions are described in `Func.maxj` and `Smc.c`.
