@@ -86,7 +86,7 @@ public class SmcManager extends CustomManager {
 		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC_inner * Def.seed_slot * 16 * Def.NC_inner * Def.NC_P * 3); // 16: byte of a 128-bit seed; 3: init in the first 3 cycles
 		engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 		engine_interface.setStream("index_out", CPUTypes.INT32, Def.NA * NP * size);
-		engine_interface.setStream("state_out", CPUTypes.FLOAT, Def.NA * NP * size);
+		engine_interface.setStream("state_out", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
 
 		// Application specific inputs
 		engine_interface.setStream("obsrv_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));

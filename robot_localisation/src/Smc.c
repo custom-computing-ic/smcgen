@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
 		for (int i=0; i<itl_outer; i++) {
 
 #ifdef debug
-			for(int j=0; j<NP; j++)
+			for(int j=0; j<NA*NP; j++)
 				printf("State particle %d: (%f %f %f)\n", j, state[j*3], state[j*3+1], state[j*3+2]);
 #endif
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
 			smcKernel(itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
 
 #ifdef debug
-			for(int j=0; j<NP; j++)
+			for(int j=0; j<NA*NP; j++)
 				printf("Resampled particle %d index: %d\n", j, index_out[j]);
 #endif
 
@@ -161,7 +161,7 @@ void smcKernel(int itl_inner, float* state_in, float* control_in, float* rand_nu
 
 void resample(float* state, int* index){
 
-	float temp[NA*NP*SS];
+	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
 
 	for (int a=0; a<NA; a++) {
 		for (int p=0; p<NP; p++){
@@ -172,6 +172,15 @@ void resample(float* state, int* index){
 		}
 	}
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
+
+#ifdef debug
+	for(int a=0; a<NA; a++){
+		for(int p=0; p<NP; p++){
+			printf("Resampled particle %d value: %f %f %f\n", p, state[p*SS*NA+a*SS],state[p*SS*NA+a*SS+1],state[p*SS*NA+a*SS+2]);
+		}
+	}
+#endif
+
 }
 
 void output(int step, float* state){
