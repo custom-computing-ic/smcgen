@@ -20,7 +20,7 @@ void update(float* state, float* control);
 
 int main(int argc, char *argv[]){
 
-	if (argc<3 || argc>4){
+	if (argc<2 || argc>3){
 		printf("Usage: %s [observation file]\n", argv[0]);
 		return 0;
 	}
@@ -72,7 +72,6 @@ int main(int argc, char *argv[]){
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
 			smcKernel(itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
-			printf("FPGA kernel finished...\n");
 
 #ifdef debug
 			for(int j=0; j<NP; j++)
@@ -121,11 +120,21 @@ void init(char *obsrvFile, float* obsrv, float* state){
 
 void smcKernel(int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
+	struct timeval tv1, tv2;
+
 	// Copy states to LMEM
+	gettimeofday(&tv1, NULL);
 	Smc_ram(NP, state_in);
+	gettimeofday(&tv2, NULL);
+	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 
 	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
 	Smc(NP, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
 void resample(float* state, int* index){
