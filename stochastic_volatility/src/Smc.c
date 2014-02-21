@@ -44,7 +44,6 @@ int main(int argc, char *argv[]){
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
 
-
 			// Determine inner loop iteration, a number divisible by NC
 			int itl_inner = 1;
 			// Allocate state (from initialisation or resampling)
