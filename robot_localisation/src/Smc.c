@@ -70,7 +70,7 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
+			smcFPGA(i, itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
 #else
 #endif
 
