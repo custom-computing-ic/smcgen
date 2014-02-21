@@ -80,7 +80,6 @@ void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, floa
 			state_out[p*SS*NA+a*SS] = 0.91*state_in[p*SS*NA+a*SS]+nrand(1,p);
 			// Importance weighting
 			weight[p*NA+a] = exp(-0.5*(state_out[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_out[p*SS*NA+a*SS])));
-			//weight[p*NA+a] = 1/exp(state_out[p*SS*NA+a*SS]/2.0)*exp(-0.5*pow(obsrv_in[0]/exp(state_out[p*SS*NA+a*SS]/2.0),2));
 			weight_sum[a] += weight[p*NA+a];
 			//printf("%f %f %f\n",state_out[p*SS*NA+a*SS],obsrv_in[0],weight[p*NA+a]);
 		}
@@ -113,7 +112,7 @@ void resampleCPU(float* state, float* weight, float* weight_sum){
 			while (u-sum_pdf[k]>=0 && k<NP){
 				k = k + 1;
 			}
-			temp[p*SS*NA+a*SS] = state[k*SS*NA+a*SS];
+			temp[p*SS*NA+a*SS] = state[(k-1)*SS*NA+a*SS];
 		}
 	}
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
