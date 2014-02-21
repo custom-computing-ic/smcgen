@@ -73,12 +73,11 @@ void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, floa
 	float *weight_sum = (float *)malloc(NA*sizeof(float));
 
 	gettimeofday(&tv1, NULL);
-	printf("Hi!\n");
 	for (int a=0; a<NA; a++) {
 		weight_sum[a] = 0;
 		for (int p=0; p<NP; p++){
 			// Sampling
-			state_out[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,NP);
+			state_out[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,p);
 			// Importance weighting
 			weight[p*NA+a] = exp(-0.5*(state_out[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_out[p*SS*NA+a*SS])));
 			weight_sum[a] += weight[p*NA+a];
@@ -115,6 +114,7 @@ void resampleCPU(float* state, float* weight, float* weight_sum){
 			temp[p*SS*NA+a*SS] = state[k*SS*NA+a*SS];
 		}
 	}
+	memcpy(state, temp, sizeof(float)*NA*NP*SS);
 }
 
 /* Common functions */
