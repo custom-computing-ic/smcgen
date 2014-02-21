@@ -20,6 +20,7 @@ public class Weight2CDFKernel extends Kernel {
 
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
 
+		// Counters for stage 1
 		Counter a_counter = control.count.makeCounter(
 					control.count.makeParams(MathUtils.bitsToRepresent(loopSize))
 						.withMax(loopSize)
@@ -33,6 +34,8 @@ public class Weight2CDFKernel extends Kernel {
 				);
 		DFEVar p = p_counter.getCount();
 		DFEVar used = a < Def.NA;
+
+		// Counter for stage 2
 		DFEVar raddr = control.count.makeCounter(
 					control.count.makeParams(MathUtils.bitsToRepresent(Def.NA*Def.NPMax-1))
 						.withEnable((p===(NP-1).cast(p.getType()) & p_counter.getWrap()) | p===NP.cast(p.getType()))
@@ -46,10 +49,22 @@ public class Weight2CDFKernel extends Kernel {
 		for(int i=0; i<Def.NC_P; i++)
 			list.add(weight[i]);
 		DFEVar weight_selected = (Def.NC_P==1) ? weight[0] : control.mux(c, list);
+
+		// Write CDF
 		DFEVar cdf = Def.compType.newInstance(this);
 		cdf <== weight_selected + (p===0 ? 0 : stream.offset(cdf, -loopSize));
-		DFEVar sum = Reductions.streamHold(cdf, p===(NP-1).cast(p.getType()));
 
+		// Write and read sum
+		DFEVar sum = Def.compType.newInstance(this);
+		if (Def.NA>1){
+			Memory<DFEVar> summemo = mem.alloc(Def.compType, Def.NA);
+			summemo.write(a.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NA-1))), cdf, p===(NP-1).cast(p.getType()) & used);
+			sum <== summemo.read(raddr.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NA-1))));
+		}else{
+			sum <== Reductions.streamHold(cdf, p===(NP-1).cast(p.getType()));
+		}
+
+		// Read CDF
 		Memory<DFEVar> cdfmemo = mem.alloc(Def.compType, Def.NPMax*Def.NA);
 		DFEVar waddr = (Def.NA==1) ? p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) : p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) # a;
 		cdfmemo.write(waddr, cdf, p!==NP.cast(p.getType()) & used);
