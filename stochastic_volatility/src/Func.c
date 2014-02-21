@@ -77,10 +77,12 @@ void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, floa
 		weight_sum[a] = 0;
 		for (int p=0; p<NP; p++){
 			// Sampling
-			state_out[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,p);
+			state_out[p*SS*NA+a*SS] = 0.91*state_in[p*SS*NA+a*SS]+nrand(1,p);
 			// Importance weighting
 			weight[p*NA+a] = exp(-0.5*(state_out[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_out[p*SS*NA+a*SS])));
+			//weight[p*NA+a] = 1/exp(state_out[p*SS*NA+a*SS]/2.0)*exp(-0.5*pow(obsrv_in[0]/exp(state_out[p*SS*NA+a*SS]/2.0),2));
 			weight_sum[a] += weight[p*NA+a];
+			//printf("%f %f %f\n",state_out[p*SS*NA+a*SS],obsrv_in[0],weight[p*NA+a]);
 		}
 	}
 	// Resampling of robot particles
@@ -149,13 +151,23 @@ void init(char *obsrvFile, float* obsrv, float* state){
 
 // Output particle values
 void output(int step, float* state){
+
+	FILE *ofp;
+	if(step==0)
+		ofp = fopen("data_xest", "w");
+	else
+		ofp = fopen("data_xest", "a");
+
 	for(int a=0; a<NA; a++){
 		float sum_x = 0;
 		for(int p=0; p<NP; p++){
 			sum_x += state[p*SS*NA+a*SS];
 		}
 		printf("At step %d, state is %f.\n", step, sum_x/(NP*1.0));
+		fprintf(ofp, "%f\n", sum_x/(NP*1.0));
 	}
+
+	fclose(ofp);
 }
 
 // Commit changes to the particles
