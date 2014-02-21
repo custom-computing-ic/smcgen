@@ -20,7 +20,6 @@ MAXELEROSDIR_SIM:=$(MAXCOMPILERDIR)/lib/maxeleros-sim
 
 # ---- Source files ----
 ENGINEFILES=$(wildcard ../src/*.maxj)
-CPUFILES=$(wildcard ../src/*.c ../src/dSFMT-src-2.2.1/*.c)
 
 # ---- Command alias ----
 CC=icc
