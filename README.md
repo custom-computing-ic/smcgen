@@ -28,7 +28,7 @@ Springer, 2001.
 #### 1. Robot localisation
 
 ##### To view the source code, go to robot_localisation/src/
-* Application specific functions are described in `Func.maxj` and `Smc.c`.
+* Application specific functions are described in `Func.maxj` and `Func.c`.
 ```
 /* Func.maxj */
 /* User customised sampling function */
@@ -90,7 +90,7 @@ public class Def {
 #### 2. Stochastic volatility
 
 ##### To view the source code, go to stochastic_volatility/src/
-* Application specific functions are described in `Func.maxj` and `Smc.c`.
+* Application specific functions are described in `Func.maxj` and `Func.c`.
 * Design and system parameters are described in `Def.maxj` and `Def.h`.
 
 ##### To simulate, build and run the design, got to stochastic_volatility/build/
