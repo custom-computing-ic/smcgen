@@ -15,9 +15,14 @@ extern dsfmt_t dsfmt[NP];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
+
+#ifdef debug
+	for(int p=0; p<NP; p++)
+		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
+#endif
 
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
@@ -29,12 +34,22 @@ void smcFPGA(int itl_inner, float* state_in, float* rand_num, int* seed, float* 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
 	Smc(NP, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	// Rearrange particles
+	if(outer_idx==itl_outer-1)
+		resampleFPGA(state_out, index_out);
+	else
+		resampleFPGA(state_in, index_out);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+
+#ifdef debug
+	for(int p=0; p<NP; p++)
+		printf("Resampled particle %d index: %d\n", p, index_out[p]);
+#endif
 }
 
-// Reorganise particles based on the resampled indices
+// Rearrange particles based on the resampled indices
 void resampleFPGA(float* state, int* index){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
@@ -51,29 +66,62 @@ void resampleFPGA(float* state, int* index){
 /* CPU only functions */
 
 // Call CPU SMC core
-void smcCPU(int itl_inner, float* state_in, float* obsrv_in, float* state_out){
+void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
-	float *state_next = (float *)malloc(NA*NP*SS*sizeof(float));
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
+	float *weight_sum = (float *)malloc(NA*sizeof(float));
 
 	gettimeofday(&tv1, NULL);
+	printf("Hi!\n");
 	for (int a=0; a<NA; a++) {
+		weight_sum[a] = 0;
 		for (int p=0; p<NP; p++){
-			state_next[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,NP);
-			weight[p*NA+a] = exp(-0.5*(state_next[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_in[p*SS*NA+a*SS])));
+			// Sampling
+			state_out[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,NP);
+			// Importance weighting
+			weight[p*NA+a] = exp(-0.5*(state_out[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_out[p*SS*NA+a*SS])));
+			weight_sum[a] += weight[p*NA+a];
 		}
 	}
+	// Resampling of robot particles
+	if(outer_idx==itl_outer-1)
+		resampleCPU(state_out, weight, weight_sum);
+	else
+		resampleCPU(state_in, weight, weight_sum);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+}
+
+// Resample particles
+void resampleCPU(float* state, float* weight, float* weight_sum){
+
+	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
+	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
+
+	for (int a=0; a<NA; a++) {
+		sum_pdf[0] = 0;
+		for (int p=1; p<=NP; p++){
+			sum_pdf[p] = sum_pdf[p-1] + weight[(p-1)*NA+a]/weight_sum[a];
+		}
+		int k=0;
+		float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NP*1.0);
+		for (int p=0; p<NP; p++){
+			float u = u1 + p/(NP*1.0);
+			while (u-sum_pdf[k]>=0 && k<NP){
+				k = k + 1;
+			}
+			temp[p*SS*NA+a*SS] = state[k*SS*NA+a*SS];
+		}
+	}
 }
 
 /* Common functions */
 
 // Read input files
 void init(char *obsrvFile, float* obsrv, float* state){
-	
+
 	// Read observations
 	FILE *fpSensor = fopen(obsrvFile, "r");
 	if(!fpSensor) {

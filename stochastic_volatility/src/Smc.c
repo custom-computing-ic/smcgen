@@ -44,10 +44,6 @@ int main(int argc, char *argv[]){
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
 
-#ifdef debug
-			for(int j=0; j<NP; j++)
-				printf("State particle %d: (%f %f %f)\n", j, state[j*3], state[j*3+1], state[j*3+2]);
-#endif
 
 			// Determine inner loop iteration, a number divisible by NC
 			int itl_inner = 1;
@@ -66,19 +62,10 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
-#ifdef debug
-			for(int j=0; j<NP; j++)
-				printf("Resampled particle %d index: %d\n", j, index_out[j]);
-#endif
-			// Resampling particles
-			if(i==itl_outer-1)
-				resampleFPGA(state_out, index_out);
-			else
-				resampleFPGA(state_in, index_out);
+			smcFPGA(i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
 #else
 			printf("Calling CPU function...\n");
-			smcCPU(itl_inner,state_in,obsrv_in,state_out);
+			smcCPU(i,itl_inner,state_in,obsrv_in,state_out);
 #endif
 
 		}
