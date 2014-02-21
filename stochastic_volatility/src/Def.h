@@ -3,6 +3,8 @@
 
 //#define debug
 
+#define Use_FPGA
+
 /* Number of CPU threads */
 #ifndef THREADS
 #pragma message "THREADS has been set to 12"

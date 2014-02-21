@@ -14,6 +14,7 @@ dsfmt_t dsfmt[NP];
 
 void init(char *obsrvFile, float* obsrv, float* state);
 void smcKernel(int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
+void smcCPU(int itl_inner, float* state_in, float* obsrv_in, float* state_out);
 void resample(float* state_out, int* index);
 void output(int step, float* state);
 void update(float* state, float* control);
@@ -69,20 +70,24 @@ int main(int argc, char *argv[]){
 			for(int a=0; a<NA; a++){
 				obsrv_in[a] = obsrv[NA*t+a];
 			}
+#ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
 			smcKernel(itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
-
 #ifdef debug
 			for(int j=0; j<NP; j++)
 				printf("Resampled particle %d index: %d\n", j, index_out[j]);
 #endif
-
 			// Resampling particles
 			if(i==itl_outer-1)
 				resample(state_out, index_out);
 			else
 				resample(state_in, index_out);
+#else
+			printf("Calling CPU function...\n");
+			smcCPU(itl_inner,state_in,obsrv_in,state_out);
+#endif
+
 		}
 		update(state_in, state_out);
 		output(t, state_in);
@@ -137,16 +142,32 @@ void smcKernel(int itl_inner, float* state_in, float* rand_num, int* seed, float
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
+void smcCPU(int itl_inner, float* state_in, float* obsrv_in, float* state_out){
+
+	struct timeval tv1, tv2;
+	float *state_next = (float *)malloc(NA*NP*SS*sizeof(float));
+	float *weight = (float *)malloc(NA*NP*sizeof(float));
+
+	gettimeofday(&tv1, NULL);
+	for (int a=0; a<NA; a++) {
+		for (int p=0; p<NP; p++){
+			state_next[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,NP);
+			weight[p*NA+a] = exp(-0.5*(state_next[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_in[p*SS*NA+a*SS])));
+		}
+	}
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+}
+
 void resample(float* state, int* index){
 
-	float temp[NA*NP*SS];
+	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
 
 	for (int a=0; a<NA; a++) {
 		for (int p=0; p<NP; p++){
 			int k = index[p*NA+a];
 			temp[p*SS*NA+a*SS] = state[k*SS*NA+a*SS];
-			temp[p*SS*NA+a*SS+1] = state[k*SS*NA+a*SS+1];
-			temp[p*SS*NA+a*SS+2] = state[k*SS*NA+a*SS+2];
 		}
 	}
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
