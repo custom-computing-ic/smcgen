@@ -4,12 +4,123 @@
 #include <unistd.h>
 #include <time.h>
 #include <mathimf.h>
+#include "Maxfiles.h"
+#include "MaxSLiCInterface.h"
 #include "dSFMT.h"
 #include "Def.h"
 #include "Func.h"
 
 extern dsfmt_t dsfmt[NP];
 
+/* FPGA only functions */
+
+// Call FPGA SMC core
+void smcFPGA(int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+
+	struct timeval tv1, tv2;
+
+	// Copy states to LMEM
+	gettimeofday(&tv1, NULL);
+	Smc_ram(NP, state_in);
+	gettimeofday(&tv2, NULL);
+	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
+	Smc(NP, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+}
+
+// Reorganise particles based on the resampled indices
+void resampleFPGA(float* state, int* index){
+
+	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
+
+	for (int a=0; a<NA; a++) {
+		for (int p=0; p<NP; p++){
+			int k = index[p*NA+a];
+			temp[p*SS*NA+a*SS] = state[k*SS*NA+a*SS];
+		}
+	}
+	memcpy(state, temp, sizeof(float)*NA*NP*SS);
+}
+
+/* CPU only functions */
+
+// Call CPU SMC core
+void smcCPU(int itl_inner, float* state_in, float* obsrv_in, float* state_out){
+
+	struct timeval tv1, tv2;
+	float *state_next = (float *)malloc(NA*NP*SS*sizeof(float));
+	float *weight = (float *)malloc(NA*NP*sizeof(float));
+
+	gettimeofday(&tv1, NULL);
+	for (int a=0; a<NA; a++) {
+		for (int p=0; p<NP; p++){
+			state_next[p*SS*NA+a*SS] = 0.9*state_in[p*SS*NA+a*SS]+nrand(1,NP);
+			weight[p*NA+a] = exp(-0.5*(state_next[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_in[p*SS*NA+a*SS])));
+		}
+	}
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+}
+
+/* Common functions */
+
+// Read input files
+void init(char *obsrvFile, float* obsrv, float* state){
+	
+	// Read observations
+	FILE *fpSensor = fopen(obsrvFile, "r");
+	if(!fpSensor) {
+		printf("Failed to open the observation file.\n");
+		exit(-1);
+	}
+	for(int t=0; t<NT; t++){
+		fscanf(fpSensor, "%f\n", &obsrv[t]);
+	}
+	fclose(fpSensor);
+
+	// Initialise random number generators
+	srand(time(NULL));
+	for(int  p=0; p<NP; p++){
+		dsfmt_init_gen_rand(&dsfmt[p], rand());
+	}
+
+	// Initialise states
+	for(int a=0; a<NA; a++){
+		for(int p=0; p<NP; p++){
+			state[p*SS*NA+a*SS] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+		}
+	}
+}
+
+// Output particle values
+void output(int step, float* state){
+	for(int a=0; a<NA; a++){
+		float sum_x = 0;
+		for(int p=0; p<NP; p++){
+			sum_x += state[p*SS*NA+a*SS];
+		}
+		printf("At step %d, state is %f.\n", step, sum_x/(NP*1.0));
+	}
+}
+
+// Commit changes to the particles
+void update(float* state_current, float* state_next){
+	for(int a=0; a<NA; a++){
+		for(int p=0; p<NP; p++){
+			for(int s=0; s<SS; s++)
+				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
+		}
+	}
+}
+
+// Gaussian random number generator
 float nrand(float sigma, int l){
 
 	float x, y, w;
