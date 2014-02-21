@@ -21,7 +21,7 @@ Springer, 2001.
 	- MPC-X1000 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
 	- MPC-X2000 with maia dataflow engines (Altera Stratix V GS 5SGSD8 FPGAs)
 3. GCC 4.4 or newer.
-4. Inter Compiler 12.1 or newer.
+4. Intel Compiler 12.1 or newer.
 
 ### Example applications
 
