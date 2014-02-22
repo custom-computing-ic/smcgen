@@ -150,11 +150,11 @@ void init(char *obsrvFile, float* obsrv, float* state){
 // Output particle values
 void output(int step, float* state){
 
-	FILE *ofp;
+	FILE *fpXest;
 	if(step==0)
-		ofp = fopen("data_xest", "w");
+		fpXest = fopen("data_xest.txt", "w");
 	else
-		ofp = fopen("data_xest", "a");
+		fpXest = fopen("data_xest.txt", "a");
 
 	for(int a=0; a<NA; a++){
 		float sum_x = 0;
@@ -162,10 +162,10 @@ void output(int step, float* state){
 			sum_x += state[p*SS*NA+a*SS];
 		}
 		printf("At step %d, state is %f.\n", step, sum_x/(NP*1.0));
-		fprintf(ofp, "%f\n", sum_x/(NP*1.0));
+		fprintf(fpXest, "%f\n", sum_x/(NP*1.0));
 	}
 
-	fclose(ofp);
+	fclose(fpXest);
 }
 
 // Commit changes to the particles
@@ -176,6 +176,39 @@ void update(float* state_current, float* state_next){
 				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
 		}
 	}
+}
+
+// Check estimated states with the true states
+void check(char *stateFile){
+
+	FILE *fpX;
+	FILE *fpXest;
+	fpX = fopen(stateFile, "r");
+	fpXest = fopen("data_xest.txt", "r");
+
+	if(!fpX) {
+		printf("Failed to open the state file.\n");
+		exit(-1);
+	}
+	if(!fpXest) {
+		printf("Failed to open the estimated state file.\n");
+		exit(-1);
+	}
+
+	float total_error, step_error;
+	float x, x_est;
+
+	total_error = 0;
+	for(int t=0; t<NT; t++){
+		fscanf(fpX, "%f\n", &x);
+		fscanf(fpXest, "%f\n", &x_est);
+		step_error = x_est-x;
+		total_error += step_error;
+	}
+	printf("Average error: %f\n", total_error/(NT*1.0));
+	fclose(fpX);
+	fclose(fpXest);
+
 }
 
 // Gaussian random number generator

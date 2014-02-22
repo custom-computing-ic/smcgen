@@ -33,7 +33,7 @@ MANAGER=$(PRJ)Manager
 OTHERCFLAGS=-I../src/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1 
 
 # Runtime arguments
-ARGS=../src/obsrv.txt
+ARGS=../src/obsrv.txt ../src/data_x.txt
 
 
 # Using known hardware settings

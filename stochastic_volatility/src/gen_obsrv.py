@@ -1,8 +1,8 @@
 from random import *
 from math import *
 
-fx = open('data_x','w')
-fy = open('data_y','w')
+fx = open('data_x.txt','w')
+fy = open('data_y.txt','w')
 fo = open('obsrv.txt','w')
 
 x = 0

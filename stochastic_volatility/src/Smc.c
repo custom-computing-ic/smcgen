@@ -14,8 +14,8 @@ dsfmt_t dsfmt[NP];
 
 int main(int argc, char *argv[]){
 
-	if (argc<2 || argc>3){
-		printf("Usage: %s [observation file]\n", argv[0]);
+	if (argc<3 || argc>4){
+		printf("Usage: %s [observation file] [state file]\n", argv[0]);
 		return 0;
 	}
 
@@ -71,6 +71,7 @@ int main(int argc, char *argv[]){
 		update(state_in, state_out);
 		output(t, state_in);
 	}
+	check(argv[2]);
 
 	return 0;
 }

@@ -21,6 +21,7 @@ void resampleCPU(float* state, float* weight, float* weight_sum);
 void init(char *obsrvFile, float* obsrv, float* state);
 void output(int step, float* state);
 void update(float* state, float* control);
+void check(char *stateFile);
 float nrand(float sigma, int l);
 
 #endif
