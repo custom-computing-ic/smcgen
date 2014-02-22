@@ -15,7 +15,7 @@ extern dsfmt_t dsfmt[NPMax];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -66,7 +66,7 @@ void resampleFPGA(int NP, float* state, int* index){
 /* CPU only functions */
 
 // Call CPU SMC core
-void smcCPU(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
+void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 	float *weight = (float *)malloc(NA*NP*sizeof(float));

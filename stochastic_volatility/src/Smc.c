@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 	printf("Usage: %s [observation file] [state file] [NP] [S]\n", argv[0]);
 
 	int NP = atoi(argv[3]);
-	int S = atoi(argv[4]);
+	float S = atoi(argv[4]);
 
 	// Read observation and control
 	// Initialise states
