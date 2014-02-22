@@ -1,7 +1,7 @@
 # Ignore everything under build, but not build itself and the Makefile
 */build/*
 !*/build/Makefile
-*/optimiser/*
+*/optimiser
 
 # Ignore temporary files
 *~
