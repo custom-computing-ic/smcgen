@@ -24,11 +24,11 @@
 //#define NP	6144
 //#endif
 #ifndef NPMin
-#pragma message "NP has been set to 2048"
+#pragma message "NPMin has been set to 2048"
 #define NPMin	2048
 #endif
 #ifndef NPMax
-#pragma message "NP has been set to 8192"
+#pragma message "NPMax has been set to 8192"
 #define NPMax	8192
 #endif
 

@@ -34,7 +34,7 @@ OTHERCFLAGS=-I../src/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1
 
 # Runtime arguments
 NP=768
-S=1.0
+S=1.5
 ARGS=../src/obsrv.txt ../src/data_x.txt $(NP) $(S)
 
 

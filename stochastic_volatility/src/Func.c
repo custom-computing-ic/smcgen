@@ -32,35 +32,54 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 
+#ifdef FPGA_resampling // Do resampling on FPGA
+	
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-#ifdef FPGA_resampling
 	Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+	
 	// Rearrange particles
+	gettimeofday(&tv1, NULL);
 	if(outer_idx==itl_outer-1)
 		resampleFPGA(NP, state_out, index_out);
 	else
 		resampleFPGA(NP, state_in, index_out);
-#else
+	gettimeofday(&tv2, NULL);
+	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
+
+#else // Do resampling on CPU
+	
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
 	float *weight_sum = (float *)malloc(NA*sizeof(float));
+
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
 	Smc(NP, S, itl_inner, obsrv_in, seed, state_out, weight);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+
+	// Resampling of robot particles
+	gettimeofday(&tv1, NULL);
 	for (int a=0; a<NA; a++) {
 		weight_sum[a] = 0;
-		#pragma omp parallel for num_threads(THREADS)
 		for (int p=0; p<NP; p++){
 			weight_sum[a] += weight[p*NA+a];
 		}
 	}
-	// Resampling of robot particles
 	if(outer_idx==itl_outer-1)
 		resampleCPU(NP, state_out, weight, weight_sum);
 	else
 		resampleCPU(NP, state_in, weight, weight_sum);
-#endif
 	gettimeofday(&tv2, NULL);
-	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
+
+#endif
 
 #ifdef debug
 	for(int p=0; p<NP; p++)
