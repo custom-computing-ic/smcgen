@@ -1,0 +1,11 @@
+/* vim: set filetype=java : */
+
+import com.maxeler.maxcompiler.v2.build.EngineParameters;
+
+public class SmcEngineParameters extends EngineParameters {
+
+	public SmcEngineParameters(String[] args) {
+		super(args);
+	}
+
+}
