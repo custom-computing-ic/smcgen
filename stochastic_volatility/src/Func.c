@@ -81,7 +81,6 @@ void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, floa
 			// Importance weighting
 			weight[p*NA+a] = exp(-0.5*(state_out[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_out[p*SS*NA+a*SS])));
 			weight_sum[a] += weight[p*NA+a];
-			//printf("%f %f %f\n",state_out[p*SS*NA+a*SS],obsrv_in[0],weight[p*NA+a]);
 		}
 	}
 	// Resampling of robot particles

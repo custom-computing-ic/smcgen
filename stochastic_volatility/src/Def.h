@@ -3,7 +3,7 @@
 
 //#define debug
 
-//#define Use_FPGA
+#define Use_FPGA
 
 /* Number of CPU threads */
 #ifndef THREADS
@@ -20,7 +20,7 @@
 /* Number of particles */
 #ifndef NP
 #pragma message "NP has been set to 6144"
-#define NP	2000
+#define NP	6144
 #endif
 
 /* Horizon length */

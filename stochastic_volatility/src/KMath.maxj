@@ -19,6 +19,10 @@ public class KMath {
 		return KernelMath.ceil(x);
 	}
 
+	static DFEVar modulo(DFEVar x, int base) {
+		return KernelMath.modulo(x,base);
+	}
+
 	static DFEVar sin(DFEVar x) {
 		return KernelMath.sin(x);
 	}
