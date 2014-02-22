@@ -7,8 +7,8 @@
 
 /* Number of CPU threads */
 #ifndef THREADS
-#pragma message "THREADS has been set to 12"
-#define THREADS	12
+#pragma message "THREADS has been set to 4"
+#define THREADS	4
 #endif
 
 /* Number of steps */

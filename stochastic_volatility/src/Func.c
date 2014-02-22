@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,6 +76,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	gettimeofday(&tv1, NULL);
 	for (int a=0; a<NA; a++) {
 		weight_sum[a] = 0;
+		#pragma omp parallel for num_threads(THREADS)
 		for (int p=0; p<NP; p++){
 			// Sampling
 			state_out[p*SS*NA+a*SS] = 0.91*state_in[p*SS*NA+a*SS]+nrand(S*1,p);
