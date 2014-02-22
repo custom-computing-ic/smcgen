@@ -205,7 +205,7 @@ void check(char *stateFile){
 		step_error = x_est-x;
 		total_error += step_error;
 	}
-	printf("Average error: %f\n", total_error/(NT*1.0));
+	printf("Average error: %f\n", fabs(total_error)/(NT*1.0));
 	fclose(fpX);
 	fclose(fpXest);
 
