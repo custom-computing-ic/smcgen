@@ -18,9 +18,17 @@
 #endif
 
 /* Number of particles */
-#ifndef NP
-#pragma message "NP has been set to 6144"
-#define NP	6144
+//#ifndef NP
+//#pragma message "NP has been set to 6144"
+//#define NP	6144
+//#endif
+#ifndef NPMin
+#pragma message "NP has been set to 2048"
+#define NPMin	2048
+#endif
+#ifndef NPMax
+#pragma message "NP has been set to 8192"
+#define NPMax	8192
 #endif
 
 /* Horizon length */

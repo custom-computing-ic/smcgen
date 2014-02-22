@@ -10,12 +10,12 @@
 #include "Def.h"
 #include "Func.h"
 
-extern dsfmt_t dsfmt[NP];
+extern dsfmt_t dsfmt[NPMax];
 
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -36,9 +36,9 @@ void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* rand_num, int
 	Smc(NP, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
 	// Rearrange particles
 	if(outer_idx==itl_outer-1)
-		resampleFPGA(state_out, index_out);
+		resampleFPGA(NP, state_out, index_out);
 	else
-		resampleFPGA(state_in, index_out);
+		resampleFPGA(NP, state_in, index_out);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -50,7 +50,7 @@ void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* rand_num, int
 }
 
 // Rearrange particles based on the resampled indices
-void resampleFPGA(float* state, int* index){
+void resampleFPGA(int NP, float* state, int* index){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
 
@@ -66,7 +66,7 @@ void resampleFPGA(float* state, int* index){
 /* CPU only functions */
 
 // Call CPU SMC core
-void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
+void smcCPU(int NP, int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
@@ -85,16 +85,16 @@ void smcCPU(int outer_idx, int itl_inner, float* state_in, float* obsrv_in, floa
 	}
 	// Resampling of robot particles
 	if(outer_idx==itl_outer-1)
-		resampleCPU(state_out, weight, weight_sum);
+		resampleCPU(NP, state_out, weight, weight_sum);
 	else
-		resampleCPU(state_in, weight, weight_sum);
+		resampleCPU(NP, state_in, weight, weight_sum);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
 // Resample particles
-void resampleCPU(float* state, float* weight, float* weight_sum){
+void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
 	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
@@ -120,7 +120,7 @@ void resampleCPU(float* state, float* weight, float* weight_sum){
 /* Common functions */
 
 // Read input files
-void init(char *obsrvFile, float* obsrv, float* state){
+void init(int NP, char *obsrvFile, float* obsrv, float* state){
 
 	// Read observations
 	FILE *fpSensor = fopen(obsrvFile, "r");
@@ -148,7 +148,7 @@ void init(char *obsrvFile, float* obsrv, float* state){
 }
 
 // Output particle values
-void output(int step, float* state){
+void output(int NP, int step, float* state){
 
 	FILE *fpXest;
 	if(step==0)
@@ -169,7 +169,7 @@ void output(int step, float* state){
 }
 
 // Commit changes to the particles
-void update(float* state_current, float* state_next){
+void update(int NP, float* state_current, float* state_next){
 	for(int a=0; a<NA; a++){
 		for(int p=0; p<NP; p++){
 			for(int s=0; s<SS; s++)
@@ -216,10 +216,10 @@ float nrand(float sigma, int l){
 
 	float x, y, w;
 	float n1;
-	static float n2[NP] = {0.0};
-	static short n2_cached[NP] = {0};
+	static float n2 = 0.0;
+	static short n2_cached = 0;
 
-	if (!n2_cached[l]){
+	if (!n2_cached){
 		do {
 			x = 2.0 * dsfmt_genrand_close_open(&dsfmt[l]) - 1.0;
 			y = 2.0 * dsfmt_genrand_close_open(&dsfmt[l]) - 1.0;
@@ -228,15 +228,15 @@ float nrand(float sigma, int l){
 
 		w = sqrt((-2.0*log(w))/w);
 		n1 = x * w;
-		n2[l] = y * w;
-		n2_cached[l] = 1;
+		n2 = y * w;
+		n2_cached = 1;
 
 		return sigma * n1;
 	}
 	else{
 
-		n2_cached[l] = 0;
-		return sigma * n2[l];
+		n2_cached = 0;
+		return sigma * n2;
 	}
 
 }
