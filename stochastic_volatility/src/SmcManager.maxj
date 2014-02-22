@@ -63,11 +63,13 @@ public class SmcManager extends CustomManager {
 		int size = CPUTypes.FLOAT.sizeInBytes();
 		InterfaceParam itl_inner = engine_interface.addParam("itl_inner", CPUTypes.INT);
 		InterfaceParam NP = engine_interface.addParam("NP", CPUTypes.INT);
+		InterfaceParam S = engine_interface.addParam("S", CPUTypes.INT);
 
 
 		engine_interface.setScalar("SmcKernel", "itl_inner", itl_inner);
 		engine_interface.setScalar("SmcKernel", "NP", NP);
 		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
+		engine_interface.setScalar("SmcKernel", "S", S);
 		engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
 		engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
 

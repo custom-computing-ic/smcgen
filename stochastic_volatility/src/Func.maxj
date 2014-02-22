@@ -8,7 +8,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 public class Func{
 
 	/* User customised sampling function */
-	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct seeds) {
+	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct seeds, DFEVar S) {
 
 		DFEStruct s_out = Def.state_t.newInstance(smc);
 
@@ -16,7 +16,7 @@ public class Func{
 
 		DFEVar seed_a = seeds.get("a");
 		
-		s_out.get("x") <== KMath.nrand(smc, seed_a, 0.91*x, Def.S*1.0);
+		s_out.get("x") <== KMath.nrand(smc, seed_a, 0.91*x, S*1.0);
 
 		return s_out;
 	}

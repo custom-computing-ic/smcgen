@@ -65,7 +65,7 @@ public class KMath {
 	}
 
 	// Guassian random number generator
-	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, double std) {
+	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, DFEVar std) {
 
 		UrandomCore urng = new UrandomCore(smc, seed);
 		NrandomCore nrng = new NrandomCore(smc, 8, 24, urng.getRandOut());

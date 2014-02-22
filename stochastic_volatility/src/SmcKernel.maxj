@@ -18,6 +18,7 @@ class SmcKernel extends Kernel {
 		// Setup counters
 		DFEVar itl_inner = io.scalarInput("itl_inner", dfeUInt(32)); // determined at run-time
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
+		DFEVar S = io.scalarInput("S", Def.compType); // determined at run-time
 		OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
 		Counter a_counter = control.count.makeCounter(
 					control.count.makeParams(
@@ -72,7 +73,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> state_out = Def.state_io_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP); // SMC core computation
+				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP, S); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
 			if (Def.NC_inner==1){
 				DFEVar temp_w = particle[j].get("w");
@@ -109,7 +110,7 @@ class SmcKernel extends Kernel {
 		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;
 	}
 
-	private DFEStruct SmcCore(DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP){
+	private DFEStruct SmcCore(DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP, DFEVar S){
 
 		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
@@ -122,7 +123,7 @@ class SmcKernel extends Kernel {
 		// Sampling: calculate next state using current state
 		// User please customises Func.maxj:sampling
 		state_current <== h===0 ? state_in : stream.offset(state_next, -1*Def.NA*Def.NPMin-Def.NA*offsetNP);
-		state_next <== Func.sampling(this, state_current, seeds);
+		state_next <== Func.sampling(this, state_current, seeds, S);
 
 		// Weighting: calculate normalised weights of particles
 		// User please customises Func.maxj:weighting

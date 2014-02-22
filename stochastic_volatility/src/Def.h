@@ -3,7 +3,7 @@
 
 //#define debug
 
-//#define Use_FPGA
+#define Use_FPGA
 
 /* Number of CPU threads */
 #ifndef THREADS
@@ -18,6 +18,7 @@
 #endif
 
 /* Number of particles */
+// NP is from run-time argument
 //#ifndef NP
 //#pragma message "NP has been set to 6144"
 //#define NP	6144
@@ -44,10 +45,11 @@
 #endif
 
 /* Spread of Gaussian random numbers */
-#ifndef S
-#pragma message "S has been set to 1"
-#define S	1
-#endif
+// S is from run-time argument
+//#ifndef S
+//#pragma message "S has been set to 1"
+//#define S	1
+//#endif
 
 /* Number of agents */
 #ifndef NA

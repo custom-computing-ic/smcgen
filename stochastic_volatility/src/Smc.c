@@ -14,12 +14,10 @@ dsfmt_t dsfmt[NPMax];
 
 int main(int argc, char *argv[]){
 
-	if (argc<4 || argc>5){
-		printf("Usage: %s [observation file] [state file] [NP]\n", argv[0]);
-		return 0;
-	}
+	printf("Usage: %s [observation file] [state file] [NP] [S]\n", argv[0]);
 
 	int NP = atoi(argv[3]);
+	int S = atoi(argv[4]);
 
 	// Read observation and control
 	// Initialise states
@@ -63,10 +61,10 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(NP, i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
+			smcFPGA(NP,S,i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
 #else
 			printf("Calling CPU function...\n");
-			smcCPU(NP, i,itl_inner,state_in,obsrv_in,state_out);
+			smcCPU(NP,S,i,itl_inner,state_in,obsrv_in,state_out);
 #endif
 
 		}

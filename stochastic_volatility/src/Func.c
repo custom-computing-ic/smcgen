@@ -15,7 +15,7 @@ extern dsfmt_t dsfmt[NPMax];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -33,7 +33,7 @@ void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* rand_
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
 	// Rearrange particles
 	if(outer_idx==itl_outer-1)
 		resampleFPGA(NP, state_out, index_out);
@@ -66,7 +66,7 @@ void resampleFPGA(int NP, float* state, int* index){
 /* CPU only functions */
 
 // Call CPU SMC core
-void smcCPU(int NP, int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
+void smcCPU(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
@@ -77,7 +77,7 @@ void smcCPU(int NP, int outer_idx, int itl_inner, float* state_in, float* obsrv_
 		weight_sum[a] = 0;
 		for (int p=0; p<NP; p++){
 			// Sampling
-			state_out[p*SS*NA+a*SS] = 0.91*state_in[p*SS*NA+a*SS]+nrand(1,p);
+			state_out[p*SS*NA+a*SS] = 0.91*state_in[p*SS*NA+a*SS]+nrand(S*1,p);
 			// Importance weighting
 			weight[p*NA+a] = exp(-0.5*(state_out[p*SS*NA+a*SS]+obsrv_in[0]*obsrv_in[0]*exp(-1*state_out[p*SS*NA+a*SS])));
 			weight_sum[a] += weight[p*NA+a];
