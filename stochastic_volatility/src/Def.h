@@ -1,66 +1,69 @@
 #ifndef SMC_HEADER
 #define SMC_HEADER
 
+/* Debug mode */
+#ifndef debug
 //#define debug
+#endif
 
-#define Use_FPGA
+/* FPGA usage control */
+/* enable: use FPGA; disable: use CPU for all processes */
+#ifndef FPGA_resampling
+#define Use_FPGA 
+#endif
+
+/* Resampling control*/
+/* enable: resampling on FPGA; disable: resampling on CPU */
+#ifndef FPGA_resampling
+//#define FPGA_resampling 
+#endif
 
 /* Number of CPU threads */
 #ifndef THREADS
-#pragma message "THREADS has been set to 4"
 #define THREADS	4
 #endif
 
 /* Number of steps */
 #ifndef NT
-#pragma message "NT has been set to 10"
 #define NT		10
 #endif
 
 /* Number of particles */
 // NP is from run-time argument
 //#ifndef NP
-//#pragma message "NP has been set to 6144"
 //#define NP	6144
 //#endif
 #ifndef NPMin
-#pragma message "NPMin has been set to 2048"
 #define NPMin	2048
 #endif
 #ifndef NPMax
-#pragma message "NPMax has been set to 8192"
 #define NPMax	8192
 #endif
 
 /* Horizon length */
 #ifndef H
-#pragma message "H has been set to 1"
 #define H  	1
 #endif
 
 /* Outer loop */
 #ifndef itl_outer
-#pragma message "itl_outer has been set to 1"
 #define itl_outer 1
 #endif
 
 /* Spread of Gaussian random numbers */
 // S is from run-time argument
 //#ifndef S
-//#pragma message "S has been set to 1"
 //#define S	1
 //#endif
 
 /* Number of agents */
 #ifndef NA
-#pragma message "NA has been set to 1"
 #define NA	1
 #endif
 
 /* Number of FPGA cores */
 /* NC_inner * NC_P */
 #ifndef NC
-#pragma message "NC has been set to 16"
 #define NC	16
 #endif
 

@@ -63,7 +63,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
 
-	// Resampling of robot particles
+	// Resample particles
 	gettimeofday(&tv1, NULL);
 	for (int a=0; a<NA; a++) {
 		weight_sum[a] = 0;
