@@ -34,12 +34,30 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
+#ifdef FPGA_resampling
 	Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
 	// Rearrange particles
 	if(outer_idx==itl_outer-1)
 		resampleFPGA(NP, state_out, index_out);
 	else
 		resampleFPGA(NP, state_in, index_out);
+#else
+	float *weight = (float *)malloc(NA*NP*sizeof(float));
+	float *weight_sum = (float *)malloc(NA*sizeof(float));
+	Smc(NP, S, itl_inner, obsrv_in, seed, state_out, weight);
+	for (int a=0; a<NA; a++) {
+		weight_sum[a] = 0;
+		#pragma omp parallel for num_threads(THREADS)
+		for (int p=0; p<NP; p++){
+			weight_sum[a] += weight[p*NA+a];
+		}
+	}
+	// Resampling of robot particles
+	if(outer_idx==itl_outer-1)
+		resampleCPU(NP, state_out, weight, weight_sum);
+	else
+		resampleCPU(NP, state_in, weight, weight_sum);
+#endif
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);

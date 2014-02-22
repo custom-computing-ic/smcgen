@@ -26,6 +26,7 @@ public class SmcManager extends CustomManager {
 		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
 		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
 		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
+		addStreamToCPU("state_out") <== smcBlock.getOutput("state_out");
 
 		if(Def.FPGA_resampling==1){
 			KernelBlock weight2cdfBlock = addKernel(new Weight2CDFKernel(makeKernelParameters("Weight2CDFKernel")));
@@ -34,7 +35,6 @@ public class SmcManager extends CustomManager {
 			cdf2IndexBlock.getInput("cdf") <== weight2cdfBlock.getOutput("cdf");
 			cdf2IndexBlock.getInput("rand") <== addStreamFromCPU("rand");
 			addStreamToCPU("index_out") <== cdf2IndexBlock.getOutput("index_out");
-			addStreamToCPU("state_out") <== smcBlock.getOutput("state_out");
 		}else{
 			addStreamToCPU("weight_out") <== smcBlock.getOutput("weight_out");
 		}
@@ -93,6 +93,8 @@ public class SmcManager extends CustomManager {
 		if(Def.FPGA_resampling==1){
 			engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 			engine_interface.setStream("index_out", CPUTypes.INT32, Def.NA * NP * size);
+		}else{
+			engine_interface.setStream("weight_out", CPUTypes.FLOAT, Def.NA * NP * size);
 		}
 
 		engine_interface.ignoreLMem("particle_mem");

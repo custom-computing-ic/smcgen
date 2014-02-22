@@ -3,7 +3,7 @@
 
 //#define debug
 
-//#define Use_FPGA
+#define Use_FPGA
 
 /* Number of CPU threads */
 #ifndef THREADS
