@@ -125,15 +125,15 @@ void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 void init(int NP, char *obsrvFile, float* obsrv, float* state){
 
 	// Read observations
-	FILE *fpSensor = fopen(obsrvFile, "r");
-	if(!fpSensor) {
+	FILE *fpObsrv = fopen(obsrvFile, "r");
+	if(!fpObsrv) {
 		printf("Failed to open the observation file.\n");
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpSensor, "%f\n", &obsrv[t]);
+		fscanf(fpObsrv, "%f\n", &obsrv[t]);
 	}
-	fclose(fpSensor);
+	fclose(fpObsrv);
 
 	// Initialise random number generators
 	srand(time(NULL));
