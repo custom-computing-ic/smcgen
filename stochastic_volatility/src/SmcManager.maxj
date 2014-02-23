@@ -20,9 +20,6 @@ public class SmcManager extends CustomManager {
 
 		KernelBlock smcBlock = addKernel(new SmcKernel(makeKernelParameters("SmcKernel")));
 
-		config.setAllowNonMultipleTransitions(true);
-		config.setDefaultStreamClockFrequency(Def.Clk_core);
-
 		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
 		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
 		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
@@ -116,6 +113,8 @@ public class SmcManager extends CustomManager {
 
 	public static void main(String[] args) {
 		SmcManager manager = new SmcManager(new SmcEngineParameters(args));
+		manager.config.setAllowNonMultipleTransitions(true);
+		manager.config.setDefaultStreamClockFrequency(Def.Clk_core);
 		manager.config.setOnCardMemoryFrequency(Def.Clk_mem);
 		manager.build();
 	}
