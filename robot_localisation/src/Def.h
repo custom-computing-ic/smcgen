@@ -7,7 +7,7 @@
 
 /* Number of CPU threads */
 #ifndef THREADS
-#define THREADS	12
+#define THREADS	4
 #endif
 
 /* Number of steps */

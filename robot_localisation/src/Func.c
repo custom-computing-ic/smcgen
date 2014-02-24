@@ -15,7 +15,7 @@ extern dsfmt_t dsfmt[NPMax];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
