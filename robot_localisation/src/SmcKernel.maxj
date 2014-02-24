@@ -21,6 +21,7 @@ class SmcKernel extends Kernel {
 		// Setup counters
 		DFEVar itl_inner = io.scalarInput("itl_inner", dfeUInt(32)); // determined at run-time
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
+		DFEVar S = io.scalarInput("S", Def.compType); // determined at run-time
 		OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
 		Counter a_counter = control.count.makeCounter(
 					control.count.makeParams(
@@ -66,7 +67,7 @@ class SmcKernel extends Kernel {
 				).getCount()<3;
 		DFEVector<DFEStruct> seeds = io.input("seed_in", Def.seeds_input_t, init); // seeds for random number generators
 		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_io_t, h===0); // state input, only the first horizon (h==0) is taken from the input
-		DFEStruct c_in = io.input("control_in", Def.control_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // control input, taken once per time step
+		DFEStruct c_in = io.input("ref_in", Def.ref_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // reference input, taken once per time step
 		DFEVar o_in = io.input("obsrv_in", Def.compType, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
 
 		// Calculate weights
@@ -117,7 +118,7 @@ class SmcKernel extends Kernel {
 		
 		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
-		DFEStruct control_in = getControl(a, c_in, n===0 & h===0 & p===0);
+		DFEStruct ref_in = getControl(a, c_in, n===0 & h===0 & p===0);
 		DFEVar obsrv_in = o_in;
 		DFEVar weight_in = w_in;
 
@@ -127,7 +128,7 @@ class SmcKernel extends Kernel {
 		// Sampling: calculate next state using current state
 		// User please customises Func.maxj:sampling
 		state_current <== h===0 ? state_in : stream.offset(state_next, -1*Def.NA*Def.NPMin-Def.NA*offsetNP);
-		state_next <== Func.sampling(this, state_current, control_in, seeds, S);
+		state_next <== Func.sampling(this, state_current, ref_in, seeds, S);
 
 		// Weighting: calculate normalised weights of particles
 		// User please customises Func.maxj:weighting
@@ -139,14 +140,14 @@ class SmcKernel extends Kernel {
 		return particle;
 	}
 
-	private DFEStruct getControl(DFEVar a, DFEStruct c_in, DFEVar write) {
+	private DFEStruct getControl(DFEVar a, DFEStruct r_in, DFEVar write) {
 		if (Def.NA>1){
-			Memory<DFEStruct> memo = mem.alloc(Def.control_t, Def.NA);
+			Memory<DFEStruct> memo = mem.alloc(Def.ref_t, Def.NA);
 			DFEVar address = a;
-			return memo.port(address, c_in, write, RamWriteMode.WRITE_FIRST);
+			return memo.port(address, r_in, write, RamWriteMode.WRITE_FIRST);
 		}else{
-			DFEStruct controlHold = Reductions.streamHold(c_in, write);
-			return controlHold;
+			DFEStruct refHold = Reductions.streamHold(r_in, write);
+			return refHold;
 		}
 	}
 }

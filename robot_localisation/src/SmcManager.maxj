@@ -92,7 +92,6 @@ public class SmcManager extends CustomManager {
 		if(Def.FPGA_resampling==1){
 			engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 			engine_interface.setStream("index_out", CPUTypes.INT32, Def.NA * NP * size);
-		}
 		}else{
 			engine_interface.setStream("weight_out", CPUTypes.FLOAT, Def.NA * NP * size);
 		}

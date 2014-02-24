@@ -10,12 +10,12 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 public class Func{
 
 	/* User customised sampling function */
-	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct c_in, DFEStruct seeds, DFEVar S) {
+	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct r_in, DFEStruct seeds, DFEVar S) {
 
 		DFEStruct s_out = Def.state_t.newInstance(smc);
 
-		DFEVar d = c_in.get("d");
-		DFEVar r = c_in.get("r");
+		DFEVar dist = r_in.get("d");
+		DFEVar rot = r_in.get("r");
 		DFEVar x = s_in.get("x");
 		DFEVar y = s_in.get("y");
 		DFEVar h = s_in.get("h");
@@ -24,9 +24,9 @@ public class Func{
 		DFEVar seed_b = seeds.get("b");
 		DFEVar seed_c = seeds.get("c");
 		
-		s_out.get("x") <== x + KMath.nrand(smc, seed_a, d, S*0.5) * KMath.cos(h);
-		s_out.get("y") <== y + KMath.nrand(smc, seed_b, d, S*0.5) * KMath.sin(h);
-		s_out.get("h") <== h + KMath.nrand(smc, seed_c, r, S*0.1);
+		s_out.get("x") <== x + KMath.nrand(smc, seed_a, dist, S*0.5) * KMath.cos(h);
+		s_out.get("y") <== y + KMath.nrand(smc, seed_b, dist, S*0.5) * KMath.sin(h);
+		s_out.get("h") <== h + KMath.nrand(smc, seed_c, rot, S*0.1);
 
 		// Uncomment the line below for debugging
 		//smc.debug.printf("Position: %f %f %f\n", x, y, h);

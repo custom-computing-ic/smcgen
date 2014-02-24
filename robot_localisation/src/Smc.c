@@ -16,15 +16,14 @@ int main(int argc, char *argv[]){
 
 	printf("Usage: %s [observation file (Y)] [reference file (R)] [true state file (X)] [NP] [S]\n", argv[0]);
 
+	int NP = atoi(argv[4]);
+	float S = atof(argv[5]);
+
 	// Read observation and reference
 	// Initialise states
 	float *obsrv = (float *)malloc(NT*sizeof(float));
 	float *ref = (float *)malloc(NT*RS*sizeof(float));
 	float *state = (float *)malloc(NA*NP*SS*sizeof(float));
-
-	int NP = atoi(argv[4]);
-	float S = atof(argv[5]);
-
 	init(NP, argv[1], obsrv, argv[2], ref, state);
 
 	// Other array values

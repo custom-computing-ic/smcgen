@@ -35,7 +35,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, S, itl_inner, ref_in, obsrv_in, rand_num, seed, index_out, state_out);
+	Smc(NP, S, itl_inner, obsrv_in, rand_num, ref_in, seed, index_out, state_out);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -57,7 +57,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, S, itl_inner, obsrv_in, seed, state_out, weight);
+	Smc(NP, S, itl_inner, obsrv_in, ref_in, seed, state_out, weight);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -76,8 +76,8 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	else
 		resampleCPU(NP, state_in, weight, weight_sum);
 	gettimeofday(&tv2, NULL);
-	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
 #endif
 
@@ -133,6 +133,8 @@ void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 				k = k + 1;
 			}
 			temp[p*SS*NA+a*SS] = state[(k-1)*SS*NA+a*SS];
+			temp[p*SS*NA+a*SS+1] = state[(k-1)*SS*NA+a*SS+1];
+			temp[p*SS*NA+a*SS+2] = state[(k-1)*SS*NA+a*SS+2];
 		}
 	}
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
@@ -214,7 +216,7 @@ void check(char *stateFile){
 	fpX = fopen(stateFile, "r");
 	fpXest = fopen("data_xest.txt", "r");
 
-	if(!ifpX){
+	if(!fpX){
 		printf("Failed to open the state file.\n");
 		exit(-1);
 	}
