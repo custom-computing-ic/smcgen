@@ -34,10 +34,10 @@
 //#define NP	6144
 //#endif
 #ifndef NPMin
-#define NPMin	2048
+#define NPMin	96
 #endif
 #ifndef NPMax
-#define NPMax	8192
+#define NPMax	4096
 #endif
 
 /* Horizon length */

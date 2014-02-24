@@ -223,6 +223,18 @@ void check(char *stateFile){
 		exit(-1);
 	}
 
+	float total_error, step_error;
+	float x, y, h;
+	float x_est, y_est, h_est;
+
+	total_error = 0;
+	for(int t=0; t<NT; t++){
+		fscanf(fpX, "%f %f %f\n", &x, &y, &h);
+		fscanf(fpXest, "%f %f %f\n", &x_est, &y_est, &h_est);
+		step_error = sqrt(pow(x_est-x,2)+pow(y_est-y,2));
+		total_error += step_error;
+	}
+	printf("Average error: %f\n", fabs(total_error)/(NT*1.0));
 	fclose(fpX);
 	fclose(fpXest);
 
