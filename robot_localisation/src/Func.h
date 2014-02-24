@@ -14,7 +14,7 @@ typedef struct control_t
 	float r;
 }control_t;
 
-void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
+void smcFPGA(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
 void resampleFPGA(int NP, float* state_out, int* index);
 void init(int NP, char *obsrvFile, float* obsrv, char *controlFile, float* control, float* state);
 void output(int NP, int step, float* state);

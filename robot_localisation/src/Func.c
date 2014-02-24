@@ -15,7 +15,7 @@ extern dsfmt_t dsfmt[NPMax];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, int S, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -33,7 +33,7 @@ void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* contr
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, itl_inner, control_in, obsrv_in, rand_num, seed, index_out, state_out);
+	Smc(NP, S, itl_inner, control_in, obsrv_in, rand_num, seed, index_out, state_out);
 	// Rearrange particles
 	if(outer_idx==itl_outer-1)
 		resampleFPGA(NP, state_out, index_out);

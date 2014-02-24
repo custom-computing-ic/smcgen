@@ -49,6 +49,7 @@ public class SmcManager extends CustomManager {
 		int        size = type.sizeInBytes();
 
 		InterfaceParam NP = engine_interface.addParam("NP", CPUTypes.INT);
+		InterfaceParam S = engine_interface.addParam("S", CPUTypes.FLOAT);
 
 		engine_interface.setLMemLinear("particle_mem", engine_interface.addConstant(0), NP * Def.NA * Def.H * Def.state_slot * size);
 		engine_interface.setStream("particle_mem_from_cpu", type, NP * Def.NA * Def.H * Def.state_slot * size);
@@ -69,6 +70,7 @@ public class SmcManager extends CustomManager {
 		engine_interface.setScalar("SmcKernel", "itl_inner", itl_inner);
 		engine_interface.setScalar("SmcKernel", "NP", NP);
 		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
+		engine_interface.setOffset("SmcKernel", "S", S);
 		engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
 		engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
 

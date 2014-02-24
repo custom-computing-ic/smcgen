@@ -16,6 +16,7 @@
 #endif
 
 /* Number of particles */
+// NP is from run-time argument
 //#ifndef NP
 //#define NP	4096
 //#endif
@@ -37,6 +38,7 @@
 #endif
 
 /* Spread of Gaussian random numbers */
+// S is from run-time argument
 //#ifndef S
 //#define S	1
 //#endif
