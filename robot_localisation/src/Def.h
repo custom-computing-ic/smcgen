@@ -1,9 +1,22 @@
 #ifndef SMC_HEADER
 #define SMC_HEADER
 
+/* Debug mode */
+#ifndef debug
 //#define debug
+#endif
 
-#define Use_FPGA
+/* FPGA usage control */
+/* enable: use FPGA; disable: use CPU for all processes */
+#ifndef Use_FPGA
+#define Use_FPGA 
+#endif
+
+/* Resampling control*/
+/* enable: resampling on FPGA; disable: resampling on CPU */
+#ifndef FPGA_resampling
+//#define FPGA_resampling 
+#endif
 
 /* Number of CPU threads */
 #ifndef THREADS

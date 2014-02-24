@@ -31,17 +31,55 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 
+#ifdef FPGA_resampling // Do resampling on FPGA
+
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
 	Smc(NP, S, itl_inner, ref_in, obsrv_in, rand_num, seed, index_out, state_out);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+	
 	// Rearrange particles
+	gettimeofday(&tv1, NULL);
 	if(outer_idx==itl_outer-1)
 		resampleFPGA(NP, state_out, index_out);
 	else
 		resampleFPGA(NP, state_in, index_out);
 	gettimeofday(&tv2, NULL);
+	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
+
+#else // Do resampling on CPU
+	
+	float *weight = (float *)malloc(NA*NP*sizeof(float));
+	float *weight_sum = (float *)malloc(NA*sizeof(float));
+
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
+	Smc(NP, S, itl_inner, obsrv_in, seed, state_out, weight);
+	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+
+	// Resample particles
+	gettimeofday(&tv1, NULL);
+	for (int a=0; a<NA; a++) {
+		weight_sum[a] = 0;
+		for (int p=0; p<NP; p++){
+			weight_sum[a] += weight[p*NA+a];
+		}
+	}
+	// Resample particles
+	if(outer_idx==itl_outer-1)
+		resampleCPU(NP, state_out, weight, weight_sum);
+	else
+		resampleCPU(NP, state_in, weight, weight_sum);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+
+#endif
 
 #ifdef debug
 	for(int p=0; p<NP; p++)
@@ -75,6 +113,30 @@ void resampleFPGA(int NP, float* state, int* index){
 }
 
 /* CPU only functions */
+
+// Resample particles
+void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
+
+	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
+	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
+
+	for (int a=0; a<NA; a++) {
+		sum_pdf[0] = 0;
+		for (int p=1; p<=NP; p++){
+			sum_pdf[p] = sum_pdf[p-1] + weight[(p-1)*NA+a]/weight_sum[a];
+		}
+		int k=0;
+		float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NP*1.0);
+		for (int p=0; p<NP; p++){
+			float u = u1 + p/(NP*1.0);
+			while (u-sum_pdf[k]>=0 && k<NP){
+				k = k + 1;
+			}
+			temp[p*SS*NA+a*SS] = state[(k-1)*SS*NA+a*SS];
+		}
+	}
+	memcpy(state, temp, sizeof(float)*NA*NP*SS);
+}
 
 /* Common functions */
 
@@ -121,7 +183,7 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 
 // Output particle values
 void output(int NP, int step, float* state){
-	
+
 	FILE *fpXest;
 
 	if(step==0)
@@ -146,7 +208,7 @@ void output(int NP, int step, float* state){
 }
 
 void check(char *stateFile){
-	
+
 	FILE *fpX;
 	FILE *fpXest;
 	fpX = fopen(stateFile, "r");

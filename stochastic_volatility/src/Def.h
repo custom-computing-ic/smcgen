@@ -8,7 +8,7 @@
 
 /* FPGA usage control */
 /* enable: use FPGA; disable: use CPU for all processes */
-#ifndef FPGA_resampling
+#ifndef Use_FPGA
 #define Use_FPGA 
 #endif
 
