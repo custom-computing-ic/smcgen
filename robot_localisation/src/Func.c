@@ -114,6 +114,77 @@ void resampleFPGA(int NP, float* state, int* index){
 
 /* CPU only functions */
 
+// Call CPU SMC core
+void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
+
+	struct timeval tv1, tv2;
+	float *weight = (float *)malloc(NA*NP*sizeof(float));
+	float *weight_sum = (float *)malloc(NA*sizeof(float));
+
+	gettimeofday(&tv1, NULL);
+	for (int a=0; a<NA; a++) {
+		weight_sum[a] = 0;
+		#pragma omp parallel for num_threads(THREADS)
+		for (int p=0; p<NP; p++){
+			// Sampling
+			state_out[p*SS*NA+a*SS] = state_in[p*SS*NA+a*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS*NA+a*SS+2]);
+			state_out[p*SS*NA+a*SS+1] = state_in[p*SS*NA+a*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS*NA+a*SS+2]);
+			state_out[p*SS*NA+a*SS+2] = state_in[p*SS*NA+a*SS+2] + (ref_in[1]+nrand(S*0.1,p));
+			// Importance weighting
+			float obsrvEst = est(state_out[p*SS*NA+a*SS],state_out[p*SS*NA+a*SS+1],state_out[p*SS*NA+a*SS+2]);
+			weight[p*NA+a] = exp(-1*pow(obsrvEst-obsrv_in[0],2)/(S*0.5));
+			weight_sum[a] += weight[p*NA+a];
+		}
+	}
+	// Resampling of robot particles
+	if(outer_idx==itl_outer-1)
+		resampleCPU(NP, state_out, weight, weight_sum);
+	else
+		resampleCPU(NP, state_in, weight, weight_sum);
+	gettimeofday(&tv2, NULL);
+	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+}
+
+// Estimate sensor value
+float est(float x, float y, float h){
+	
+	float ax[8] = {0,0,18,18,0,8,6,12};
+	float ay[8] = {0,12,12,0,6,6,6,6};
+	float bx[8] = {0,18,18,0,4,16,6,12};
+	float by[8] = {12,12,0,0,6,6,12,12};
+
+	float min_dist = 99;
+	for (int i=0; i<8; i++){
+		float dist = dist2Wall(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
+		if (dist<min_dist)
+			min_dist = dist;
+	}
+	return min_dist;
+}
+
+// Calculate distance to wall
+float dist2Wall(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
+
+	float dy = by-ay;
+	float dx = bx-ax;
+	float pa = dy * (ax-x) - dx * (ay-y);
+	float pb = dy * cos_h - dx * sin_h;
+	float temp = (pb==0) ? 99 : pa/pb;
+	float dist = (temp<0) ? 99 : temp;
+	float x_check = x + dist * cos_h;
+	float y_check = y + dist * sin_h;
+	int cond_a = ((x_check-ax)>=-0.01 & (x_check-bx)<=0.01) ? 1 : 0;
+	int cond_b = ((x_check-ax)<=0.01 & (x_check-bx)>=-0.01) ? 1 : 0;
+	int cond_c = ((y_check-ay)>=-0.01 & (y_check-by)<=0.01) ? 1 : 0;
+	int cond_d = ((y_check-ay)<=0.01 & (y_check-by)>=-0.01) ? 1 : 0;
+
+	if ((cond_a || cond_b) && (cond_c || cond_d))
+		return dist;
+	else
+		return 99.0;
+}
+
 // Resample particles
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 

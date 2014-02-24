@@ -70,8 +70,10 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(NP, S, i, itl_inner,state_in,ref_in,rand_num,seed,obsrv_in,index_out,state_out);
+			smcFPGA(NP,S,i,itl_inner,state_in,ref_in,rand_num,seed,obsrv_in,index_out,state_out);
 #else
+			printf("Calling CPU function...\n");
+			smcCPU(NP,S,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
 #endif
 
 		}
