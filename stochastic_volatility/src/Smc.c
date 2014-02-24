@@ -14,7 +14,7 @@ dsfmt_t dsfmt[NPMax];
 
 int main(int argc, char *argv[]){
 
-	printf("Usage: %s [observation file] [state file] [NP] [S]\n", argv[0]);
+	printf("Usage: %s [observation file (Y)] [true state file (X)] [NP] [S]\n", argv[0]);
 
 	int NP = atoi(argv[3]);
 	float S = atof(argv[4]);
