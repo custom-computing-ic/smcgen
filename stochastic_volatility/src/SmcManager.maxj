@@ -21,8 +21,8 @@ public class SmcManager extends CustomManager {
 		KernelBlock smcBlock = addKernel(new SmcKernel(makeKernelParameters("SmcKernel")));
 
 		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
-		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
 		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
+		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
 		addStreamToCPU("state_out") <== smcBlock.getOutput("state_out");
 
 		if(Def.FPGA_resampling==1){

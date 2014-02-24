@@ -29,11 +29,11 @@ public class Def {
 	public static int state_slot = 3;
 
 	// Control Type
-	public static final DFEStructType control_t = new DFEStructType(
+	public static final DFEStructType ref_t = new DFEStructType(
 		new StructFieldType("d", compType),
 		new StructFieldType("r", compType)
 	);
-	public static int control_slot = 2;
+	public static int ref_slot = 2;
 
 	// Particle Type
 	public static final DFEStructType particle_t = new DFEStructType(
@@ -51,8 +51,9 @@ public class Def {
 	// System Parameters
 	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
 	public static int NC_P = 2; // Parallelisation along NP, should be divisor of NP
-	public static int Clk_core = 150;
-	public static int Clk_mem = 333;
+	public static int Clk_core = 160;
+	public static int Clk_mem = 400;
+	public static int FPGA_resampling = 1; // 1: resampling on FPGA; 0: resampling on CPU
 
 	// Vectors for multiple cores
 	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);

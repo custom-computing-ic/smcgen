@@ -15,7 +15,7 @@ extern dsfmt_t dsfmt[NPMax];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -33,7 +33,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, S, itl_inner, control_in, obsrv_in, rand_num, seed, index_out, state_out);
+	Smc(NP, S, itl_inner, ref_in, obsrv_in, rand_num, seed, index_out, state_out);
 	// Rearrange particles
 	if(outer_idx==itl_outer-1)
 		resampleFPGA(NP, state_out, index_out);
@@ -79,29 +79,29 @@ void resampleFPGA(int NP, float* state, int* index){
 /* Common functions */
 
 // Read input files
-void init(int NP, char* obsrvFile, float* obsrv, char* controlFile, float* control, float* state){
+void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, float* state){
 
 	// Read observations
-	FILE *fpSensor = fopen(obsrvFile, "r");
-	if(!fpSensor) {
+	FILE *fpObsrv = fopen(obsrvFile, "r");
+	if(!fpObsrv) {
 		printf("Failed to open the observation file.\n");
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpSensor, "%f\n", &obsrv[t]);
+		fscanf(fpObsrv, "%f\n", &obsrv[t]);
 	}
-	fclose(fpSensor);
+	fclose(fpObsrv);
 
-	// Read control values
-	FILE *fpControl = fopen(controlFile, "r");
-	if(!fpControl) {
-		printf("Failed to open the control file.\n");
+	// Read reference values
+	FILE *fpRef = fopen(refFile, "r");
+	if(!fpRef) {
+		printf("Failed to open the reference file.\n");
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpControl, "%f %f\n", &control[t*2], &control[t*2+1]);
+		fscanf(fpRef, "%f %f\n", &ref[t*2], &ref[t*2+1]);
 	}
-	fclose(fpControl);
+	fclose(fpRef);
 
 	// Initialise random number generators
 	srand(time(NULL));

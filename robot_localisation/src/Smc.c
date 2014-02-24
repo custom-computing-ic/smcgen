@@ -16,24 +16,24 @@ int main(int argc, char *argv[]){
 
 	printf("Usage: %s [observation file (Y)] [reference file (R)] [true state file (X)] [NP] [S]\n", argv[0]);
 
-	// Read observation and control
+	// Read observation and reference
 	// Initialise states
 	float *obsrv = (float *)malloc(NT*sizeof(float));
-	float *control = (float *)malloc(NT*CS*sizeof(float));
+	float *ref = (float *)malloc(NT*RS*sizeof(float));
 	float *state = (float *)malloc(NA*NP*SS*sizeof(float));
 
 	int NP = atoi(argv[4]);
 	float S = atof(argv[5]);
 
-	init(NP, argv[1], obsrv, argv[2], control, state);
+	init(NP, argv[1], obsrv, argv[2], ref, state);
 
 	// Other array values
 	float *state_in = state;
 	float *state_out = (float *)malloc(NA*NP*SS*sizeof(float));
 #if defined NA==1
-	float *control_in = (float *)malloc(NA*CS*2*sizeof(float));
+	float *ref_in = (float *)malloc(NA*RS*2*sizeof(float));
 #else
-	float *control_in = (float *)malloc(NA*CS*sizeof(float));
+	float *ref_in = (float *)malloc(NA*RS*sizeof(float));
 #endif
 #if defined NA==1 || defined NA==2 || defined NA==3
 	float *rand_num = (float *)malloc(4*sizeof(float));
@@ -53,10 +53,10 @@ int main(int argc, char *argv[]){
 
 			// Determine inner loop iteration, a number divisible by NC
 			int itl_inner = 1;
-			// Allocate control of the current time step
+			// Allocate references of the current time step
 			for(int a=0; a<NA; a++){
-				control_in[a*CS] = control[NA*CS*t+a*CS];
-				control_in[a*CS+1] = control[NA*CS*t+a*CS+1];
+				ref_in[a*RS] = ref[NA*RS*t+a*RS];
+				ref_in[a*RS+1] = ref[NA*RS*t+a*RS+1];
 			}
 			// Setup rand number for FPGA resampler
 			for(int a=0; a<NA; a++)
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(NP, S, i, itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
+			smcFPGA(NP, S, i, itl_inner,state_in,ref_in,rand_num,seed,obsrv_in,index_out,state_out);
 #else
 #endif
 

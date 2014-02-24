@@ -59,9 +59,9 @@
 #define SS 3
 #endif
 
-/* Number of control slots */
-#ifndef CS
-#define CS 2
+/* Number of reference slots */
+#ifndef RS
+#define RS 2
 #endif
 
 #define Pi 3.14159265359
