@@ -10,21 +10,22 @@
 #include "Def.h"
 #include "Func.h"
 
-dsfmt_t dsfmt[NP];
+dsfmt_t dsfmt[NPMax];
 
 int main(int argc, char *argv[]){
 
-	if (argc<3 || argc>4){
-		printf("Usage: %s [observation file]\n", argv[0]);
-		return 0;
-	}
+	printf("Usage: %s [observation file (Y)] [reference file (R)] [true state file (X)] [NP] [S]\n", argv[0]);
 
 	// Read observation and control
 	// Initialise states
 	float *obsrv = (float *)malloc(NT*sizeof(float));
 	float *control = (float *)malloc(NT*CS*sizeof(float));
 	float *state = (float *)malloc(NA*NP*SS*sizeof(float));
-	init(argv[1], obsrv, argv[2], control, state);
+
+	int NP = atoi(argv[4]);
+	float S = atof(argv[5]);
+
+	init(NP, argv[1], obsrv, argv[2], control, state);
 
 	// Other array values
 	float *state_in = state;
@@ -70,14 +71,15 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(i, itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
+			smcFPGA(NP, i, itl_inner,state_in,control_in,rand_num,seed,obsrv_in,index_out,state_out);
 #else
 #endif
 
 		}
-		update(state_in, state_out);
-		output(t, state_in);
+		update(NP, state_in, state_out);
+		output(NP, t, state_in);
 	}
+	check(argv[3]);
 
 	return 0;
 }

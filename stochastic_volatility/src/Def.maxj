@@ -39,7 +39,7 @@ public class Def {
 	// System Parameters
 	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
 	public static int NC_P = 16; // Parallelisation along NP, should be divisor of NP
-	public static int Clk_core = 180;
+	public static int Clk_core = 160;
 	public static int Clk_mem = 400;
 	public static int FPGA_resampling = 0; // 1: resampling on FPGA; 0: resampling on CPU
 

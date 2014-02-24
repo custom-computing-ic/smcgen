@@ -10,12 +10,12 @@
 #include "Def.h"
 #include "Func.h"
 
-extern dsfmt_t dsfmt[NP];
+extern dsfmt_t dsfmt[NPMax];
 
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, int outer_idx, int itl_inner, float* state_in, float* control_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -36,9 +36,9 @@ void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* control_in, f
 	Smc(NP, itl_inner, control_in, obsrv_in, rand_num, seed, index_out, state_out);
 	// Rearrange particles
 	if(outer_idx==itl_outer-1)
-		resampleFPGA(state_out, index_out);
+		resampleFPGA(NP, state_out, index_out);
 	else
-		resampleFPGA(state_in, index_out);
+		resampleFPGA(NP, state_in, index_out);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -50,7 +50,7 @@ void smcFPGA(int outer_idx, int itl_inner, float* state_in, float* control_in, f
 }
 
 // Rearrange particles based on the resampled indices
-void resampleFPGA(float* state, int* index){
+void resampleFPGA(int NP, float* state, int* index){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
 
@@ -79,7 +79,7 @@ void resampleFPGA(float* state, int* index){
 /* Common functions */
 
 // Read input files
-void init(char* obsrvFile, float* obsrv, char* controlFile, float* control, float* state){
+void init(int NP, char* obsrvFile, float* obsrv, char* controlFile, float* control, float* state){
 
 	// Read observations
 	FILE *fpSensor = fopen(obsrvFile, "r");
@@ -120,7 +120,15 @@ void init(char* obsrvFile, float* obsrv, char* controlFile, float* control, floa
 }
 
 // Output particle values
-void output(int step, float* state){
+void output(int NP, int step, float* state){
+	
+	FILE *fpXest;
+
+	if(step==0)
+		fpXest = fopen("data_xest.txt", "w");
+	else
+		fpXest = fopen("data_xest.txt", "a");
+
 	for(int a=0; a<NA; a++){
 		float sum_x = 0;
 		float sum_y = 0;
@@ -131,11 +139,35 @@ void output(int step, float* state){
 			sum_h += state[p*SS*NA+a*SS+2];
 		}
 		printf("Agent %d's position at step %d is (%f, %f, %f).\n", a, step, sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
+		fprintf(fpXest, "%f %f %f\n", sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
 	}
+
+	fclose(fpXest);
+}
+
+void check(char *stateFile){
+	
+	FILE *fpX;
+	FILE *fpXest;
+	fpX = fopen(stateFile, "r");
+	fpXest = fopen("data_xest.txt", "r");
+
+	if(!ifpX){
+		printf("Failed to open the state file.\n");
+		exit(-1);
+	}
+	if(!fpXest){
+		printf("Failed to open the estimated state file.\n");
+		exit(-1);
+	}
+
+	fclose(fpX);
+	fclose(fpXest);
+
 }
 
 // Commit changes to the particles
-void update(float* state_current, float* state_next){
+void update(int NP, float* state_current, float* state_next){
 	for(int a=0; a<NA; a++){
 		for(int p=0; p<NP; p++){
 			for(int s=0; s<SS; s++)
@@ -149,10 +181,10 @@ float nrand(float sigma, int l){
 
 	float x, y, w;
 	float n1;
-	static float n2[NP] = {0.0};
-	static short n2_cached[NP] = {0};
+	static float n2 = 0.0;
+	static short n2_cached = {0};
 
-	if (!n2_cached[l]){
+	if (!n2_cached){
 		do {
 			x = 2.0 * dsfmt_genrand_close_open(&dsfmt[l]) - 1.0;
 			y = 2.0 * dsfmt_genrand_close_open(&dsfmt[l]) - 1.0;
@@ -161,15 +193,15 @@ float nrand(float sigma, int l){
 
 		w = sqrt((-2.0*log(w))/w);
 		n1 = x * w;
-		n2[l] = y * w;
-		n2_cached[l] = 1;
+		n2 = y * w;
+		n2_cached = 1;
 
 		return sigma * n1;
 	}
 	else{
 
-		n2_cached[l] = 0;
-		return sigma * n2[l];
+		n2_cached = 0;
+		return sigma * n2;
 	}
 
 }
