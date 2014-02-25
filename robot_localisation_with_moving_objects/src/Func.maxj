@@ -1,0 +1,131 @@
+/* vim: set filetype=java : */
+/* User has to customise this file */
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+
+public class Func{
+
+	/* User customised sampling function */
+	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct r_in, DFEStruct seeds, DFEVar S) {
+
+		DFEStruct s_out = Def.state_t.newInstance(smc);
+
+		DFEVar dist = r_in.get("d");
+		DFEVar rot = r_in.get("r");
+		DFEVar x = s_in.get("x");
+		DFEVar y = s_in.get("y");
+		DFEVar h = s_in.get("h");
+
+		DFEVar seed_a = seeds.get("a");
+		DFEVar seed_b = seeds.get("b");
+		DFEVar seed_c = seeds.get("c");
+		
+		s_out.get("x") <== x + KMath.nrand(smc, seed_a, dist, S*0.5) * KMath.cos(h);
+		s_out.get("y") <== y + KMath.nrand(smc, seed_b, dist, S*0.5) * KMath.sin(h);
+		s_out.get("h") <== h + KMath.nrand(smc, seed_c, rot, S*0.1);
+
+		// Uncomment the line below for debugging
+		//smc.debug.printf("Position: %f %f %f\n", x, y, h);
+
+		return s_out;
+	}
+
+	/* User customised weighting function */
+	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
+
+		// Observation input
+		DFEVar obsrv = o_in;
+		DFEVar obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
+
+		// Score calculation
+		DFEVar obsrvEst = est(smc,s_in);
+		DFEVar score = KMath.exp(-1*KMath.powSq(obsrvEst-obsrvHold)/(Def.S*0.5));
+		// Constaint handling
+		DFEVar succeed = obsrvEst >= 0 ? smc.constant.var(true) : smc.constant.var(false);
+		// Weight accumulation
+		DFEVar weight = succeed ? score*w_in : 0;
+
+		// Uncomment the line below for debugging
+		//smc.debug.printf("Score: %f\n", obsrvEst);
+		//smc.debug.printf("Weight %f\n", weight);
+
+		return weight;
+	}
+
+	/* Other user functions */
+	
+	// Calculate observation value based on state
+	private static DFEVar est(SmcKernel smc, DFEStruct s_in) {
+
+		DFEVar x = s_in.get("x");
+		DFEVar y = s_in.get("y");
+		DFEVar h = s_in.get("h");
+		DFEVar cos_h = KMath.cos(h);
+		DFEVar sin_h = KMath.sin(h);
+
+		// Map information
+		int num_wall = 8;
+		DFEVectorType<DFEVar> vectorType = new DFEVectorType<DFEVar>(Def.compType, num_wall);
+		DFEVector<DFEVar> ax = vectorType.newInstance(smc);
+		DFEVector<DFEVar> ay = vectorType.newInstance(smc);
+		DFEVector<DFEVar> bx = vectorType.newInstance(smc);
+		DFEVector<DFEVar> by = vectorType.newInstance(smc);
+		ax[0] <== smc.constant.var(Def.compType,0); ay[0] <== smc.constant.var(Def.compType,0); 
+		bx[0] <== smc.constant.var(Def.compType,0); by[0] <== smc.constant.var(Def.compType,12);
+		ax[1] <== smc.constant.var(Def.compType,0); ay[1] <== smc.constant.var(Def.compType,12); 
+		bx[1] <== smc.constant.var(Def.compType,18); by[1] <== smc.constant.var(Def.compType,12);
+		ax[2] <== smc.constant.var(Def.compType,18); ay[2] <== smc.constant.var(Def.compType,12); 
+		bx[2] <== smc.constant.var(Def.compType,18); by[2] <== smc.constant.var(Def.compType,0);
+		ax[3] <== smc.constant.var(Def.compType,18); ay[3] <== smc.constant.var(Def.compType,0); 
+		bx[3] <== smc.constant.var(Def.compType,0); by[3] <== smc.constant.var(Def.compType,0);
+		ax[4] <== smc.constant.var(Def.compType,0); ay[4] <== smc.constant.var(Def.compType,6); 
+		bx[4] <== smc.constant.var(Def.compType,4); by[4] <== smc.constant.var(Def.compType,6);
+		ax[5] <== smc.constant.var(Def.compType,8); ay[5] <== smc.constant.var(Def.compType,6); 
+		bx[5] <== smc.constant.var(Def.compType,16); by[5] <== smc.constant.var(Def.compType,6);
+		ax[6] <== smc.constant.var(Def.compType,6); ay[6] <== smc.constant.var(Def.compType,6); 
+		bx[6] <== smc.constant.var(Def.compType,6); by[6] <== smc.constant.var(Def.compType,12);
+		ax[7] <== smc.constant.var(Def.compType,12); ay[7] <== smc.constant.var(Def.compType,6); 
+		bx[7] <== smc.constant.var(Def.compType,12); by[7] <== smc.constant.var(Def.compType,12);
+
+		// Calculate distances to walls
+		DFEVector<DFEVar> dist = vectorType.newInstance(smc);
+		for (int i=0; i<num_wall; i++)
+			dist[i] <== dist2Wall(smc,x,y,cos_h,sin_h,ax[i],ay[i],bx[i],by[i]);
+
+		DFEVar dist_01 = KMath.min(dist[0],dist[1]);
+		DFEVar dist_23 = KMath.min(dist[2],dist[3]);
+		DFEVar dist_45 = KMath.min(dist[4],dist[5]);
+		DFEVar dist_67 = KMath.min(dist[6],dist[7]);
+		DFEVar dist_03 = KMath.min(dist_01,dist_23);
+		DFEVar dist_47 = KMath.min(dist_45,dist_67);
+		DFEVar dist_07 = KMath.min(dist_03,dist_47);
+
+		return dist_07;
+	}
+
+	private static DFEVar dist2Wall(SmcKernel smc, DFEVar x, DFEVar y, DFEVar cos_h, DFEVar sin_h, DFEVar ax, DFEVar ay, DFEVar bx, DFEVar by){
+
+		DFEVar dy = by-ay;
+		DFEVar dx = bx-ax;
+		DFEVar pa = dy * (ax-x) - dx * (ay-y);
+		DFEVar pb = dy * cos_h - dx * sin_h;
+		DFEVar temp = pb===0 ? 99 : pa/pb;
+		DFEVar dist = temp < 0 ? 99 : temp;
+		DFEVar x_check = x + dist * cos_h;
+		DFEVar y_check = y + dist * sin_h;
+		DFEVar cond_a = (x_check-ax)>=-0.01 & (x_check-bx)<=0.01;
+		DFEVar cond_b = (x_check-ax)<=0.01 & (x_check-bx)>=-0.01;
+		DFEVar cond_c = (y_check-ay)>=-0.01 & (y_check-by)<=0.01;
+		DFEVar cond_d = (y_check-ay)<=0.01 & (y_check-by)>=-0.01;
+		DFEVar cond_e = ((cond_a | cond_b) & (cond_c | cond_d));
+
+		//smc.debug.printf("%f %f %f\n", x_check, y_check, dist);
+
+		return cond_e ? dist : smc.constant.var(Def.compType,99);
+	}
+
+}
