@@ -122,7 +122,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 			weight_sum[a] += weight[p*NA+a];
 		}
 	}
-	// Resampling of robot particles
+	// Resampling of particles
 	if(outer_idx==itl_outer-1)
 		resampleCPU(NP, state_out, weight, weight_sum);
 	else

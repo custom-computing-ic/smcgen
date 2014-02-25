@@ -123,16 +123,45 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	gettimeofday(&tv1, NULL);
 	for (int a=0; a<NA; a++) {
 		weight_sum[a] = 0;
-		#pragma omp parallel for num_threads(THREADS)
+#pragma omp parallel for num_threads(THREADS)
 		for (int p=0; p<NP; p++){
 			// Sampling
-			state_out[p*SS*NA+a*SS] = state_in[p*SS*NA+a*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS*NA+a*SS+2]);
-			state_out[p*SS*NA+a*SS+1] = state_in[p*SS*NA+a*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS*NA+a*SS+2]);
-			state_out[p*SS*NA+a*SS+2] = state_in[p*SS*NA+a*SS+2] + (ref_in[1]+nrand(S*0.1,p));
+			if (p%NPBlock==0){ // robot particles
+				state_out[p*SS*NA+a*SS] = state_in[p*SS*NA+a*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS*NA+a*SS+2]);
+				state_out[p*SS*NA+a*SS+1] = state_in[p*SS*NA+a*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS*NA+a*SS+2]);
+				state_out[p*SS*NA+a*SS+2] = state_in[p*SS*NA+a*SS+2] + (ref_in[1]+nrand(S*0.1,p));
+			}else{ // particles of the moving objects
+				float dist = 0.05+nrand(0.02,p);
+				float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+				state_out[p*SS*NA+a*SS] = state_in[p*SS*NA+a*SS] + (dist+nrand(S*0.5,p)) * cos(state_in[p*SS*NA+a*SS+2]);
+				state_out[p*SS*NA+a*SS+1] = state_in[p*SS*NA+a*SS+1] + (dist+nrand(S*0.5,p)) * sin(state_in[p*SS*NA+a*SS+2]);
+				state_out[p*SS*NA+a*SS+2] = state_in[p*SS*NA+a*SS+2] + (rot+nrand(S*0.1,p));
+			}
 			// Importance weighting
-			float obsrvEst = est(state_out[p*SS*NA+a*SS],state_out[p*SS*NA+a*SS+1],state_out[p*SS*NA+a*SS+2]);
-			weight[p*NA+a] = exp(-1*pow(obsrvEst-obsrv_in[0],2)/(S*0.5));
-			weight_sum[a] += weight[p*NA+a];
+			int NSensor = 20;
+			float h_base;
+			float h_step = Pi/(3.0*NSensor);
+			float *obsrvEst = (float *)malloc(Nsensor*sizeof(float));
+			float *temp = (float *)malloc(Nsensor*sizeof(float));
+			int index = p/NPBlock*NPBlock;
+			for (int i=0; i<20; i++){
+				if (p%NPBlock==0){ // check walls
+					h_base = state_out[p*SS*NA+a*SS+2] - Pi/3.0;
+					obsrvEst[i] = estWall(state_out[p*SS*NA+a*SS],state_out[p*SS*NA+a*SS+1],h_base+h_step*i);
+					temp[i] = obsrvEst[i];
+				}else{ // check moving objects
+					h_base = state_out[index*SS*NA+a*SS+2] - Pi/3.0;
+					if ((p-1)%7==0)	obsrvEst[i] = temp[i];
+					obsrvEst[i] = min(obsrvEst[i],estObj(state_out[index*SS*NA+a*SS],state_out[index*SS*NA+a*SS],h_base+h_step*i));
+				}
+			}
+			if ((p-1)%7==6){
+				float base = 0;
+				for (int i=0; i<Nsensor; i++)
+					base += obsrvEst[i];
+				weight[(p/7-1)*NA+a] = exp(base*base/-200.0);
+				weight_sum[a] += weight[(p/7-1)*NA+a];
+			}
 		}
 	}
 	// Resampling of robot particles
@@ -147,7 +176,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 
 // Estimate sensor value
 float est(float x, float y, float h){
-	
+
 	float ax[8] = {0,0,18,18,0,8,6,12};
 	float ay[8] = {0,12,12,0,6,6,6,6};
 	float bx[8] = {0,18,18,0,4,16,6,12};

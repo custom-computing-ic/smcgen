@@ -33,11 +33,17 @@
 //#ifndef NP
 //#define NP	4096
 //#endif
+// 7120*4096
 #ifndef NPMin
-#define NPMin 2048
+#define NPMin 29163520
 #endif
 #ifndef NPMax
-#define NPMax 8192
+#define NPMax 29163520
+#endif
+
+/* Number of particles in a block */
+#ifndef NPBlock
+#define NPBlock 7120
 #endif
 
 /* Horizon length */
