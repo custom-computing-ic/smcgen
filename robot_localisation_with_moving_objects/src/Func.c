@@ -31,27 +31,6 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 
-#ifdef FPGA_resampling // Do resampling on FPGA
-
-	// Invoke FPGA kernel
-	gettimeofday(&tv1, NULL);
-	Smc(NP, S, itl_inner, obsrv_in, rand_num, ref_in, seed, index_out, state_out);
-	gettimeofday(&tv2, NULL);
-	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
-	
-	// Rearrange particles
-	gettimeofday(&tv1, NULL);
-	if(outer_idx==itl_outer-1)
-		resampleFPGA(NP, state_out, index_out);
-	else
-		resampleFPGA(NP, state_in, index_out);
-	gettimeofday(&tv2, NULL);
-	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
-
-#else // Do resampling on CPU
-	
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
 	float *weight_sum = (float *)malloc(NA*sizeof(float));
 
@@ -78,35 +57,6 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
-#endif
-
-#ifdef debug
-	for(int p=0; p<NP; p++)
-		printf("Resampled particle %d index: %d\n", p, index_out[p]);
-#endif
-}
-
-// Rearrange particles based on the resampled indices
-void resampleFPGA(int NP, float* state, int* index){
-
-	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
-
-	for (int a=0; a<NA; a++) {
-		for (int p=0; p<NP; p++){
-			int k = index[p*NA+a];
-			temp[p*SS*NA+a*SS] = state[k*SS*NA+a*SS];
-			temp[p*SS*NA+a*SS+1] = state[k*SS*NA+a*SS+1];
-			temp[p*SS*NA+a*SS+2] = state[k*SS*NA+a*SS+2];
-		}
-	}
-	memcpy(state, temp, sizeof(float)*NA*NP*SS);
-
-#ifdef debug
-	for(int a=0; a<NA; a++){
-		for(int p=0; p<NP; p++){
-			printf("Resampled particle %d value: %f %f %f\n", p, state[p*SS*NA+a*SS],state[p*SS*NA+a*SS+1],state[p*SS*NA+a*SS+2]);
-		}
-	}
 #endif
 
 }
@@ -152,7 +102,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 				}else{ // check moving objects
 					h_base = state_out[index*SS*NA+a*SS+2] - Pi/3.0;
 					if ((p-1)%7==0)	obsrvEst[i] = temp[i];
-					obsrvEst[i] = min(obsrvEst[i],estObj(state_out[index*SS*NA+a*SS],state_out[index*SS*NA+a*SS],h_base+h_step*i));
+					obsrvEst[i] = min(obsrvEst[i],estObj(state_out[index*SS*NA+a*SS],state_out[index*SS*NA+a*SS],h_base+h_step*i),state_out[p*SS*NA+a*SS],state_out[p*SS*NA+a*SS+1]);
 				}
 			}
 			if ((p-1)%7==6){
@@ -174,8 +124,8 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
-// Estimate sensor value
-float est(float x, float y, float h){
+// Estimate sensor value (wall)
+float estWall(float x, float y, float h){
 
 	float ax[8] = {0,0,18,18,0,8,6,12};
 	float ay[8] = {0,12,12,0,6,6,6,6};
@@ -184,15 +134,21 @@ float est(float x, float y, float h){
 
 	float min_dist = 99;
 	for (int i=0; i<8; i++){
-		float dist = dist2Wall(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
+		float dist = dist(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
 		if (dist<min_dist)
 			min_dist = dist;
 	}
 	return min_dist;
 }
 
-// Calculate distance to wall
-float dist2Wall(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
+// Estimate sensor value (moving objects)
+float estObj(float x, float y, float h, float ox, float oy){
+
+	return dist(x,y,cos(h),sin(h),0,0.4,0,0.4);
+}
+
+// Calculate distance
+float dist(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
 
 	float dy = by-ay;
 	float dx = bx-ax;
@@ -216,6 +172,30 @@ float dist2Wall(float x, float y, float cos_h, float sin_h, float ax, float ay, 
 // Resample particles
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 
+	int NPObj = (NPBlock-1)/7;
+	for (int p=0; p<NP; p++){
+		// Resampling of people particles
+		psum_pdf[0] = 0;
+		for (int i=1; i<=NPObj; i++){
+			psum_pdf[i] = psum_pdf[i-1] + weight[i]/weight_sum;
+		}
+		int k=0;
+		u1 = ((float) dsfmt_genrand_close_open(&dsfmt)) / (NPObj*1.0);
+		for (int i=0; i<NPObj; i++){
+			u = u1 + i/(NPObj*1.0);
+			while (u-psum_pdf[k]>=0 && k<NPObj){
+				k = k + 1;
+			}
+			memcpy(temp, state+(k-1)*7*SS*NA+a*SS, sizeof(float)*7*SS*NA);
+			weight[i] = weight[k-1];
+		}
+		w[p] = 0;
+		// Weight of robot particles
+		for (int i=0; i<NPObj; i++){
+			w[p] += weight[i];
+		}
+		memcpy(state+p*7*SS*NA+a*SS, temp, sizeof(float)*7*SS*NA);
+	}
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
 	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
 

@@ -25,17 +25,7 @@ public class SmcManager extends CustomManager {
 		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
 		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
 		addStreamToCPU("state_out") <== smcBlock.getOutput("state_out");
-
-		if(Def.FPGA_resampling==1){
-			KernelBlock weight2cdfBlock = addKernel(new Weight2CDFKernel(makeKernelParameters("Weight2CDFKernel")));
-			KernelBlock cdf2IndexBlock = addKernel(new CDF2IndexKernel(makeKernelParameters("CDF2IndexKernel")));
-			weight2cdfBlock.getInput("weight_in") <== smcBlock.getOutput("weight_out");
-			cdf2IndexBlock.getInput("cdf") <== weight2cdfBlock.getOutput("cdf");
-			cdf2IndexBlock.getInput("rand") <== addStreamFromCPU("rand");
-			addStreamToCPU("index_out") <== cdf2IndexBlock.getOutput("index_out");
-		}else{
-			addStreamToCPU("weight_out") <== smcBlock.getOutput("weight_out");
-		}
+		addStreamToCPU("weight_out") <== smcBlock.getOutput("weight_out");
 
 		createSLiCinterface(modeDefault());
 		createSLiCinterface(modeLMem());
@@ -76,12 +66,6 @@ public class SmcManager extends CustomManager {
 				itl_inner * NP * Def.NA * Def.state_slot * size,
 				engine_interface.addConstant(0));
 		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
-		if(Def.FPGA_resampling==1){
-			engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
-			engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
-			engine_interface.setTicks("Weight2CDFKernel", Weight2CDFKernel.loopSize * NP + Def.NA * NP);
-			engine_interface.setTicks("CDF2IndexKernel", 3 * CDF2IndexKernel.loopSize * NP);
-		}
 
 		// Inputs and outputs
 		engine_interface.setStream("state_in", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
@@ -89,12 +73,7 @@ public class SmcManager extends CustomManager {
 		engine_interface.setStream("obsrv_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC_inner * Def.seed_slot * 16 * Def.NC_inner * Def.NC_P * 3); // 16: byte of a 128-bit seed; 3: init in the first 3 cycles
 		engine_interface.setStream("state_out", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
-		if(Def.FPGA_resampling==1){
-			engine_interface.setStream("rand", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
-			engine_interface.setStream("index_out", CPUTypes.INT32, Def.NA * NP * size);
-		}else{
-			engine_interface.setStream("weight_out", CPUTypes.FLOAT, Def.NA * NP * size);
-		}
+		engine_interface.setStream("weight_out", CPUTypes.FLOAT, Def.NA * NP * size);
 
 		engine_interface.ignoreLMem("particle_mem");
 		engine_interface.ignoreStream("particle_mem_from_cpu");

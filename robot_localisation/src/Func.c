@@ -80,10 +80,6 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 #endif
 
-#ifdef debug
-	for(int p=0; p<NP; p++)
-		printf("Resampled particle %d index: %d\n", p, index_out[p]);
-#endif
 }
 
 // Rearrange particles based on the resampled indices
