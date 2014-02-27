@@ -22,22 +22,22 @@
 #define NT		10
 #endif
 
-/* Number of particles */
-// NP is from run-time argument
-//#ifndef NP
-//#define NP	4096
-//#endif
-// 7120*4096
+/* Number of robot particles */
 #ifndef NPMin
-#define NPMin 29163520
+#define NPMin 4096
 #endif
 #ifndef NPMax
-#define NPMax 29163520
+#define NPMax 4096
 #endif
 
-/* Number of particles in a block */
-#ifndef NPBlock
-#define NPBlock 7120
+/* Number of moving object particles per robot particles */
+#ifndef NPObj
+#define NPObj 1017
+#endif
+
+/* Number of moving objects */
+#ifndef Obj
+#define Obj 7
 #endif
 
 /* Horizon length */
@@ -48,17 +48,6 @@
 /* Outer loop */
 #ifndef itl_outer
 #define itl_outer 4
-#endif
-
-/* Spread of Gaussian random numbers */
-// S is from run-time argument
-//#ifndef S
-//#define S	1
-//#endif
-
-/* Number of agents */
-#ifndef NA
-#define NA	1
 #endif
 
 /* Number of FPGA cores */
@@ -76,6 +65,8 @@
 #ifndef RS
 #define RS 2
 #endif
+
+#define NSensor 20
 
 #define Pi 3.14159265359
 

@@ -19,6 +19,11 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	struct timeval tv1, tv2;
 
+	int slotOfP = 1+Obj*NPObj; // R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
+	int slotOfAllP = NP*slotOfP;
+	
+	float *weightObj = (float *)malloc(NP*sizeof(float));
+
 #ifdef debug
 	for(int p=0; p<NP; p++)
 		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
@@ -31,31 +36,22 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 
-	float *weight = (float *)malloc(NP*sizeof(float));
-	float *weight_sum = (float *)malloc(sizeof(float));
-
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, S, itl_inner, obsrv_in, ref_in, seed, state_out, weight);
+	Smc(NP, S, itl_inner, obsrv_in, ref_in, seed, state_out, weightObj);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
 
 	// Resample particles
 	gettimeofday(&tv1, NULL);
-	weight_sum[a] = 0;
-	for (int p=0; p<NP; p++){
-		weight_sum[a] += weight[p];
-	}
 	if(outer_idx==itl_outer-1)
-		resampleCPU(NP, state_out, weight, weight_sum);
+		resampleCPU(NP, slotOfP, slotOfAllP, state_out, weightObj);
 	else
-		resampleCPU(NP, state_in, weight, weight_sum);
+		resampleCPU(NP, slotOfP, slotOfAllP, state_in, weightObj);
 	gettimeofday(&tv2, NULL);
 	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
-
-#endif
 
 }
 
@@ -65,18 +61,30 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
-	float *weight = (float *)malloc(NP*sizeof(float));
-	float *weight_sum = (float *)malloc(sizeof(float));
+
+	float h_step = Pi/(3.0*NSensor);
+	int slotOfP = 1+Obj*NPObj; // R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
+	int slotOfAllP = NP*slotOfP;
+
+	float *obsrvEst = (float *)malloc(NSensor*sizeof(float));
+	float *obsrvTmp = (float *)malloc(NSensor*sizeof(float));
+	float *weightObj = (float *)malloc(NP*NPObj*sizeof(float));
+
+	float x_robot, y_robot, h_base;
 
 	gettimeofday(&tv1, NULL);
-	weight_sum[a] = 0;
 #pragma omp parallel for num_threads(THREADS)
-	for (int p=0; p<NP; p++){
+	for (int p=0; p<slotOfAllP; p++){
+		int idxOfP = p/slotOfP; // Index of particle
+		int idxInP = p%slotOfP; // Index inside a particle
 		// Sampling
-		if (p%NPBlock==0){ // robot particles
+		if (idxInP==0){ // robot particles
 			state_out[p*SS] = state_in[p*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
 			state_out[p*SS+1] = state_in[p*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
 			state_out[p*SS+2] = state_in[p*SS+2] + (ref_in[1]+nrand(S*0.1,p));
+			x_robot = state_out[p*SS];
+			y_robot = state_out[p*SS+1];
+			h_base = state_out[p*SS+2] - Pi/3.0;
 		}else{ // particles of the moving objects
 			float dist = 0.05+nrand(0.02,p);
 			float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
@@ -85,39 +93,94 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 			state_out[p*SS+2] = state_in[p*SS+2] + (rot+nrand(S*0.1,p));
 		}
 		// Importance weighting
-		int NSensor = 20;
-		float h_step = Pi/(3.0*NSensor);
-		float *obsrvEst = (float *)malloc(Nsensor*sizeof(float));
-		float *temp = (float *)malloc(Nsensor*sizeof(float));
-		int index = p/NPBlock*NPBlock;
-		float x_robot = state_out[index*SS];
-		float y_robot = state_out[index*SS+1];
-		float h_base = state_out[index*SS+2] - Pi/3.0;
 		for (int i=0; i<20; i++){
-			if (p%NPBlock==0){ // check walls
+			if (idxInP==0){ // check walls
 				obsrvEst[i] = estWall(x_robot,y_robot,h_base+h_step*i);
-				temp[i] = obsrvEst[i];
+				obsrvTmp[i] = obsrvEst[i];
 			}else{ // check moving objects
-				if (p!=0 && (p-1)%7==0)	obsrvEst[i] = temp[i];
-				obsrvEst[i] = min(obsrvEst[i],estObj(x_robot,y_robot,h_base+h_step*i,state_out[p*SS],state_out[p*SS+1]));
+				if ((idxInP-1)%Obj==0)	obsrvEst[i] = obsrvTmp[i];
+				obsrvEst[i] = fmin(obsrvEst[i],estObj(x_robot,y_robot,h_base+h_step*i,state_out[p*SS],state_out[p*SS+1]));
 			}
 		}
-		if (p!=0 && (p-1)%7==6){
+		if ((idxInP-1)%Obj==6){
 			float base = 0;
-			for (int i=0; i<Nsensor; i++)
-				base += obsrvEst[i];
-			weight[(p-1)/7] = exp(base*base/-200.0);
-			weight_sum[a] += weight[(p-1)/7];
+			for (int i=0; i<NSensor; i++)
+				base = base + obsrvEst[i] - obsrv_in[i];
+			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base*base/-200.0);
 		}
+
 	}
 	// Resampling of robot particles
 	if(outer_idx==itl_outer-1)
-		resampleCPU(NP, state_out, weight, weight_sum);
+		resampleCPU(NP, slotOfP, slotOfAllP, state_out, weightObj);
 	else
-		resampleCPU(NP, state_in, weight, weight_sum);
+		resampleCPU(NP, slotOfP, slotOfAllP, state_in, weightObj);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+}
+
+// Resample particles
+void resampleCPU(int NP, int slotOfP, int slotOfAllP, float* state, float* weightObj){
+
+	// Resampling of moving object particles
+	float *weightR = (float *)malloc(NP*sizeof(float));
+	float weightR_sum = 0;
+	for (int p=0; p<NP; p++){
+		weightR[p] = resampleObj(state+p*slotOfP*SS+1, weightObj+p*NPObj);
+		weightR_sum += weightR[p];
+	}
+
+	// Resampling of robot particles
+	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
+	float *temp = (float *)malloc(slotOfAllP*SS*sizeof(float)); //!!
+	sum_pdf[0] = 0;
+	for (int p=1; p<=NP; p++){
+		sum_pdf[p] = sum_pdf[p-1] + weightR[p-1]/weightR_sum;
+	}
+	int k=0;
+	float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NP*1.0);
+	for (int p=0; p<NP; p++){
+		float u = u1 + p/(NP*1.0);
+		while (u-sum_pdf[k]>=0 && k<NP){
+			k = k + 1;
+		}
+		memcpy(temp+p*slotOfP*SS, state+(k-1)*slotOfP*SS, slotOfP*SS*sizeof(float));
+	}
+	memcpy(state, temp, slotOfAllP*SS*sizeof(float));
+}
+
+float resampleObj(float* state, float* weightObj){
+
+	float *sum_pdf = (float *)malloc((NPObj+1)*sizeof(float));
+	float *temp = (float *)malloc(Obj*NPObj*SS*sizeof(float));
+
+	float weightObj_sum = 0;
+	for (int p=0; p<NPObj; p++){
+		weightObj_sum += weightObj[p];
+	}
+	sum_pdf[0] = 0;
+	for (int p=1; p<=NPObj; p++){
+		sum_pdf[p] = sum_pdf[p-1] + weightObj[p]/weightObj_sum;
+	}
+	int k=0;
+	float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NPObj*1.0);
+	for (int p=0; p<NPObj; p++){
+		float u = u1 + p/(NPObj*1.0);
+		while (u-sum_pdf[k]>=0 && k<NPObj){
+			k = k + 1;
+		}
+		memcpy(temp+p*Obj*SS, state+(k-1)*Obj*SS, Obj*SS*sizeof(float));
+		weightObj[p] = weightObj[k-1];
+	}
+	float weightR = 0;
+	// Weight of robot particles
+	for (int p=0; p<NPObj; p++){
+		weightR += weightObj[p];
+	}
+	memcpy(state, temp, Obj*NPObj*SS*sizeof(float));
+
+	return weightR;
 }
 
 // Estimate sensor value (wall)
@@ -130,7 +193,7 @@ float estWall(float x, float y, float h){
 
 	float min_dist = 99;
 	for (int i=0; i<8; i++){
-		float dist = dist(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
+		float dist = dist2Obj(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
 		if (dist<min_dist)
 			min_dist = dist;
 	}
@@ -140,11 +203,11 @@ float estWall(float x, float y, float h){
 // Estimate sensor value (moving objects)
 float estObj(float x, float y, float h, float ox, float oy){
 
-	return dist(x,y,cos(h),sin(h),0,0.4,0,0.4);
+	return dist2Obj(x,y,cos(h),sin(h),0,0.4,0,0.4);
 }
 
 // Calculate distance
-float dist(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
+float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
 
 	float dy = by-ay;
 	float dx = bx-ax;
@@ -165,54 +228,6 @@ float dist(float x, float y, float cos_h, float sin_h, float ax, float ay, float
 		return 99.0;
 }
 
-// Resample particles
-void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
-
-	int NPObj = (NPBlock-1)/7;
-	float *sum_pdf = (float *)malloc((NPObj+1)*sizeof(float));
-	float *temp = (float *)malloc(NP*SS*sizeof(float));
-
-	for (int p=0; p<NP; p++){
-		// Resampling of people particles
-		sum_pdf[0] = 0;
-		for (int i=1; i<=NPObj; i++){
-			sum_pdf[i] = sum_pdf[i-1] + weight[i]/weight_sum;
-		}
-		int k=0;
-		u1 = ((float) dsfmt_genrand_close_open(&dsfmt)) / (NPObj*1.0);
-		for (int i=0; i<NPObj; i++){
-			u = u1 + i/(NPObj*1.0);
-			while (u-sum_pdf[k]>=0 && k<NPObj){
-				k = k + 1;
-			}
-			memcpy(temp, state+1+(k-1)*7*SS, sizeof(float)*7*SS);
-			weight[i] = weight[k-1];
-		}
-		w[p] = 0;
-		// Weight of robot particles
-		for (int i=0; i<NPObj; i++){
-			w[p] += weight[i];
-		}
-		memcpy(state+p*7*SS, temp, sizeof(float)*7*SS);
-	}
-	sum_pdf[0] = 0;
-	for (int p=1; p<=NP; p++){
-		sum_pdf[p] = sum_pdf[p-1] + weight[p-1]/weight_sum[a];
-	}
-	int k=0;
-	float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NP*1.0);
-	for (int p=0; p<NP; p++){
-		float u = u1 + p/(NP*1.0);
-		while (u-sum_pdf[k]>=0 && k<NP){
-			k = k + 1;
-		}
-		temp[p*SS] = state[(k-1)*SS];
-		temp[p*SS+1] = state[(k-1)*SS+1];
-		temp[p*SS+2] = state[(k-1)*SS+2];
-	}
-	memcpy(state, temp, sizeof(float)*NP*SS);
-}
-
 /* Common functions */
 
 // Read input files
@@ -225,7 +240,9 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpObsrv, "%f\n", &obsrv[t]);
+		for (int i=0; i<NSensor; i++){
+			fscanf(fpObsrv, "%f\n", &obsrv[t*NSensor+i]);
+		}
 	}
 	fclose(fpObsrv);
 
@@ -272,7 +289,7 @@ void output(int NP, int step, float* state){
 		sum_y += state[p*SS+1];
 		sum_h += state[p*SS+2];
 	}
-	printf("Agent %d's position at step %d is (%f, %f, %f).\n", a, step, sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
+	printf("Position at step %d is (%f, %f, %f).\n", step, sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
 	fprintf(fpXest, "%f %f %f\n", sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
 
 	fclose(fpXest);
