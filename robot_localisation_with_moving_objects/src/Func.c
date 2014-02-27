@@ -31,8 +31,8 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 
-	float *weight = (float *)malloc(NA*NP*sizeof(float));
-	float *weight_sum = (float *)malloc(NA*sizeof(float));
+	float *weight = (float *)malloc(NP*sizeof(float));
+	float *weight_sum = (float *)malloc(sizeof(float));
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
@@ -43,11 +43,9 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	// Resample particles
 	gettimeofday(&tv1, NULL);
-	for (int a=0; a<NA; a++) {
-		weight_sum[a] = 0;
-		for (int p=0; p<NP; p++){
-			weight_sum[a] += weight[p*NA+a];
-		}
+	weight_sum[a] = 0;
+	for (int p=0; p<NP; p++){
+		weight_sum[a] += weight[p];
 	}
 	if(outer_idx==itl_outer-1)
 		resampleCPU(NP, state_out, weight, weight_sum);
@@ -67,51 +65,49 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
-	float *weight = (float *)malloc(NA*NP*sizeof(float));
-	float *weight_sum = (float *)malloc(NA*sizeof(float));
+	float *weight = (float *)malloc(NP*sizeof(float));
+	float *weight_sum = (float *)malloc(sizeof(float));
 
 	gettimeofday(&tv1, NULL);
-	for (int a=0; a<NA; a++) {
-		weight_sum[a] = 0;
+	weight_sum[a] = 0;
 #pragma omp parallel for num_threads(THREADS)
-		for (int p=0; p<NP; p++){
-			// Sampling
-			if (p%NPBlock==0){ // robot particles
-				state_out[p*SS*NA+a*SS] = state_in[p*SS*NA+a*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS*NA+a*SS+2]);
-				state_out[p*SS*NA+a*SS+1] = state_in[p*SS*NA+a*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS*NA+a*SS+2]);
-				state_out[p*SS*NA+a*SS+2] = state_in[p*SS*NA+a*SS+2] + (ref_in[1]+nrand(S*0.1,p));
-			}else{ // particles of the moving objects
-				float dist = 0.05+nrand(0.02,p);
-				float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-				state_out[p*SS*NA+a*SS] = state_in[p*SS*NA+a*SS] + (dist+nrand(S*0.5,p)) * cos(state_in[p*SS*NA+a*SS+2]);
-				state_out[p*SS*NA+a*SS+1] = state_in[p*SS*NA+a*SS+1] + (dist+nrand(S*0.5,p)) * sin(state_in[p*SS*NA+a*SS+2]);
-				state_out[p*SS*NA+a*SS+2] = state_in[p*SS*NA+a*SS+2] + (rot+nrand(S*0.1,p));
+	for (int p=0; p<NP; p++){
+		// Sampling
+		if (p%NPBlock==0){ // robot particles
+			state_out[p*SS] = state_in[p*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
+			state_out[p*SS+1] = state_in[p*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
+			state_out[p*SS+2] = state_in[p*SS+2] + (ref_in[1]+nrand(S*0.1,p));
+		}else{ // particles of the moving objects
+			float dist = 0.05+nrand(0.02,p);
+			float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state_out[p*SS] = state_in[p*SS] + (dist+nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
+			state_out[p*SS+1] = state_in[p*SS+1] + (dist+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
+			state_out[p*SS+2] = state_in[p*SS+2] + (rot+nrand(S*0.1,p));
+		}
+		// Importance weighting
+		int NSensor = 20;
+		float h_step = Pi/(3.0*NSensor);
+		float *obsrvEst = (float *)malloc(Nsensor*sizeof(float));
+		float *temp = (float *)malloc(Nsensor*sizeof(float));
+		int index = p/NPBlock*NPBlock;
+		float x_robot = state_out[index*SS];
+		float y_robot = state_out[index*SS+1];
+		float h_base = state_out[index*SS+2] - Pi/3.0;
+		for (int i=0; i<20; i++){
+			if (p%NPBlock==0){ // check walls
+				obsrvEst[i] = estWall(x_robot,y_robot,h_base+h_step*i);
+				temp[i] = obsrvEst[i];
+			}else{ // check moving objects
+				if (p!=0 && (p-1)%7==0)	obsrvEst[i] = temp[i];
+				obsrvEst[i] = min(obsrvEst[i],estObj(x_robot,y_robot,h_base+h_step*i,state_out[p*SS],state_out[p*SS+1]));
 			}
-			// Importance weighting
-			int NSensor = 20;
-			float h_base;
-			float h_step = Pi/(3.0*NSensor);
-			float *obsrvEst = (float *)malloc(Nsensor*sizeof(float));
-			float *temp = (float *)malloc(Nsensor*sizeof(float));
-			int index = p/NPBlock*NPBlock;
-			for (int i=0; i<20; i++){
-				if (p%NPBlock==0){ // check walls
-					h_base = state_out[p*SS*NA+a*SS+2] - Pi/3.0;
-					obsrvEst[i] = estWall(state_out[p*SS*NA+a*SS],state_out[p*SS*NA+a*SS+1],h_base+h_step*i);
-					temp[i] = obsrvEst[i];
-				}else{ // check moving objects
-					h_base = state_out[index*SS*NA+a*SS+2] - Pi/3.0;
-					if ((p-1)%7==0)	obsrvEst[i] = temp[i];
-					obsrvEst[i] = min(obsrvEst[i],estObj(state_out[index*SS*NA+a*SS],state_out[index*SS*NA+a*SS],h_base+h_step*i),state_out[p*SS*NA+a*SS],state_out[p*SS*NA+a*SS+1]);
-				}
-			}
-			if ((p-1)%7==6){
-				float base = 0;
-				for (int i=0; i<Nsensor; i++)
-					base += obsrvEst[i];
-				weight[(p/7-1)*NA+a] = exp(base*base/-200.0);
-				weight_sum[a] += weight[(p/7-1)*NA+a];
-			}
+		}
+		if (p!=0 && (p-1)%7==6){
+			float base = 0;
+			for (int i=0; i<Nsensor; i++)
+				base += obsrvEst[i];
+			weight[(p-1)/7] = exp(base*base/-200.0);
+			weight_sum[a] += weight[(p-1)/7];
 		}
 	}
 	// Resampling of robot particles
@@ -173,20 +169,23 @@ float dist(float x, float y, float cos_h, float sin_h, float ax, float ay, float
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 
 	int NPObj = (NPBlock-1)/7;
+	float *sum_pdf = (float *)malloc((NPObj+1)*sizeof(float));
+	float *temp = (float *)malloc(NP*SS*sizeof(float));
+
 	for (int p=0; p<NP; p++){
 		// Resampling of people particles
-		psum_pdf[0] = 0;
+		sum_pdf[0] = 0;
 		for (int i=1; i<=NPObj; i++){
-			psum_pdf[i] = psum_pdf[i-1] + weight[i]/weight_sum;
+			sum_pdf[i] = sum_pdf[i-1] + weight[i]/weight_sum;
 		}
 		int k=0;
 		u1 = ((float) dsfmt_genrand_close_open(&dsfmt)) / (NPObj*1.0);
 		for (int i=0; i<NPObj; i++){
 			u = u1 + i/(NPObj*1.0);
-			while (u-psum_pdf[k]>=0 && k<NPObj){
+			while (u-sum_pdf[k]>=0 && k<NPObj){
 				k = k + 1;
 			}
-			memcpy(temp, state+(k-1)*7*SS*NA+a*SS, sizeof(float)*7*SS*NA);
+			memcpy(temp, state+1+(k-1)*7*SS, sizeof(float)*7*SS);
 			weight[i] = weight[k-1];
 		}
 		w[p] = 0;
@@ -194,29 +193,24 @@ void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 		for (int i=0; i<NPObj; i++){
 			w[p] += weight[i];
 		}
-		memcpy(state+p*7*SS*NA+a*SS, temp, sizeof(float)*7*SS*NA);
+		memcpy(state+p*7*SS, temp, sizeof(float)*7*SS);
 	}
-	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
-	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
-
-	for (int a=0; a<NA; a++) {
-		sum_pdf[0] = 0;
-		for (int p=1; p<=NP; p++){
-			sum_pdf[p] = sum_pdf[p-1] + weight[(p-1)*NA+a]/weight_sum[a];
-		}
-		int k=0;
-		float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NP*1.0);
-		for (int p=0; p<NP; p++){
-			float u = u1 + p/(NP*1.0);
-			while (u-sum_pdf[k]>=0 && k<NP){
-				k = k + 1;
-			}
-			temp[p*SS*NA+a*SS] = state[(k-1)*SS*NA+a*SS];
-			temp[p*SS*NA+a*SS+1] = state[(k-1)*SS*NA+a*SS+1];
-			temp[p*SS*NA+a*SS+2] = state[(k-1)*SS*NA+a*SS+2];
-		}
+	sum_pdf[0] = 0;
+	for (int p=1; p<=NP; p++){
+		sum_pdf[p] = sum_pdf[p-1] + weight[p-1]/weight_sum[a];
 	}
-	memcpy(state, temp, sizeof(float)*NA*NP*SS);
+	int k=0;
+	float u1 = ((float) dsfmt_genrand_close_open(&dsfmt[0])) / (NP*1.0);
+	for (int p=0; p<NP; p++){
+		float u = u1 + p/(NP*1.0);
+		while (u-sum_pdf[k]>=0 && k<NP){
+			k = k + 1;
+		}
+		temp[p*SS] = state[(k-1)*SS];
+		temp[p*SS+1] = state[(k-1)*SS+1];
+		temp[p*SS+2] = state[(k-1)*SS+2];
+	}
+	memcpy(state, temp, sizeof(float)*NP*SS);
 }
 
 /* Common functions */
@@ -253,12 +247,10 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 	}
 
 	// Initialise states
-	for(int a=0; a<NA; a++){
-		for(int p=0; p<NP; p++){
-			state[p*SS*NA+a*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-			state[p*SS*NA+a*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
-			state[p*SS*NA+a*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
-		}
+	for(int p=0; p<NP; p++){
+		state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+		state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+		state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 	}
 }
 
@@ -272,18 +264,16 @@ void output(int NP, int step, float* state){
 	else
 		fpXest = fopen("data_xest.txt", "a");
 
-	for(int a=0; a<NA; a++){
-		float sum_x = 0;
-		float sum_y = 0;
-		float sum_h = 0;
-		for(int p=0; p<NP; p++){
-			sum_x += state[p*SS*NA+a*SS];
-			sum_y += state[p*SS*NA+a*SS+1];
-			sum_h += state[p*SS*NA+a*SS+2];
-		}
-		printf("Agent %d's position at step %d is (%f, %f, %f).\n", a, step, sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
-		fprintf(fpXest, "%f %f %f\n", sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
+	float sum_x = 0;
+	float sum_y = 0;
+	float sum_h = 0;
+	for(int p=0; p<NP; p++){
+		sum_x += state[p*SS];
+		sum_y += state[p*SS+1];
+		sum_h += state[p*SS+2];
 	}
+	printf("Agent %d's position at step %d is (%f, %f, %f).\n", a, step, sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
+	fprintf(fpXest, "%f %f %f\n", sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
 
 	fclose(fpXest);
 }
@@ -323,11 +313,9 @@ void check(char *stateFile){
 
 // Commit changes to the particles
 void update(int NP, float* state_current, float* state_next){
-	for(int a=0; a<NA; a++){
-		for(int p=0; p<NP; p++){
-			for(int s=0; s<SS; s++)
-				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
-		}
+	for(int p=0; p<NP; p++){
+		for(int s=0; s<SS; s++)
+			state_current[p*SS+s] = state_next[p*SS+s];
 	}
 }
 
