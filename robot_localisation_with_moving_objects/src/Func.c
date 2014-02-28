@@ -10,18 +10,15 @@
 #include "Def.h"
 #include "Func.h"
 
-extern dsfmt_t dsfmt[NPMax];
+extern dsfmt_t dsfmt[NPMax*slotOfP];
 
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
+void smcFPGA(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 
-	int slotOfP = 1+Obj*NPObj; // R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
-	int slotOfAllP = NP*slotOfP;
-	
 	float *weightObj = (float *)malloc(NP*sizeof(float));
 
 #ifdef debug
@@ -46,9 +43,9 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	// Resample particles
 	gettimeofday(&tv1, NULL);
 	if(outer_idx==itl_outer-1)
-		resampleCPU(NP, slotOfP, slotOfAllP, state_out, weightObj);
+		resampleCPU(NP, slotOfAllP, state_out, weightObj);
 	else
-		resampleCPU(NP, slotOfP, slotOfAllP, state_in, weightObj);
+		resampleCPU(NP, slotOfAllP, state_in, weightObj);
 	gettimeofday(&tv2, NULL);
 	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
@@ -58,13 +55,11 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 /* CPU only functions */
 
 // Call CPU SMC core
-void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
+void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 
 	float h_step = Pi/(3.0*NSensor);
-	int slotOfP = 1+Obj*NPObj; // R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
-	int slotOfAllP = NP*slotOfP;
 
 	float *obsrvEst = (float *)malloc(NSensor*sizeof(float));
 	float *obsrvTmp = (float *)malloc(NSensor*sizeof(float));
@@ -73,7 +68,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	float x_robot, y_robot, h_base;
 
 	gettimeofday(&tv1, NULL);
-#pragma omp parallel for num_threads(THREADS)
+//#pragma omp parallel for num_threads(THREADS)
 	for (int p=0; p<slotOfAllP; p++){
 		int idxOfP = p/slotOfP; // Index of particle
 		int idxInP = p%slotOfP; // Index inside a particle
@@ -93,7 +88,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 			state_out[p*SS+2] = state_in[p*SS+2] + (rot+nrand(S*0.1,p));
 		}
 		// Importance weighting
-		for (int i=0; i<20; i++){
+		for (int i=0; i<NSensor; i++){
 			if (idxInP==0){ // check walls
 				obsrvEst[i] = estWall(x_robot,y_robot,h_base+h_step*i);
 				obsrvTmp[i] = obsrvEst[i];
@@ -104,24 +99,27 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 		}
 		if ((idxInP-1)%Obj==6){
 			float base = 0;
-			for (int i=0; i<NSensor; i++)
-				base = base + obsrvEst[i] - obsrv_in[i];
-			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base*base/-200.0);
+			for (int i=0; i<NSensor; i++){
+				base = base + fabs(obsrvEst[i]-obsrv_in[i]);
+				printf("%f ", obsrvEst[i]);
+			}
+			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base/-200.0);
+			printf("%d %d\n", idxOfP, (idxInP-1)/Obj);
 		}
 
 	}
 	// Resampling of robot particles
 	if(outer_idx==itl_outer-1)
-		resampleCPU(NP, slotOfP, slotOfAllP, state_out, weightObj);
+		resampleCPU(NP, slotOfAllP, state_out, weightObj);
 	else
-		resampleCPU(NP, slotOfP, slotOfAllP, state_in, weightObj);
+		resampleCPU(NP, slotOfAllP, state_in, weightObj);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
 // Resample particles
-void resampleCPU(int NP, int slotOfP, int slotOfAllP, float* state, float* weightObj){
+void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 
 	// Resampling of moving object particles
 	float *weightR = (float *)malloc(NP*sizeof(float));
@@ -133,7 +131,7 @@ void resampleCPU(int NP, int slotOfP, int slotOfAllP, float* state, float* weigh
 
 	// Resampling of robot particles
 	float *sum_pdf = (float *)malloc((NP+1)*sizeof(float));
-	float *temp = (float *)malloc(slotOfAllP*SS*sizeof(float)); //!!
+	float *temp = (float *)malloc(slotOfAllP*SS*sizeof(float));
 	sum_pdf[0] = 0;
 	for (int p=1; p<=NP; p++){
 		sum_pdf[p] = sum_pdf[p-1] + weightR[p-1]/weightR_sum;
@@ -203,7 +201,7 @@ float estWall(float x, float y, float h){
 // Estimate sensor value (moving objects)
 float estObj(float x, float y, float h, float ox, float oy){
 
-	return dist2Obj(x,y,cos(h),sin(h),0,0.4,0,0.4);
+	return dist2Obj(x,y,cos(h),sin(h),ox-0.2,oy-0.2,ox+0.2,oy+0.2);
 }
 
 // Calculate distance
@@ -231,7 +229,7 @@ float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, f
 /* Common functions */
 
 // Read input files
-void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, float* state){
+void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, float* ref, float* state){
 
 	// Read observations
 	FILE *fpObsrv = fopen(obsrvFile, "r");
@@ -259,12 +257,12 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 
 	// Initialise random number generators
 	srand(time(NULL));
-	for(int  p=0; p<NP; p++){
+	for(int  p=0; p<slotOfAllP; p++){
 		dsfmt_init_gen_rand(&dsfmt[p], rand());
 	}
 
 	// Initialise states
-	for(int p=0; p<NP; p++){
+	for(int p=0; p<slotOfAllP; p++){
 		state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
 		state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
 		state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
@@ -285,9 +283,9 @@ void output(int NP, int step, float* state){
 	float sum_y = 0;
 	float sum_h = 0;
 	for(int p=0; p<NP; p++){
-		sum_x += state[p*SS];
-		sum_y += state[p*SS+1];
-		sum_h += state[p*SS+2];
+		sum_x += state[p*slotOfP*SS];
+		sum_y += state[p*slotOfP*SS+1];
+		sum_h += state[p*slotOfP*SS+2];
 	}
 	printf("Position at step %d is (%f, %f, %f).\n", step, sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
 	fprintf(fpXest, "%f %f %f\n", sum_x/(NP*1.0), sum_y/(NP*1.0), sum_h/(NP*1.0));
@@ -329,8 +327,8 @@ void check(char *stateFile){
 }
 
 // Commit changes to the particles
-void update(int NP, float* state_current, float* state_next){
-	for(int p=0; p<NP; p++){
+void update(int slotOfAllP, float* state_current, float* state_next){
+	for(int p=0; p<slotOfAllP; p++){
 		for(int s=0; s<SS; s++)
 			state_current[p*SS+s] = state_next[p*SS+s];
 	}

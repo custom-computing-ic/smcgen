@@ -9,7 +9,7 @@
 /* FPGA usage control */
 /* enable: use FPGA; disable: use CPU for all processes */
 #ifndef Use_FPGA
-#define Use_FPGA 
+//#define Use_FPGA 
 #endif
 
 /* Number of CPU threads */
@@ -24,10 +24,10 @@
 
 /* Number of robot particles */
 #ifndef NPMin
-#define NPMin 4096
+#define NPMin 256
 #endif
 #ifndef NPMax
-#define NPMax 4096
+#define NPMax 256
 #endif
 
 /* Number of moving object particles per robot particles */
@@ -38,6 +38,13 @@
 /* Number of moving objects */
 #ifndef Obj
 #define Obj 7
+#endif
+
+/* Number of slots in a particle */
+// 1+Obj*NPObj
+// R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
+#ifndef slotOfP
+#define slotOfP 7120
 #endif
 
 /* Horizon length */
@@ -66,7 +73,10 @@
 #define RS 2
 #endif
 
+/* Number of sensors on a robot */
+#ifndef NSensor
 #define NSensor 20
+#endif
 
 #define Pi 3.14159265359
 
