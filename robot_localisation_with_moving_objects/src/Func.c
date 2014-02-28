@@ -72,6 +72,7 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 	for (int p=0; p<slotOfAllP; p++){
 		int idxOfP = p/slotOfP; // Index of particle
 		int idxInP = p%slotOfP; // Index inside a particle
+		//printf("Idx: %d %d\n", idxOfP, idxInP);
 		// Sampling
 		if (idxInP==0){ // robot particles
 			state_out[p*SS] = state_in[p*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
@@ -83,28 +84,35 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 		}else{ // particles of the moving objects
 			float dist = 0.05+nrand(0.02,p);
 			float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-			state_out[p*SS] = state_in[p*SS] + (dist+nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
-			state_out[p*SS+1] = state_in[p*SS+1] + (dist+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
-			state_out[p*SS+2] = state_in[p*SS+2] + (rot+nrand(S*0.1,p));
+			state_out[p*SS] = state_in[p*SS];// + (dist + nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
+			state_out[p*SS+1] = state_in[p*SS+1];// + (dist+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
+			state_out[p*SS+2] = state_in[p*SS+2];// + (rot+nrand(S*0.1,p));
 		}
 		// Importance weighting
 		for (int i=0; i<NSensor; i++){
 			if (idxInP==0){ // check walls
 				obsrvEst[i] = estWall(x_robot,y_robot,h_base+h_step*i);
 				obsrvTmp[i] = obsrvEst[i];
+				//printf("%f ", obsrvEst[i]);
 			}else{ // check moving objects
-				if ((idxInP-1)%Obj==0)	obsrvEst[i] = obsrvTmp[i];
+				if ((idxInP-1)%Obj==0){
+					obsrvEst[i] = obsrvTmp[i];
+					//printf("(%d %d)", idxOfP, idxInP);
+				}
 				obsrvEst[i] = fmin(obsrvEst[i],estObj(x_robot,y_robot,h_base+h_step*i,state_out[p*SS],state_out[p*SS+1]));
+				printf("%f ", obsrvEst[i]);
 			}
 		}
+		printf("\n");
+		//if (idxInP==0) printf("(%f %f)\n", x_robot, y_robot);
 		if ((idxInP-1)%Obj==6){
 			float base = 0;
 			for (int i=0; i<NSensor; i++){
 				base = base + fabs(obsrvEst[i]-obsrv_in[i]);
-				printf("%f ", obsrvEst[i]);
+				//printf("%f ", obsrvEst[i]);
 			}
 			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base/-200.0);
-			printf("%d %d\n", idxOfP, (idxInP-1)/Obj);
+			//printf("(%f %f %f) %d %d %f\n", x_robot, y_robot, h_base, idxOfP, (idxInP-1)/Obj, exp(base/-200.0));
 		}
 
 	}
