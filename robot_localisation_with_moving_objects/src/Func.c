@@ -59,7 +59,7 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 
 	struct timeval tv1, tv2;
 
-	float h_step = Pi/(3.0*NSensor);
+	float h_step = 2.0*Pi/(NSensor*1.0);
 
 	float *obsrvEst = (float *)malloc(NSensor*sizeof(float));
 	float *obsrvTmp = (float *)malloc(NSensor*sizeof(float));
@@ -67,20 +67,23 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 
 	float x_robot, y_robot, h_base;
 
+	//for (int p=0; p<NP; p++){
+		//printf("(%f %f)\n", state_in[p*slotOfP*SS], state_in[p*slotOfP*SS+1]);
+	//}
+
 	gettimeofday(&tv1, NULL);
 //#pragma omp parallel for num_threads(THREADS)
 	for (int p=0; p<slotOfAllP; p++){
 		int idxOfP = p/slotOfP; // Index of particle
 		int idxInP = p%slotOfP; // Index inside a particle
-		//printf("Idx: %d %d\n", idxOfP, idxInP);
 		// Sampling
 		if (idxInP==0){ // robot particles
-			state_out[p*SS] = state_in[p*SS] + (ref_in[0]+nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
-			state_out[p*SS+1] = state_in[p*SS+1] + (ref_in[0]+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
-			state_out[p*SS+2] = state_in[p*SS+2] + (ref_in[1]+nrand(S*0.1,p));
+			state_out[p*SS] = state_in[p*SS] + (ref_in[0]+nrand(S*0.2,p)) * cos(state_in[p*SS+2]);
+			state_out[p*SS+1] = state_in[p*SS+1] + (ref_in[0]+nrand(S*0.2,p)) * sin(state_in[p*SS+2]);
+			state_out[p*SS+2] = state_in[p*SS+2] + (ref_in[1]+nrand(S*0.05,p));
 			x_robot = state_out[p*SS];
 			y_robot = state_out[p*SS+1];
-			h_base = state_out[p*SS+2] - Pi/3.0;
+			h_base = state_out[p*SS+2];
 		}else{ // particles of the moving objects
 			float dist = 0.05+nrand(0.02,p);
 			float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
@@ -93,26 +96,22 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 			if (idxInP==0){ // check walls
 				obsrvEst[i] = estWall(x_robot,y_robot,h_base+h_step*i);
 				obsrvTmp[i] = obsrvEst[i];
-				//printf("%f ", obsrvEst[i]);
 			}else{ // check moving objects
 				if ((idxInP-1)%Obj==0){
 					obsrvEst[i] = obsrvTmp[i];
-					//printf("(%d %d)", idxOfP, idxInP);
 				}
 				obsrvEst[i] = fmin(obsrvEst[i],estObj(x_robot,y_robot,h_base+h_step*i,state_out[p*SS],state_out[p*SS+1]));
-				printf("%f ", obsrvEst[i]);
 			}
 		}
-		printf("\n");
-		//if (idxInP==0) printf("(%f %f)\n", x_robot, y_robot);
 		if ((idxInP-1)%Obj==6){
 			float base = 0;
+			//printf("(%f %f) ", x_robot, y_robot);
 			for (int i=0; i<NSensor; i++){
 				base = base + fabs(obsrvEst[i]-obsrv_in[i]);
-				//printf("%f ", obsrvEst[i]);
+				//printf("[%f %f] ", obsrvEst[i], obsrv_in[i]);
 			}
-			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base/-200.0);
-			//printf("(%f %f %f) %d %d %f\n", x_robot, y_robot, h_base, idxOfP, (idxInP-1)/Obj, exp(base/-200.0));
+			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base*base/-2000.0);
+			//printf("%f\n", exp(base/-2000.0*S));
 		}
 
 	}
@@ -135,6 +134,7 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 	for (int p=0; p<NP; p++){
 		weightR[p] = resampleObj(state+p*slotOfP*SS+1, weightObj+p*NPObj);
 		weightR_sum += weightR[p];
+		//printf("(%f %f) %f\n", state[p*slotOfP*SS], state[p*slotOfP*SS+1], weightR[p]);
 	}
 
 	// Resampling of robot particles
@@ -197,7 +197,7 @@ float estWall(float x, float y, float h){
 	float bx[8] = {0,18,18,0,4,16,6,12};
 	float by[8] = {12,12,0,0,6,6,12,12};
 
-	float min_dist = 99;
+	float min_dist = 999.9;
 	for (int i=0; i<8; i++){
 		float dist = dist2Obj(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
 		if (dist<min_dist)
@@ -219,8 +219,8 @@ float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, f
 	float dx = bx-ax;
 	float pa = dy * (ax-x) - dx * (ay-y);
 	float pb = dy * cos_h - dx * sin_h;
-	float temp = (pb==0) ? 99 : pa/pb;
-	float dist = (temp<0) ? 99 : temp;
+	float temp = (pb==0) ? 999.9 : pa/pb;
+	float dist = (temp<0) ? 999.9 : temp;
 	float x_check = x + dist * cos_h;
 	float y_check = y + dist * sin_h;
 	int cond_a = ((x_check-ax)>=-0.01 & (x_check-bx)<=0.01) ? 1 : 0;
@@ -231,7 +231,7 @@ float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, f
 	if ((cond_a || cond_b) && (cond_c || cond_d))
 		return dist;
 	else
-		return 99.0;
+		return 999.9;
 }
 
 /* Common functions */
@@ -259,7 +259,7 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpRef, "%f %f\n", &ref[t*2], &ref[t*2+1]);
+		fscanf(fpRef, "%f %f\n", &ref[t*RS], &ref[t*RS+1]);
 	}
 	fclose(fpRef);
 
@@ -270,10 +270,18 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 	}
 
 	// Initialise states
-	for(int p=0; p<slotOfAllP; p++){
-		state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-		state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
-		state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+	for (int p=0; p<slotOfAllP; p++){
+		int idxOfP = p/slotOfP; // Index of particle
+		int idxInP = p%slotOfP; // Index inside a particle
+		if (idxInP==0){ // robot particles
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*5;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*5;
+			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+		}else{ // particles of the moving objects
+			state[p*SS] = 12+((float) dsfmt_genrand_close_open(&dsfmt[p]))*6;
+			state[p*SS+1] = 6+((float) dsfmt_genrand_close_open(&dsfmt[p]))*6;
+			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+		}
 	}
 }
 
@@ -336,10 +344,7 @@ void check(char *stateFile){
 
 // Commit changes to the particles
 void update(int slotOfAllP, float* state_current, float* state_next){
-	for(int p=0; p<slotOfAllP; p++){
-		for(int s=0; s<SS; s++)
-			state_current[p*SS+s] = state_next[p*SS+s];
-	}
+	memcpy(state_current, state_next, slotOfAllP*SS*sizeof(float));
 }
 
 // Gaussian random number generator

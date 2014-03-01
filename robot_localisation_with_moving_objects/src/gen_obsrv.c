@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
 	fclose(fp_obj);
 
 	for (int i=0; i<NStep; i++){
-		float h_base = h[i]-Pi/3;
-		float h_step = Pi/1.5/NSensor;
+		float h_base = h[i];
+		float h_step = 2.0*Pi/(NSensor*1.0);
 		for (int j=0; j<NSensor; j++){
 			// Adjust sensor angle
 			float h_curr = h_base + h_step*j;

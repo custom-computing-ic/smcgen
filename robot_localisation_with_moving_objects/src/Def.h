@@ -24,15 +24,15 @@
 
 /* Number of robot particles */
 #ifndef NPMin
-#define NPMin 1024
+#define NPMin 4096
 #endif
 #ifndef NPMax
-#define NPMax 1024
+#define NPMax 4096
 #endif
 
 /* Number of moving object particles per robot particles */
 #ifndef NPObj
-#define NPObj 1017
+#define NPObj 4//1017
 #endif
 
 /* Number of moving objects */
@@ -44,7 +44,7 @@
 // 1+Obj*NPObj
 // R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
 #ifndef slotOfP
-#define slotOfP 7120
+#define slotOfP 29//7120
 #endif
 
 /* Horizon length */
