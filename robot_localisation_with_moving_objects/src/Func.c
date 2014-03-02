@@ -67,9 +67,9 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 
 	float x_robot, y_robot, h_base;
 
-	//for (int p=0; p<NP; p++){
-		//printf("(%f %f)\n", state_in[p*slotOfP*SS], state_in[p*slotOfP*SS+1]);
-	//}
+	for (int p=0; p<NP; p++){
+		//printf("!!(%f %f)\n", state_in[p*slotOfP*SS], state_in[p*slotOfP*SS+1]);
+	}
 
 	gettimeofday(&tv1, NULL);
 //#pragma omp parallel for num_threads(THREADS)
@@ -107,11 +107,11 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 			float base = 0;
 			//printf("(%f %f) ", x_robot, y_robot);
 			for (int i=0; i<NSensor; i++){
-				base = base + fabs(obsrvEst[i]-obsrv_in[i]);
+				base = base + pow(obsrvEst[i]-obsrv_in[i],2);
 				//printf("[%f %f] ", obsrvEst[i], obsrv_in[i]);
 			}
-			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base*base/-2000.0);
-			//printf("%f\n", exp(base/-2000.0*S));
+			weightObj[idxOfP*NPObj+(idxInP-1)/Obj] = exp(base*base/-20000.0*S);
+			//printf("%f %f\n", base, exp(base*base/-2000.0));
 		}
 
 	}
@@ -134,7 +134,7 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 	for (int p=0; p<NP; p++){
 		weightR[p] = resampleObj(state+p*slotOfP*SS+1, weightObj+p*NPObj);
 		weightR_sum += weightR[p];
-		//printf("(%f %f) %f\n", state[p*slotOfP*SS], state[p*slotOfP*SS+1], weightR[p]);
+		//printf("!!(%f %f) %f\n", state[p*slotOfP*SS], state[p*slotOfP*SS+1], weightR[p]);
 	}
 
 	// Resampling of robot particles
@@ -152,6 +152,7 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 			k = k + 1;
 		}
 		memcpy(temp+p*slotOfP*SS, state+(k-1)*slotOfP*SS, slotOfP*SS*sizeof(float));
+		printf("!!(%f %f) %f\n", temp[p*slotOfP*SS], temp[p*slotOfP*SS+1], weightR[k-1]);
 	}
 	memcpy(state, temp, slotOfAllP*SS*sizeof(float));
 }
@@ -160,6 +161,7 @@ float resampleObj(float* state, float* weightObj){
 
 	float *sum_pdf = (float *)malloc((NPObj+1)*sizeof(float));
 	float *temp = (float *)malloc(Obj*NPObj*SS*sizeof(float));
+	float *weightObjTmp = (float *)malloc(NPObj*sizeof(float));
 
 	float weightObj_sum = 0;
 	for (int p=0; p<NPObj; p++){
@@ -177,12 +179,12 @@ float resampleObj(float* state, float* weightObj){
 			k = k + 1;
 		}
 		memcpy(temp+p*Obj*SS, state+(k-1)*Obj*SS, Obj*SS*sizeof(float));
-		weightObj[p] = weightObj[k-1];
+		weightObjTmp[p] = weightObj[k-1];
 	}
 	float weightR = 0;
 	// Weight of robot particles
 	for (int p=0; p<NPObj; p++){
-		weightR += weightObj[p];
+		weightR += weightObjTmp[p];
 	}
 	memcpy(state, temp, Obj*NPObj*SS*sizeof(float));
 
