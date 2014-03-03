@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
 			for(int j=0; j<NC*SS*16*3; j++)
 				seed[j] = 7-j;
 			// Allocate observation value of the current time step
-			memcpy(obsrv_in, obsrv+t*NSensor*sizeof(float), NSensor*sizeof(float));
+			memcpy(obsrv_in, obsrv+t*NSensor, NSensor*sizeof(float));
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
