@@ -229,7 +229,7 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 		exit(-1);
 	}
 	for(int t=0; t<NT; t++){
-		fscanf(fpRef, "%f %f\n", &ref[t*2], &ref[t*2+1]);
+		fscanf(fpRef, "%f %f\n", &ref[t*RS], &ref[t*RS+1]);
 	}
 	fclose(fpRef);
 
