@@ -33,7 +33,7 @@ MANAGER=$(PRJ)Manager
 OTHERCFLAGS=-I../src/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1 
 
 # Runtime arguments
-NP=4096
+NP=16000
 S=1.0
 ARGS=../src/data_y.txt ../src/ref.txt ../src/data_x_robot.txt $(NP) $(S)
 

@@ -76,9 +76,9 @@ void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float
 		}else{ // particles of the moving objects
 			float dist = 0.05+nrand(0.02,p);
 			float rot = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-			state_out[p*SS] = state_in[p*SS];// + (dist + nrand(S*0.5,p)) * cos(state_in[p*SS+2]);
-			state_out[p*SS+1] = state_in[p*SS+1];// + (dist+nrand(S*0.5,p)) * sin(state_in[p*SS+2]);
-			state_out[p*SS+2] = state_in[p*SS+2];// + (rot+nrand(S*0.1,p));
+			state_out[p*SS] = state_in[p*SS];// + (dist + nrand(S*0.2,p)) * cos(state_in[p*SS+2]);
+			state_out[p*SS+1] = state_in[p*SS+1];// + (dist+nrand(S*0.2,p)) * sin(state_in[p*SS+2]);
+			state_out[p*SS+2] = state_in[p*SS+2];// + (rot+nrand(S*0.05,p));
 		}
 	}
 	// Importance weighting
@@ -281,13 +281,13 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 	for (int p=0; p<slotOfAllP; p++){
 		int idxInP = p%slotOfP; // Index inside a particle
 		if (idxInP==0){ // robot particles
-			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*5;
-			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*5;
-			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}else{ // particles of the moving objects
-			state[p*SS] = 12+((float) dsfmt_genrand_close_open(&dsfmt[p]))*6;
-			state[p*SS+1] = 6+((float) dsfmt_genrand_close_open(&dsfmt[p]))*6;
-			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
 }
