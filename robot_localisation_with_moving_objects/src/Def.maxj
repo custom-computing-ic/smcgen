@@ -42,8 +42,11 @@ public class Def {
 	);
 
 	// Design Parameters
-	public static int NPMin = 29163520;
-	public static int NPMax = 29163520;
+	public static int NPMin = 16384;
+	public static int NPMax = 16384;
+	public static int NPObj = 1017;
+	public static int Obj = 7;
+	public static int slotOfP = NPObj*Obj+1;
 	public static int NA = 1;
 	public static int H = 1;
 	public static double S = 1;
