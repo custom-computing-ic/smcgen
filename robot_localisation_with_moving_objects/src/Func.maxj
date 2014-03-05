@@ -14,7 +14,6 @@ public class Func{
 
 		DFEVar idxInP = control.count.makeCounter(
 				control.count.makeParams(32)
-				.withEnable(h_counter_en)
 				.withMax(Def.slotOfP)
 				).getCount();
 
@@ -42,6 +41,17 @@ public class Func{
 
 	/* User customised weighting function */
 	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
+
+		Counter idxInP_counter = control.count.makeCounter(
+				control.count.makeParams(32)
+				.withMax(Def.slotOfP)
+				)
+		DFEVar idxInP = idxInP_counter.getCount();
+		Counter idxOfP_counter = control.count.makeCounter(
+				control.count.makeParams(32)
+				.withEnable(idxInP_counter.getWrap())
+				)
+		DFEVar idxOfP = idxOfP_counter.getCount();
 
 		// Observation input
 		DFEVar obsrv = o_in;
