@@ -35,7 +35,8 @@ OTHERCFLAGS=-I../src/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1
 # Runtime arguments
 NP=16384
 S=1.0
-ARGS=../src/data_y.txt ../src/ref.txt ../src/data_x_robot.txt $(NP) $(S)
+itl_outer=4
+ARGS=../src/data_y.txt ../src/ref.txt ../src/data_x_robot.txt $(NP) $(S) $(itl_outer)
 
 
 # Using known hardware settings

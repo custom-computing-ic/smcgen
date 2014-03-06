@@ -52,11 +52,6 @@
 #define H  	1
 #endif
 
-/* Outer loop */
-#ifndef itl_outer
-#define itl_outer 4
-#endif
-
 /* Number of FPGA cores */
 /* NC_inner * NC_P */
 #ifndef NC

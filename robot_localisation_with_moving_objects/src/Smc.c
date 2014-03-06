@@ -14,10 +14,11 @@ dsfmt_t dsfmt[NPMax*slotOfP];
 
 int main(int argc, char *argv[]){
 
-	printf("Usage: %s [observation file (Y)] [reference file (R)] [true state file (X)] [NP] [S]\n", argv[0]);
+	printf("Usage: %s [observation file (Y)] [reference file (R)] [true state file (X)] [NP] [S] [itl_outer]\n", argv[0]);
 
 	int NP = atoi(argv[4]);
 	float S = atof(argv[5]);
+	int itl_outer = atoi(argv[6]);
 
 	int slotOfAllP = NP*slotOfP;
 	

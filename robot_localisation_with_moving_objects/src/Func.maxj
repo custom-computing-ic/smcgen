@@ -133,8 +133,8 @@ public class Func{
 		DFEVar dx = bx-ax;
 		DFEVar pa = dy * (ax-x) - dx * (ay-y);
 		DFEVar pb = dy * cos_h - dx * sin_h;
-		DFEVar temp = pb===0 ? 99 : pa/pb;
-		DFEVar dist = temp < 0 ? 99 : temp;
+		DFEVar temp = pb===0 ? 31 : pa/pb;
+		DFEVar dist = temp < 0 ? 31 : temp;
 		DFEVar x_check = x + dist * cos_h;
 		DFEVar y_check = y + dist * sin_h;
 		DFEVar cond_a = (x_check-ax)>=-0.01 & (x_check-bx)<=0.01;
@@ -145,7 +145,7 @@ public class Func{
 
 		//smc.debug.printf("%f %f %f\n", x_check, y_check, dist);
 
-		return cond_e ? dist : smc.constant.var(Def.fixedType,99);
+		return cond_e ? dist : smc.constant.var(Def.fixedType,31);
 	}
 
 }
