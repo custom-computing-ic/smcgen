@@ -21,7 +21,7 @@ class SmcKernel extends Kernel {
 		// Setup counters
 		DFEVar itl_inner = io.scalarInput("itl_inner", dfeUInt(32)); // determined at run-time
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
-		DFEVar S = io.scalarInput("S", Def.compType); // determined at run-time
+		DFEVar S = io.scalarInput("S", Def.floatType); // determined at run-time
 		OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
 		Counter a_counter = control.count.makeCounter(
 					control.count.makeParams(

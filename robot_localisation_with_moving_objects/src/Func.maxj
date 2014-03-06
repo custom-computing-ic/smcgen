@@ -13,19 +13,26 @@ public class Func{
 
 		DFEStruct s_out = Def.state_t.newInstance(smc);
 
-		DFEVar dist = r_in.get("d");
-		DFEVar rot = r_in.get("r");
-		DFEVar x = s_in.get("x");
-		DFEVar y = s_in.get("y");
-		DFEVar h = s_in.get("h");
+		DFEVar distFloat = r_in.get("d");
+		DFEVar rotFloat = r_in.get("r");
+		DFEVar xFloat = s_in.get("x");
+		DFEVar yFloat = s_in.get("y");
+		DFEVar hFloat = s_in.get("h");
+
+		// Convert to fixed-point
+		DFEVar dist = distFloat.cast(Def.fixedType);
+		DFEVar rot = rotFloat.cast(Def.fixedType);
+		DFEVar x = xFloat.cast(Def.fixedType);
+		DFEVar y = yFloat.cast(Def.fixedType);
+		DFEVar h = hFloat.cast(Def.fixedType);
 
 		DFEVar seed_a = seeds.get("a");
 		DFEVar seed_b = seeds.get("b");
 		DFEVar seed_c = seeds.get("c");
 		
-		s_out.get("x") <== idxInP===0 ? x + KMath.nrand(smc, seed_a, dist, S*0.5) * KMath.cos(h) : x;
-		s_out.get("y") <== idxInP===0 ? y + KMath.nrand(smc, seed_b, dist, S*0.5) * KMath.sin(h) : y;
-		s_out.get("h") <== idxInP===0 ? h + KMath.nrand(smc, seed_c, rot, S*0.1) : h;
+		s_out.get("x") <== (idxInP===0 ? x + KMath.nrand(smc, seed_a, dist, S*0.5).cast(Def.fixedType) * KMath.cos(h) : x).cast(Def.floatType);
+		s_out.get("y") <== (idxInP===0 ? y + KMath.nrand(smc, seed_b, dist, S*0.5).cast(Def.fixedType) * KMath.sin(h) : y).cast(Def.floatType);
+		s_out.get("h") <== (idxInP===0 ? h + KMath.nrand(smc, seed_c, rot, S*0.1).cast(Def.fixedType) : h).cast(Def.floatType);
 
 		// Uncomment the line below for debugging
 		//smc.debug.printf("Position: %f %f %f\n", x, y, h);
@@ -44,9 +51,9 @@ public class Func{
 		DFEVector<DFEVar> obsrvEst = est(smc,s_in,idxInP,weight_update);
 		DFEVector<DFEVar> base = Def.sensor_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
-			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i]);
+			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i].cast(Def.fixedType));
 		}
-		DFEVar score = KMath.exp(KMath.addTreeVector(base,0,19)/-200.0);
+		DFEVar score = KMath.exp((KMath.addTreeVector(base,0,19)/-200.0).cast(Def.floatType));
 		// Weight accumulation
 		DFEVar weight = score*w_in;
 
@@ -62,9 +69,14 @@ public class Func{
 	// Calculate observation value based on state
 	private static DFEVector<DFEVar> est(SmcKernel smc, DFEStruct s_in, DFEVar idxInP, DFEVar weight_update) {
 
-		DFEVar x = s_in.get("x");
-		DFEVar y = s_in.get("y");
-		DFEVar h = s_in.get("h");
+		DFEVar xFloat = s_in.get("x");
+		DFEVar yFloat = s_in.get("y");
+		DFEVar hFloat = s_in.get("h");
+
+		// Convert to fixed-point
+		DFEVar x = xFloat.cast(Def.fixedType);
+		DFEVar y = yFloat.cast(Def.fixedType);
+		DFEVar h = hFloat.cast(Def.fixedType);
 		DFEVar x_robot = Reductions.streamHold(x, idxInP===0);
 		DFEVar y_robot = Reductions.streamHold(y, idxInP===0);
 		DFEVar h_base = Reductions.streamHold(h, idxInP===0);
@@ -74,22 +86,22 @@ public class Func{
 		DFEVector<DFEVar> ay = Def.wall_t.newInstance(smc);
 		DFEVector<DFEVar> bx = Def.wall_t.newInstance(smc);
 		DFEVector<DFEVar> by = Def.wall_t.newInstance(smc);
-		ax[0] <== smc.constant.var(Def.compType,0); ay[0] <== smc.constant.var(Def.compType,0); 
-		bx[0] <== smc.constant.var(Def.compType,0); by[0] <== smc.constant.var(Def.compType,12);
-		ax[1] <== smc.constant.var(Def.compType,0); ay[1] <== smc.constant.var(Def.compType,12); 
-		bx[1] <== smc.constant.var(Def.compType,18); by[1] <== smc.constant.var(Def.compType,12);
-		ax[2] <== smc.constant.var(Def.compType,18); ay[2] <== smc.constant.var(Def.compType,12); 
-		bx[2] <== smc.constant.var(Def.compType,18); by[2] <== smc.constant.var(Def.compType,0);
-		ax[3] <== smc.constant.var(Def.compType,18); ay[3] <== smc.constant.var(Def.compType,0); 
-		bx[3] <== smc.constant.var(Def.compType,0); by[3] <== smc.constant.var(Def.compType,0);
-		ax[4] <== smc.constant.var(Def.compType,0); ay[4] <== smc.constant.var(Def.compType,6); 
-		bx[4] <== smc.constant.var(Def.compType,4); by[4] <== smc.constant.var(Def.compType,6);
-		ax[5] <== smc.constant.var(Def.compType,8); ay[5] <== smc.constant.var(Def.compType,6); 
-		bx[5] <== smc.constant.var(Def.compType,16); by[5] <== smc.constant.var(Def.compType,6);
-		ax[6] <== smc.constant.var(Def.compType,6); ay[6] <== smc.constant.var(Def.compType,6); 
-		bx[6] <== smc.constant.var(Def.compType,6); by[6] <== smc.constant.var(Def.compType,12);
-		ax[7] <== smc.constant.var(Def.compType,12); ay[7] <== smc.constant.var(Def.compType,6); 
-		bx[7] <== smc.constant.var(Def.compType,12); by[7] <== smc.constant.var(Def.compType,12);
+		ax[0] <== smc.constant.var(Def.fixedType,0); ay[0] <== smc.constant.var(Def.fixedType,0); 
+		bx[0] <== smc.constant.var(Def.fixedType,0); by[0] <== smc.constant.var(Def.fixedType,12);
+		ax[1] <== smc.constant.var(Def.fixedType,0); ay[1] <== smc.constant.var(Def.fixedType,12); 
+		bx[1] <== smc.constant.var(Def.fixedType,18); by[1] <== smc.constant.var(Def.fixedType,12);
+		ax[2] <== smc.constant.var(Def.fixedType,18); ay[2] <== smc.constant.var(Def.fixedType,12); 
+		bx[2] <== smc.constant.var(Def.fixedType,18); by[2] <== smc.constant.var(Def.fixedType,0);
+		ax[3] <== smc.constant.var(Def.fixedType,18); ay[3] <== smc.constant.var(Def.fixedType,0); 
+		bx[3] <== smc.constant.var(Def.fixedType,0); by[3] <== smc.constant.var(Def.fixedType,0);
+		ax[4] <== smc.constant.var(Def.fixedType,0); ay[4] <== smc.constant.var(Def.fixedType,6); 
+		bx[4] <== smc.constant.var(Def.fixedType,4); by[4] <== smc.constant.var(Def.fixedType,6);
+		ax[5] <== smc.constant.var(Def.fixedType,8); ay[5] <== smc.constant.var(Def.fixedType,6); 
+		bx[5] <== smc.constant.var(Def.fixedType,16); by[5] <== smc.constant.var(Def.fixedType,6);
+		ax[6] <== smc.constant.var(Def.fixedType,6); ay[6] <== smc.constant.var(Def.fixedType,6); 
+		bx[6] <== smc.constant.var(Def.fixedType,6); by[6] <== smc.constant.var(Def.fixedType,12);
+		ax[7] <== smc.constant.var(Def.fixedType,12); ay[7] <== smc.constant.var(Def.fixedType,6); 
+		bx[7] <== smc.constant.var(Def.fixedType,12); by[7] <== smc.constant.var(Def.fixedType,12);
 
 		DFEVector<DFEVar> obsrvTmp = Def.sensor_t.newInstance(smc);
 		DFEVector<DFEVar> obsrvEst = Def.sensor_t.newInstance(smc);
@@ -133,7 +145,7 @@ public class Func{
 
 		//smc.debug.printf("%f %f %f\n", x_check, y_check, dist);
 
-		return cond_e ? dist : smc.constant.var(Def.compType,99);
+		return cond_e ? dist : smc.constant.var(Def.fixedType,99);
 	}
 
 }

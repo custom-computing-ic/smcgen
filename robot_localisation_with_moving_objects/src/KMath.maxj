@@ -95,7 +95,7 @@ public class KMath {
 		UrandomCore urng = new UrandomCore(smc, seed);
 		NrandomCore nrng = new NrandomCore(smc, 8, 24, urng.getRandOut());
 
-		return nrng.getOutput()*std + mean;
+		return (nrng.getOutput()*std).cast(Def.fixedType) + mean;
 	}
 
 }
