@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
 		update(slotOfAllP, state_in, state_out);
 		output(NP, t, state_in);
 	}
-	check(argv[3]);
+	check(argv[3], NP);
 
 	return 0;
 }

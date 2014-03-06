@@ -316,7 +316,7 @@ void output(int NP, int step, float* state){
 	fclose(fpXest);
 }
 
-void check(char *stateFile){
+void check(char *stateFile, int NP){
 
 	FILE *fpX;
 	FILE *fpXest;
@@ -342,11 +342,12 @@ void check(char *stateFile){
 		fscanf(fpXest, "%f %f %f\n", &x_est, &y_est, &h_est);
 		step_error = sqrt(pow(x_est-x,2)+pow(y_est-y,2));
 		total_error += step_error;
-	
-	printf("Average error: %f\n", fabs(total_error)/(NT*1.0));
-	printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*150000000.0)+((NP*SlotOfP*SS+NP*NPObj)*sizeof(float))/2000000000.0));
-	fclose(fpX);
-	fclose(fpXest);
+
+		printf("Average error: %f\n", fabs(total_error)/(NT*1.0));
+		printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*150000000.0)+((NP*slotOfP*SS+NP*NPObj)*sizeof(float))/2000000000.0));
+		fclose(fpX);
+		fclose(fpXest);
+	}
 
 }
 

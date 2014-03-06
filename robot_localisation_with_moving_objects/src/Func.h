@@ -25,7 +25,7 @@ float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, f
 void init(int NP, int slotOfAllP, char *obsrvFile, float* obsrv, char *refFile, float* ref, float* state);
 void output(int NP, int step, float* state);
 void update(int NP, float* state_current, float* state_next);
-void check(char *stateFile);
+void check(char *stateFile, int NP);
 float nrand(float sigma, int l);
 
 #endif
