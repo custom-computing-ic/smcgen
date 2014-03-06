@@ -64,6 +64,15 @@ public class KMath {
 		return KernelMath.log(new Range(0, 1), x, y);
 	}
 
+	public static DFEVar addTree(DFEVector vector, begin, end) {
+		if (begin==end){
+			return vector[begin];
+		}
+		int middle = begin + (end - begin)/2;
+		return addTree(vector,begin,middle) + addTree(vector,middle+1,end);
+	}
+
+
 	// Guassian random number generator
 	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, DFEVar std) {
 

@@ -64,5 +64,11 @@ public class Def {
 	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
 
 	// Application Parameters
+	public static int NWall = 8;
+	public static int NSensor = 20;
+
+	// Application vectors
+	DFEVectorType<DFEVar> wallType = new DFEVectorType<DFEVar>(compType, NWall);
+	DFEVectorType<DFEVar> sensorType = new DFEVectorType<DFEVar>(compType, NSensor);
 
 }

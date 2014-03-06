@@ -58,8 +58,12 @@ public class Func{
 		DFEVar obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
 
 		// Score calculation
-		DFEVar obsrvEst = est(smc,s_in);
-		DFEVar score = KMath.exp(-1*KMath.powSq(obsrvEst-obsrvHold)/(Def.S*0.5));
+		DFEVector<DFEVar> obsrvEst = est(smc,s_in);
+		DFEVector<DFEVar> base = new Def.sensorType.newInstance(smc);
+		for (int i=0; i<Def.NSensor; i++){
+			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i]);
+		}
+		DFEVar score = KMath.exp(KMath.addTree(score,0,19)/-200.0);
 		// Constaint handling
 		DFEVar succeed = obsrvEst >= 0 ? smc.constant.var(true) : smc.constant.var(false);
 		// Weight accumulation
@@ -73,23 +77,22 @@ public class Func{
 	}
 
 	/* Other user functions */
-	
+
 	// Calculate observation value based on state
-	private static DFEVar est(SmcKernel smc, DFEStruct s_in) {
+	private static DFEVector est(SmcKernel smc, DFEStruct s_in) {
 
 		DFEVar x = s_in.get("x");
 		DFEVar y = s_in.get("y");
 		DFEVar h = s_in.get("h");
-		DFEVar cos_h = KMath.cos(h);
-		DFEVar sin_h = KMath.sin(h);
+		DFEVar x_robot = Reductions.streamHold(x, idxInP===0);
+		DFEVar y_robot = Reductions.streamHold(y, idxInP===0);
+		DFEVar h_base = Reductions.streamHold(h, idxInP===0);
 
 		// Map information
-		int num_wall = 8;
-		DFEVectorType<DFEVar> vectorType = new DFEVectorType<DFEVar>(Def.compType, num_wall);
-		DFEVector<DFEVar> ax = vectorType.newInstance(smc);
-		DFEVector<DFEVar> ay = vectorType.newInstance(smc);
-		DFEVector<DFEVar> bx = vectorType.newInstance(smc);
-		DFEVector<DFEVar> by = vectorType.newInstance(smc);
+		DFEVector<DFEVar> ax = Def.wallType.newInstance(smc);
+		DFEVector<DFEVar> ay = Def.wallType.newInstance(smc);
+		DFEVector<DFEVar> bx = Def.wallType.newInstance(smc);
+		DFEVector<DFEVar> by = Def.wallType.newInstance(smc);
 		ax[0] <== smc.constant.var(Def.compType,0); ay[0] <== smc.constant.var(Def.compType,0); 
 		bx[0] <== smc.constant.var(Def.compType,0); by[0] <== smc.constant.var(Def.compType,12);
 		ax[1] <== smc.constant.var(Def.compType,0); ay[1] <== smc.constant.var(Def.compType,12); 
@@ -107,23 +110,33 @@ public class Func{
 		ax[7] <== smc.constant.var(Def.compType,12); ay[7] <== smc.constant.var(Def.compType,6); 
 		bx[7] <== smc.constant.var(Def.compType,12); by[7] <== smc.constant.var(Def.compType,12);
 
-		// Calculate distances to walls
-		DFEVector<DFEVar> dist = vectorType.newInstance(smc);
-		for (int i=0; i<num_wall; i++)
-			dist[i] <== dist2Wall(smc,x,y,cos_h,sin_h,ax[i],ay[i],bx[i],by[i]);
+		DFEVector<DFEVar> obsrvTmp = Def.sensorType.newInstance(smc);
+		DFEVector<DFEVar> obsrvEst = Def.sensorType.newInstance(smc);
+		for (int i=0; i<Def.NSensor; i++){
+			DFEVar h_curr = h_base + Def.h_step*i;
+			DFEVar cos_h = KMath.cos(h_curr);
+			DFEVar sin_h = KMath.sin(h_curr);
+			// Calculate distances to walls
+			DFEVector<DFEVar> dist = vectorType.newInstance(smc);
+			for (int j=0; j<num_wall; j++)
+				dist[j] <== dist2Obj(smc,x,y,cos_h,sin_h,ax[j],ay[j],bx[j],by[j]);
+			DFEVar dist_01 = KMath.min(dist[0],dist[1]);
+			DFEVar dist_23 = KMath.min(dist[2],dist[3]);
+			DFEVar dist_45 = KMath.min(dist[4],dist[5]);
+			DFEVar dist_67 = KMath.min(dist[6],dist[7]);
+			DFEVar dist_03 = KMath.min(dist_01,dist_23);
+			DFEVar dist_47 = KMath.min(dist_45,dist_67);
+			DFEVar dist_07 = KMath.min(dist_03,dist_47);
+			obsrvTmp[i] <== dist_07;
 
-		DFEVar dist_01 = KMath.min(dist[0],dist[1]);
-		DFEVar dist_23 = KMath.min(dist[2],dist[3]);
-		DFEVar dist_45 = KMath.min(dist[4],dist[5]);
-		DFEVar dist_67 = KMath.min(dist[6],dist[7]);
-		DFEVar dist_03 = KMath.min(dist_01,dist_23);
-		DFEVar dist_47 = KMath.min(dist_45,dist_67);
-		DFEVar dist_07 = KMath.min(dist_03,dist_47);
+			// Calculate distances to moving objects
+			obsrvEst[i] <== idxInP===0 ? obsrvTmp[i] : KMath.min(obsrvEst[i],dist2Obj(smc,x_robot,y_robot,cos_h,sin_h,x-0.2,y-0.2,x+0.2,y+0.2));
+		}
 
-		return dist_07;
+		return obsrvEst;
 	}
 
-	private static DFEVar dist2Wall(SmcKernel smc, DFEVar x, DFEVar y, DFEVar cos_h, DFEVar sin_h, DFEVar ax, DFEVar ay, DFEVar bx, DFEVar by){
+	private static DFEVar dist2Obj(SmcKernel smc, DFEVar x, DFEVar y, DFEVar cos_h, DFEVar sin_h, DFEVar ax, DFEVar ay, DFEVar bx, DFEVar by){
 
 		DFEVar dy = by-ay;
 		DFEVar dx = bx-ax;
