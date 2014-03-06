@@ -4,6 +4,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath.Range;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
 
 public class KMath {
 
@@ -64,14 +65,29 @@ public class KMath {
 		return KernelMath.log(new Range(0, 1), x, y);
 	}
 
-	public static DFEVar addTree(DFEVector vector, begin, end) {
+	public static DFEVar addTreeVector(DFEVector<DFEVar> vector, int begin, int end) {
 		if (begin==end){
 			return vector[begin];
 		}
 		int middle = begin + (end - begin)/2;
-		return addTree(vector,begin,middle) + addTree(vector,middle+1,end);
+		return addTreeVector(vector,begin,middle) + addTreeVector(vector,middle+1,end);
 	}
 
+	public static DFEVar minTreeVector(DFEVector<DFEVar> vector, int begin, int end) {
+		if (begin==end){
+			return vector[begin];
+		}
+		int middle = begin + (end - begin)/2;
+		return min(minTreeVector(vector,begin,middle),minTreeVector(vector,middle+1,end));
+	}
+
+	public static DFEVar minTreeStream(SmcKernel smc, DFEVar src, int left, int right) {
+		if (left==right){
+			return smc.stream.offset(src,-left);
+		}
+		int middle = left + (right - left)/2;
+		return min(minTreeStream(smc,src,left,middle),minTreeStream(smc,src,middle+1,right));
+	}
 
 	// Guassian random number generator
 	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, DFEVar std) {
