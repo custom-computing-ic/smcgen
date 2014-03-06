@@ -293,14 +293,17 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 }
 
 // Output particle values
-void output(int NP, int step, float* state){
+void output(int cnt, int NP, int step, float* state){
 
 	FILE *fpXest;
 
-	if(step==0)
-		fpXest = fopen("data_xest.txt", "w");
-	else
-		fpXest = fopen("data_xest.txt", "a");
+	char buf[20];
+	sprintf(buf, "data_x_est_%d.txt", cnt);
+	if(step==0){
+		fpXest = fopen(buf, "w");
+	}else{
+		fpXest = fopen(buf, "a");
+	}
 
 	float sum_x = 0;
 	float sum_y = 0;
@@ -318,36 +321,46 @@ void output(int NP, int step, float* state){
 
 void check(char *stateFile, int NP, int itl_outer){
 
-	FILE *fpX;
-	FILE *fpXest;
-	fpX = fopen(stateFile, "r");
-	fpXest = fopen("data_xest.txt", "r");
+	char buf[20];
 
-	if(!fpX){
-		printf("Failed to open the state file.\n");
-		exit(-1);
-	}
-	if(!fpXest){
-		printf("Failed to open the estimated state file.\n");
-		exit(-1);
-	}
+	float total_error = 0;
+	for (int cnt=0; cnt<NTest; cnt++){
 
-	float total_error, step_error;
-	float x, y, h;
-	float x_est, y_est, h_est;
 
-	total_error = 0;
-	for(int t=0; t<NT; t++){
-		fscanf(fpX, "%f %f %f\n", &x, &y, &h);
-		fscanf(fpXest, "%f %f %f\n", &x_est, &y_est, &h_est);
-		step_error = sqrt(pow(x_est-x,2)+pow(y_est-y,2));
-		total_error += step_error;
+		FILE *fpX;
+		fpX = fopen(stateFile, "r");
+		
+		FILE *fpXest;
+		sprintf(buf, "data_x_est_%d.txt", cnt);
+		fpXest = fopen(buf, "r");
 
-		printf("Average error: %f\n", fabs(total_error)/(NT*1.0));
-		printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*150000000.0)+((NP*slotOfP*SS+NP*NPObj)*sizeof(float))/2000000000.0));
+		if(!fpX){
+			printf("Failed to open the state file.\n");
+			exit(-1);
+		}
+		if(!fpXest){
+			printf("Failed to open the estimated state file.\n");
+			exit(-1);
+		}
+
+		float step_error;
+		float x, y, h;
+		float x_est, y_est, h_est;
+
+		for(int t=0; t<NT; t++){
+			fscanf(fpX, "%f %f %f\n", &x, &y, &h);
+			fscanf(fpXest, "%f %f %f\n", &x_est, &y_est, &h_est);
+			step_error = sqrt(pow(x_est-x,2)+pow(y_est-y,2));
+			total_error += step_error;
+
+		}
+		
 		fclose(fpX);
 		fclose(fpXest);
 	}
+
+	printf("Average error: %f\n", fabs(total_error)/(NT*NTest*1.0));
+	printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*150000000.0)+((NP*slotOfP*SS+NP*NPObj)*sizeof(float))/2000000000.0));
 
 }
 

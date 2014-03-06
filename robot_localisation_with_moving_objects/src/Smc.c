@@ -22,12 +22,13 @@ int main(int argc, char *argv[]){
 
 	int slotOfAllP = NP*slotOfP;
 	
+	dsfmt_init_gen_rand(&dsfmt, 1234);
+
 	// Read observation and reference
 	// Initialise states
 	float *obsrv = (float *)malloc(NT*NSensor*sizeof(float));
 	float *ref = (float *)malloc(NT*RS*sizeof(float));
 	float *state = (float *)malloc(slotOfAllP*SS*sizeof(float));
-	init(NP, slotOfAllP, argv[1], obsrv, argv[2], ref, state);
 
 	// Other array values
 	float *state_in = state;
@@ -36,33 +37,46 @@ int main(int argc, char *argv[]){
 	int *seed = (int *)malloc(NC*SS*16*3*sizeof(int));
 	float *obsrv_in = (float *)malloc(NSensor*sizeof(float));
 
-	for(int t=0; t<NT; t++){
-		for (int i=0; i<itl_outer; i++) {
+	for (int cnt=0; cnt<NTest; cnt++){ // Run for ten times to get the average error
+		
+		init(NP, slotOfAllP, argv[1], obsrv, argv[2], ref, state);
+		
+		for(int t=0; t<NT; t++){
+			for (int i=0; i<itl_outer; i++) {
 
-			// Determine inner loop iteration, a number divisible by NC
-			int itl_inner = 1;
-			// Allocate references of the current time step
-			ref_in[0] = ref[RS*t];
-			ref_in[1] = ref[RS*t+1];
-			// Setup seeds for FPGA random number generators
-			for(int j=0; j<NC*SS*16*3; j++)
-				seed[j] = 7-j;
-			// Allocate observation value of the current time step
-			memcpy(obsrv_in, obsrv+t*NSensor, NSensor*sizeof(float));
+				// Determine inner loop iteration, a number divisible by NC
+				int itl_inner = 1;
+				// Allocate references of the current time step
+				ref_in[0] = ref[RS*t];
+				ref_in[1] = ref[RS*t+1];
+				// Setup seeds for FPGA random number generators
+				for(int j=0; j<NC*SS*16*3; j++)
+					seed[j] = 7-j;
+				// Allocate observation value of the current time step
+				memcpy(obsrv_in, obsrv+t*NSensor, NSensor*sizeof(float));
 #ifdef Use_FPGA
-			// Invoke FPGA kernel
-			printf("Calling FPGA kernel...\n");
-			smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out);
+				// Invoke FPGA kernel
+				printf("Calling FPGA kernel...\n");
+				smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out);
 #else
-			printf("Calling CPU function...\n");
-			smcCPU(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
+				printf("Calling CPU function...\n");
+				smcCPU(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
 #endif
 
+			}
+			update(slotOfAllP, state_in, state_out);
+			output(cnt, NP, t, state_in);
 		}
-		update(slotOfAllP, state_in, state_out);
-		output(NP, t, state_in);
 	}
 	check(argv[3], NP, itl_outer);
+
+	free(obsrv);
+	free(ref);
+	free(state);
+	free(state_out);
+	free(ref_in);
+	free(seed);
+	free(obsrv_in);
 
 	return 0;
 }

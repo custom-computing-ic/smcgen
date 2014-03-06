@@ -14,20 +14,21 @@
 
 /* Number of CPU threads */
 #ifndef THREADS
-#define THREADS	4
+#define THREADS	12
 #endif
 
 /* Number of steps */
 #ifndef NT
-#define NT		10
+#define NT		1
 #endif
 
 /* Number of robot particles */
+// 16384
 #ifndef NPMin
-#define NPMin 16384
+#define NPMin 5000
 #endif
 #ifndef NPMax
-#define NPMax 16384
+#define NPMax 25000
 #endif
 
 /* Number of moving object particles per robot particles */
@@ -71,6 +72,11 @@
 /* Number of sensors on a robot */
 #ifndef NSensor
 #define NSensor 20
+#endif
+
+/* Number of test to get the average error */
+#ifndef NTest
+#define NTest 10
 #endif
 
 #define Pi 3.14159265359
