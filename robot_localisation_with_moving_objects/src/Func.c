@@ -285,8 +285,8 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
 			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}else{ // particles of the moving objects
-			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+			state[p*SS] = 8+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(18-8);
+			state[p*SS+1] = 6+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(12-6);
 			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
