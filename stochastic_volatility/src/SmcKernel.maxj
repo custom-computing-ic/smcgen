@@ -18,7 +18,7 @@ class SmcKernel extends Kernel {
 		// Setup counters
 		DFEVar itl_inner = io.scalarInput("itl_inner", dfeUInt(32)); // determined at run-time
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
-		DFEVar S = io.scalarInput("S", Def.compType); // determined at run-time
+		DFEVar S = io.scalarInput("S", Def.float_t); // determined at run-time
 		OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
 		Counter a_counter = control.count.makeCounter(
 					control.count.makeParams(
@@ -64,7 +64,7 @@ class SmcKernel extends Kernel {
 				).getCount()<3;
 		DFEVector<DFEStruct> seeds = io.input("seed_in", Def.seeds_input_t, init); // seeds for random number generators
 		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_io_t, h===0); // state input, only the first horizon (h==0) is taken from the input
-		DFEVar o_in = io.input("obsrv_in", Def.compType, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
+		DFEVar o_in = io.input("obsrv_in", Def.float_t, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
 
 		// Calculate weights
 		DFEVector<DFEStruct> particle = Def.particle_array_t.newInstance(this);

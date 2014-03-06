@@ -56,13 +56,13 @@ public class Weight2CDFKernel extends Kernel {
 		DFEVar weight_selected = (Def.NC_P==1) ? weight_buffered[0] : control.mux(KMath.modulo(p,Def.NC_P), list);
 
 		// Write CDF
-		DFEVar cdf = Def.compType.newInstance(this);
+		DFEVar cdf = Def.float_t.newInstance(this);
 		cdf <== weight_selected + (p===0 ? 0 : stream.offset(cdf, -loopSize));
 
 		// Write and read sum
-		DFEVar sum = Def.compType.newInstance(this);
+		DFEVar sum = Def.float_t.newInstance(this);
 		if (Def.NA>1){
-			Memory<DFEVar> summemo = mem.alloc(Def.compType, Def.NA);
+			Memory<DFEVar> summemo = mem.alloc(Def.float_t, Def.NA);
 			summemo.write(a.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NA-1))), cdf, p===(NP-1).cast(p.getType()) & used);
 			sum <== summemo.read(raddr.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NA-1))));
 		}else{
@@ -70,13 +70,13 @@ public class Weight2CDFKernel extends Kernel {
 		}
 
 		// Read CDF
-		Memory<DFEVar> cdfmemo = mem.alloc(Def.compType, Def.NPMax*Def.NA);
+		Memory<DFEVar> cdfmemo = mem.alloc(Def.float_t, Def.NPMax*Def.NA);
 		DFEVar waddr = (Def.NA==1) ? p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) : p.cast(dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))) # a;
 		cdfmemo.write(waddr, cdf, p!==NP.cast(p.getType()) & used);
 
 		DFEVar cdf_scaled = cdfmemo.read(raddr)/sum;
 
-		io.output("cdf", Def.compType, p===NP.cast(p.getType())) <== cdf_scaled;
+		io.output("cdf", Def.float_t, p===NP.cast(p.getType())) <== cdf_scaled;
 
 		//debug.printf("CDF: %f Sum: %f\n", cdf, sum);
 		//debug.printf(p!==NP.cast(p.getType()) & used, "waddr: %d cdf: %f\n", waddr, cdf);

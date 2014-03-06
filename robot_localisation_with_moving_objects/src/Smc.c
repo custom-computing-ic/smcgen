@@ -22,8 +22,6 @@ int main(int argc, char *argv[]){
 
 	int slotOfAllP = NP*slotOfP;
 	
-	dsfmt_init_gen_rand(&dsfmt, 1234);
-
 	// Read observation and reference
 	// Initialise states
 	float *obsrv = (float *)malloc(NT*NSensor*sizeof(float));

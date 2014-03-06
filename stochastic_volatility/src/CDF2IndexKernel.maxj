@@ -25,8 +25,8 @@ public class CDF2IndexKernel extends Kernel {
 				).getCount();
 
 		// Write weights to memory in the first NP cycles
-		DFEVar cdf_in = io.input("cdf", Def.compType, y.cast(NP.getType())!==(NP*Def.NA));
-		Memory<DFEVar> cdfmemo = mem.alloc(Def.compType, Def.NPMax*Def.NA);
+		DFEVar cdf_in = io.input("cdf", Def.float_t, y.cast(NP.getType())!==(NP*Def.NA));
+		Memory<DFEVar> cdfmemo = mem.alloc(Def.float_t, Def.NPMax*Def.NA);
 		cdfmemo.write(y.cast(dfeUInt(MathUtils.bitsToAddress(Def.NPMax*Def.NA))), cdf_in, y.cast(NP.getType())!==(NP*Def.NA));
 
 		Counter pa_counter = control.count.makeCounter(
@@ -56,15 +56,15 @@ public class CDF2IndexKernel extends Kernel {
 		k <== p===1 ? 0 : (stream.offset(k, -loopSize) + (didFind ? 0 : constant.var(k.getType(), 1))); // resampled index
 		j <== p===1 ? 0 : (stream.offset(j, -loopSize) + (didFind ? 1 : constant.var(j.getType(), 0))); // index count
 
-		DFEVar rand = io.input("rand", Def.compType, p===0 & pa < (Def.NA<4 ? 4 : Def.NA));
-		DFEVar uj = Def.compType.newInstance(this);
+		DFEVar rand = io.input("rand", Def.float_t, p===0 & pa < (Def.NA<4 ? 4 : Def.NA));
+		DFEVar uj = Def.float_t.newInstance(this);
 		if (Def.NA>1){
-			Memory<DFEVar> rmemo = mem.alloc(Def.compType, Def.NA);
+			Memory<DFEVar> rmemo = mem.alloc(Def.float_t, Def.NA);
 			rmemo.write(a, rand, p===0 & notLooping);
-			uj <== j.cast(Def.compType)/NP.cast(Def.compType) + rmemo.read(a);
+			uj <== j.cast(Def.float_t)/NP.cast(Def.float_t) + rmemo.read(a);
 		}else{
 			DFEVar randHold = Reductions.streamHold(rand, p===0 & notLooping);
-			uj <== j.cast(Def.compType)/NP.cast(Def.compType) + randHold;
+			uj <== j.cast(Def.float_t)/NP.cast(Def.float_t) + randHold;
 		}
 
 		DFEVar found = (uj < cdf);

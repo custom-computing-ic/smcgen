@@ -4,7 +4,6 @@
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
-import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
 public class Func{
@@ -68,32 +67,30 @@ public class Func{
 		DFEVar sin_h = KMath.sin(h);
 
 		// Map information
-		int num_wall = 8;
-		DFEVectorType<DFEVar> vectorType = new DFEVectorType<DFEVar>(Def.compType, num_wall);
-		DFEVector<DFEVar> ax = vectorType.newInstance(smc);
-		DFEVector<DFEVar> ay = vectorType.newInstance(smc);
-		DFEVector<DFEVar> bx = vectorType.newInstance(smc);
-		DFEVector<DFEVar> by = vectorType.newInstance(smc);
-		ax[0] <== smc.constant.var(Def.compType,0); ay[0] <== smc.constant.var(Def.compType,0); 
-		bx[0] <== smc.constant.var(Def.compType,0); by[0] <== smc.constant.var(Def.compType,12);
-		ax[1] <== smc.constant.var(Def.compType,0); ay[1] <== smc.constant.var(Def.compType,12); 
-		bx[1] <== smc.constant.var(Def.compType,18); by[1] <== smc.constant.var(Def.compType,12);
-		ax[2] <== smc.constant.var(Def.compType,18); ay[2] <== smc.constant.var(Def.compType,12); 
-		bx[2] <== smc.constant.var(Def.compType,18); by[2] <== smc.constant.var(Def.compType,0);
-		ax[3] <== smc.constant.var(Def.compType,18); ay[3] <== smc.constant.var(Def.compType,0); 
-		bx[3] <== smc.constant.var(Def.compType,0); by[3] <== smc.constant.var(Def.compType,0);
-		ax[4] <== smc.constant.var(Def.compType,0); ay[4] <== smc.constant.var(Def.compType,6); 
-		bx[4] <== smc.constant.var(Def.compType,4); by[4] <== smc.constant.var(Def.compType,6);
-		ax[5] <== smc.constant.var(Def.compType,8); ay[5] <== smc.constant.var(Def.compType,6); 
-		bx[5] <== smc.constant.var(Def.compType,16); by[5] <== smc.constant.var(Def.compType,6);
-		ax[6] <== smc.constant.var(Def.compType,6); ay[6] <== smc.constant.var(Def.compType,6); 
-		bx[6] <== smc.constant.var(Def.compType,6); by[6] <== smc.constant.var(Def.compType,12);
-		ax[7] <== smc.constant.var(Def.compType,12); ay[7] <== smc.constant.var(Def.compType,6); 
-		bx[7] <== smc.constant.var(Def.compType,12); by[7] <== smc.constant.var(Def.compType,12);
+		DFEVector<DFEVar> ax = Def.wall_t.newInstance(smc);
+		DFEVector<DFEVar> ay = Def.wall_t.newInstance(smc);
+		DFEVector<DFEVar> bx = Def.wall_t.newInstance(smc);
+		DFEVector<DFEVar> by = Def.wall_t.newInstance(smc);
+		ax[0] <== smc.constant.var(Def.float_t,0); ay[0] <== smc.constant.var(Def.float_t,0); 
+		bx[0] <== smc.constant.var(Def.float_t,0); by[0] <== smc.constant.var(Def.float_t,12);
+		ax[1] <== smc.constant.var(Def.float_t,0); ay[1] <== smc.constant.var(Def.float_t,12); 
+		bx[1] <== smc.constant.var(Def.float_t,18); by[1] <== smc.constant.var(Def.float_t,12);
+		ax[2] <== smc.constant.var(Def.float_t,18); ay[2] <== smc.constant.var(Def.float_t,12); 
+		bx[2] <== smc.constant.var(Def.float_t,18); by[2] <== smc.constant.var(Def.float_t,0);
+		ax[3] <== smc.constant.var(Def.float_t,18); ay[3] <== smc.constant.var(Def.float_t,0); 
+		bx[3] <== smc.constant.var(Def.float_t,0); by[3] <== smc.constant.var(Def.float_t,0);
+		ax[4] <== smc.constant.var(Def.float_t,0); ay[4] <== smc.constant.var(Def.float_t,6); 
+		bx[4] <== smc.constant.var(Def.float_t,4); by[4] <== smc.constant.var(Def.float_t,6);
+		ax[5] <== smc.constant.var(Def.float_t,8); ay[5] <== smc.constant.var(Def.float_t,6); 
+		bx[5] <== smc.constant.var(Def.float_t,16); by[5] <== smc.constant.var(Def.float_t,6);
+		ax[6] <== smc.constant.var(Def.float_t,6); ay[6] <== smc.constant.var(Def.float_t,6); 
+		bx[6] <== smc.constant.var(Def.float_t,6); by[6] <== smc.constant.var(Def.float_t,12);
+		ax[7] <== smc.constant.var(Def.float_t,12); ay[7] <== smc.constant.var(Def.float_t,6); 
+		bx[7] <== smc.constant.var(Def.float_t,12); by[7] <== smc.constant.var(Def.float_t,12);
 
 		// Calculate distances to walls
-		DFEVector<DFEVar> dist = vectorType.newInstance(smc);
-		for (int i=0; i<num_wall; i++)
+		DFEVector<DFEVar> dist = Def.wall_t.newInstance(smc);
+		for (int i=0; i<Def.NWall; i++)
 			dist[i] <== dist2Wall(smc,x,y,cos_h,sin_h,ax[i],ay[i],bx[i],by[i]);
 
 		return KMath.minTreeVector(dist,0,Def.NWall-1);
@@ -117,7 +114,7 @@ public class Func{
 
 		//smc.debug.printf("%f %f %f\n", x_check, y_check, dist);
 
-		return cond_e ? dist : smc.constant.var(Def.compType,99);
+		return cond_e ? dist : smc.constant.var(Def.float_t,99);
 	}
 
 }
