@@ -14,7 +14,7 @@
 
 /* Number of CPU threads */
 #ifndef THREADS
-#define THREADS	12
+#define THREADS	4
 #endif
 
 /* Number of steps */
@@ -76,7 +76,7 @@
 
 /* Number of test to get the average error */
 #ifndef NTest
-#define NTest 10
+#define NTest 5
 #endif
 
 #define Pi 3.14159265359
