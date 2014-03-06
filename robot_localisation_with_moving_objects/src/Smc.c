@@ -52,17 +52,17 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(NP,slotOfAllP,S,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out);
+			smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out);
 #else
 			printf("Calling CPU function...\n");
-			smcCPU(NP,slotOfAllP,S,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
+			smcCPU(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
 #endif
 
 		}
 		update(slotOfAllP, state_in, state_out);
 		output(NP, t, state_in);
 	}
-	check(argv[3], NP);
+	check(argv[3], NP, itl_outer);
 
 	return 0;
 }

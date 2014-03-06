@@ -15,7 +15,7 @@ extern dsfmt_t dsfmt[NPMax*slotOfP];
 /* FPGA only functions */
 
 // Call FPGA SMC core
-void smcFPGA(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out){
+void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -55,7 +55,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, floa
 /* CPU only functions */
 
 // Call CPU SMC core
-void smcCPU(int NP, int slotOfAllP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
+void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
 
@@ -316,7 +316,7 @@ void output(int NP, int step, float* state){
 	fclose(fpXest);
 }
 
-void check(char *stateFile, int NP){
+void check(char *stateFile, int NP, int itl_outer){
 
 	FILE *fpX;
 	FILE *fpXest;
