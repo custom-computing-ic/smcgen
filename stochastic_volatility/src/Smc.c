@@ -19,6 +19,8 @@ int main(int argc, char *argv[]){
 	int NP = atoi(argv[3]);
 	float S = atof(argv[4]);
 
+	dsfmt_init_gen_rand(&dsfmt, 1234);
+
 	// Read observation and control
 	// Initialise states
 	float *obsrv = (float *)malloc(NT*sizeof(float));
@@ -72,6 +74,14 @@ int main(int argc, char *argv[]){
 		output(NP, t, state_in);
 	}
 	check(argv[2]);
+
+	free(obsrv);
+	free(state);
+	free(state_out);
+	free(rand_num);
+	free(seed);
+	free(obsrv_in);
+	free(index_out);
 
 	return 0;
 }
