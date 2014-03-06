@@ -298,7 +298,7 @@ void output(int cnt, int NP, int step, float* state){
 	FILE *fpXest;
 
 	char buf[20];
-	sprintf(buf, "data_x_est_%d.txt", cnt);
+	sprintf(buf, "data_xest_%d.txt", cnt);
 	if(step==0){
 		fpXest = fopen(buf, "w");
 	}else{
@@ -331,7 +331,7 @@ void check(char *stateFile, int NP, int itl_outer){
 		fpX = fopen(stateFile, "r");
 		
 		FILE *fpXest;
-		sprintf(buf, "data_x_est_%d.txt", cnt);
+		sprintf(buf, "data_xest_%d.txt", cnt);
 		fpXest = fopen(buf, "r");
 
 		if(!fpX){
