@@ -96,15 +96,7 @@ public class Func{
 		for (int i=0; i<num_wall; i++)
 			dist[i] <== dist2Wall(smc,x,y,cos_h,sin_h,ax[i],ay[i],bx[i],by[i]);
 
-		DFEVar dist_01 = KMath.min(dist[0],dist[1]);
-		DFEVar dist_23 = KMath.min(dist[2],dist[3]);
-		DFEVar dist_45 = KMath.min(dist[4],dist[5]);
-		DFEVar dist_67 = KMath.min(dist[6],dist[7]);
-		DFEVar dist_03 = KMath.min(dist_01,dist_23);
-		DFEVar dist_47 = KMath.min(dist_45,dist_67);
-		DFEVar dist_07 = KMath.min(dist_03,dist_47);
-
-		return dist_07;
+		return KMath.minTreeVector(dist,0,Def.NWall-1);
 	}
 
 	private static DFEVar dist2Wall(SmcKernel smc, DFEVar x, DFEVar y, DFEVar cos_h, DFEVar sin_h, DFEVar ax, DFEVar ay, DFEVar bx, DFEVar by){
