@@ -117,9 +117,6 @@ public class Func{
 			obsrvTmp[i] <== Reductions.streamHold(KMath.minTreeVector(dist,0,Def.NWall-1), idxInP===0);
 
 			// Calculate distances to moving objects
-			//smc.optimization.pushPipeliningFactor(0.0);
-			//obsrvEst[i] <== weight_update ? obsrvTmp[i] : KMath.min(obsrvEst[i],dist2Obj(smc,x_robot,y_robot,cos_h,sin_h,x-0.2,y-0.2,x+0.2,y+0.2));
-			//smc.optimization.popPipeliningFactor();
 			obsrvEst[i] <== weight_update ? obsrvTmp[i] : dist2Obj(smc,x_robot,y_robot,cos_h,sin_h,x-0.2,y-0.2,x+0.2,y+0.2);
 			obsrvRtn[i] <== KMath.minTreeStream(smc,obsrvEst[i],0,Def.Obj-1);
 		}
