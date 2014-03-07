@@ -13,6 +13,7 @@ public class Def {
 
 	static final DFEType float_t = KernelLib.dfeFloat(8, 24);
 	static final DFEType fixed_t = KernelLib.dfeFixOffset(26, -20, SignMode.TWOSCOMPLEMENT);
+	static final DFEType fixed_long_t = KernelLib.dfeFixOffset(30, -20, SignMode.TWOSCOMPLEMENT);
 
 	// Seeds Type
 	public static final DFEStructType seeds_t = new DFEStructType(

@@ -1,10 +1,13 @@
 /* vim: set filetype=java : */
 /* User has to customise this file */
 
+import com.maxeler.maxcompiler.v0.utils.MathUtils;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.memory.Memory;
 
 public class Func{
 
@@ -41,19 +44,19 @@ public class Func{
 	}
 
 	/* User customised weighting function */
-	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p, DFEVar idxInP, DFEVar idxOfP, DFEVar weight_update) {
+	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p, DFEVar idxInP, DFEVar idxOfP) {
 
 		// Observation input
 		DFEVector<DFEVar> obsrv = o_in;
 		DFEVector<DFEVar> obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
 
 		// Score calculation
-		DFEVector<DFEVar> obsrvEst = est(smc,s_in,idxInP,weight_update);
+		DFEVector<DFEVar> obsrvEst = est(smc,s_in,idxInP);
 		DFEVector<DFEVar> base = Def.sensor_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
 			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i].cast(Def.fixed_t));
 		}
-		DFEVar score = KMath.exp((KMath.addTreeVector(base,0,19)/-200.0).cast(Def.float_t));
+		DFEVar score = idxInP>=Def.NWall ? KMath.exp((KMath.addTreeVector(base,0,19)/-200.0).cast(Def.float_t)) : 0;
 		// Weight accumulation
 		DFEVar weight = score*w_in;
 
@@ -67,7 +70,7 @@ public class Func{
 	/* Other user functions */
 
 	// Calculate observation value based on state
-	private static DFEVector<DFEVar> est(SmcKernel smc, DFEStruct s_in, DFEVar idxInP, DFEVar weight_update) {
+	private static DFEVector<DFEVar> est(SmcKernel smc, DFEStruct s_in, DFEVar idxInP) {
 
 		DFEVar xFloat = s_in.get("x");
 		DFEVar yFloat = s_in.get("y");
@@ -81,57 +84,58 @@ public class Func{
 		DFEVar y_robot = Reductions.streamHold(y, idxInP===0);
 		DFEVar h_base = Reductions.streamHold(h, idxInP===0);
 
-		// Map information
-		DFEVector<DFEVar> ax = Def.wall_t.newInstance(smc);
-		DFEVector<DFEVar> ay = Def.wall_t.newInstance(smc);
-		DFEVector<DFEVar> bx = Def.wall_t.newInstance(smc);
-		DFEVector<DFEVar> by = Def.wall_t.newInstance(smc);
-		ax[0] <== smc.constant.var(Def.fixed_t,0); ay[0] <== smc.constant.var(Def.fixed_t,0); 
-		bx[0] <== smc.constant.var(Def.fixed_t,0); by[0] <== smc.constant.var(Def.fixed_t,12);
-		ax[1] <== smc.constant.var(Def.fixed_t,0); ay[1] <== smc.constant.var(Def.fixed_t,12); 
-		bx[1] <== smc.constant.var(Def.fixed_t,18); by[1] <== smc.constant.var(Def.fixed_t,12);
-		ax[2] <== smc.constant.var(Def.fixed_t,18); ay[2] <== smc.constant.var(Def.fixed_t,12); 
-		bx[2] <== smc.constant.var(Def.fixed_t,18); by[2] <== smc.constant.var(Def.fixed_t,0);
-		ax[3] <== smc.constant.var(Def.fixed_t,18); ay[3] <== smc.constant.var(Def.fixed_t,0); 
-		bx[3] <== smc.constant.var(Def.fixed_t,0); by[3] <== smc.constant.var(Def.fixed_t,0);
-		ax[4] <== smc.constant.var(Def.fixed_t,0); ay[4] <== smc.constant.var(Def.fixed_t,6); 
-		bx[4] <== smc.constant.var(Def.fixed_t,4); by[4] <== smc.constant.var(Def.fixed_t,6);
-		ax[5] <== smc.constant.var(Def.fixed_t,8); ay[5] <== smc.constant.var(Def.fixed_t,6); 
-		bx[5] <== smc.constant.var(Def.fixed_t,16); by[5] <== smc.constant.var(Def.fixed_t,6);
-		ax[6] <== smc.constant.var(Def.fixed_t,6); ay[6] <== smc.constant.var(Def.fixed_t,6); 
-		bx[6] <== smc.constant.var(Def.fixed_t,6); by[6] <== smc.constant.var(Def.fixed_t,12);
-		ax[7] <== smc.constant.var(Def.fixed_t,12); ay[7] <== smc.constant.var(Def.fixed_t,6); 
-		bx[7] <== smc.constant.var(Def.fixed_t,12); by[7] <== smc.constant.var(Def.fixed_t,12);
+		// Map information in ROMs
+		double axMap[] = new double[Def.NWall];
+		double ayMap[] = new double[Def.NWall];
+		double bxMap[] = new double[Def.NWall];
+		double byMap[] = new double[Def.NWall];
+		axMap[0] = 0; 	ayMap[0] = 0;	bxMap[0] = 0; 	byMap[0] = 12;
+		axMap[1] = 0; 	ayMap[1] = 12; 	bxMap[1] = 18; 	byMap[1] = 12;
+		axMap[2] = 18; 	ayMap[2] = 12; 	bxMap[2] = 18; 	byMap[2] = 0;
+		axMap[3] = 18; 	ayMap[3] = 0; 	bxMap[3] = 0; 	byMap[3] = 0;
+		axMap[4] = 0; 	ayMap[4] = 6; 	bxMap[4] = 4; 	byMap[4] = 6;
+		axMap[5] = 8; 	ayMap[5] = 6; 	bxMap[5] = 16; 	byMap[5] = 6;
+		axMap[6] = 6; 	ayMap[6] = 6; 	bxMap[6] = 6; 	byMap[6] = 12;
+		axMap[7] = 12; 	ayMap[7] = 6; 	bxMap[7] = 12; 	byMap[7] = 12;
+		Memory<DFEVar> axRom = smc.mem.alloc(Def.fixed_t,Def.NWall);
+		axRom.setContents(axMap);
+		Memory<DFEVar> ayRom = smc.mem.alloc(Def.fixed_t,Def.NWall);
+		ayRom.setContents(ayMap);
+		Memory<DFEVar> bxRom = smc.mem.alloc(Def.fixed_t,Def.NWall);
+		bxRom.setContents(bxMap);
+		Memory<DFEVar> byRom = smc.mem.alloc(Def.fixed_t,Def.NWall);
+		byRom.setContents(byMap);
 
-		DFEVector<DFEVar> obsrvTmp = Def.sensor_t.newInstance(smc);
+		DFEVar wallCycle = idxInP < 8;
+		DFEVar addr = idxInP.cast(KernelLib.dfeUInt(MathUtils.bitsToRepresent(Def.NWall-1)));
+		DFEVar ax = wallCycle ? axRom.read(addr) : x-0.2;
+		DFEVar ay = wallCycle ? ayRom.read(addr) : y-0.2;
+		DFEVar bx = wallCycle ? bxRom.read(addr) : x+0.2;
+		DFEVar by = wallCycle ? byRom.read(addr) : y+0.2;
+
 		DFEVector<DFEVar> obsrvEst = Def.sensor_t.newInstance(smc);
-		DFEVector<DFEVar> obsrvRtn = Def.sensor_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
 			DFEVar h_curr = h_base + Def.h_step*i;
 			DFEVar cos_h = KMath.cos(h_curr);
 			DFEVar sin_h = KMath.sin(h_curr);
-			// Calculate distances to walls
-			DFEVector<DFEVar> dist = Def.wall_t.newInstance(smc);
-			for (int j=0; j<Def.NWall; j++)
-				dist[j] <== dist2Obj(smc,x,y,cos_h,sin_h,ax[j],ay[j],bx[j],by[j]);
-			obsrvTmp[i] <== Reductions.streamHold(KMath.minTreeVector(dist,0,Def.NWall-1), idxInP===0);
-
-			// Calculate distances to moving objects
-			obsrvEst[i] <== weight_update ? obsrvTmp[i] : dist2Obj(smc,x_robot,y_robot,cos_h,sin_h,x-0.2,y-0.2,x+0.2,y+0.2);
-			obsrvRtn[i] <== KMath.minTreeStream(smc,obsrvEst[i],0,Def.Obj-1);
+			DFEVar dist = dist2Obj(smc,x_robot,y_robot,cos_h,sin_h,ax,ay,bx,by);
+			// Hold distance to walls
+			DFEVar obsrvWall = Reductions.streamHold(KMath.minTreeStream(smc,dist,0,Def.NWall-1),idxInP===Def.NWall-1);
+			// Take distances to moving objects into account
+			obsrvEst[i] <== KMath.min(obsrvWall, KMath.minTreeStream(smc,dist,0,Def.Obj-1));
 		}
 
-		return obsrvRtn;
+		return obsrvEst;
 	}
 
 	private static DFEVar dist2Obj(SmcKernel smc, DFEVar x, DFEVar y, DFEVar cos_h, DFEVar sin_h, DFEVar ax, DFEVar ay, DFEVar bx, DFEVar by){
 
 		DFEVar dy = by-ay;
 		DFEVar dx = bx-ax;
-		DFEVar pa = dy * (ax-x) - dx * (ay-y);
-		DFEVar pb = dy * cos_h - dx * sin_h;
+		DFEVar pa = dy.cast(Def.fixed_long_t) * (ax-x).cast(Def.fixed_long_t) - dx.cast(Def.fixed_long_t) * (ay-y).cast(Def.fixed_long_t);
+		DFEVar pb = (dy * cos_h - dx * sin_h).cast(Def.fixed_long_t);
 		DFEVar temp = pb===0 ? 31 : pa/pb;
-		DFEVar dist = temp < 0 ? 31 : temp;
+		DFEVar dist = temp < 0 ? 31 : temp.cast(Def.fixed_t);
 		DFEVar x_check = x + dist * cos_h;
 		DFEVar y_check = y + dist * sin_h;
 		DFEVar cond_a = (x_check-ax)>=-0.01 & (x_check-bx)<=0.01;

@@ -71,11 +71,10 @@ class SmcKernel extends Kernel {
 		DFEVar idxOfP = idxOfP_counter.getCount(); // index of a robot particle
 		Counter weight_valid_counter = control.count.makeCounter(
 				control.count.makeParams(32)
-				.withEnable(idxInP!==0)
+				.withEnable(idxInP>0)
 				.withMax(Def.Obj)
 				);
-		DFEVar weight_update = weight_valid_counter.getCount()===0; // index of a robot particle
-		DFEVar weight_valid = weight_valid_counter.getCount()===Def.Obj-1; // index of a robot particle
+		DFEVar weight_valid = weight_valid_counter.getCount()===Def.Obj-1; // for weight output control
 
 		// Setup inputs
 		DFEVar init = control.count.makeCounter(
@@ -95,7 +94,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> state_out = Def.state_io_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], c_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP, S, idxOfP, idxInP, weight_update); // SMC core computation
+				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], c_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP, S, idxOfP, idxInP); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
 			if (Def.NC_inner==1){
 				DFEVar temp_w = particle[j].get("w");
@@ -132,7 +131,7 @@ class SmcKernel extends Kernel {
 		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;
 	}
 
-	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP, DFEVar S, DFEVar idxOfP, DFEVar idxInP, DFEVar weight_update){
+	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP, DFEVar S, DFEVar idxOfP, DFEVar idxInP){
 		
 		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
@@ -150,7 +149,7 @@ class SmcKernel extends Kernel {
 
 		// Weighting: calculate normalised weights of particles
 		// User please customises Func.maxj:weighting
-		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p, idxOfP, idxInP, weight_update);
+		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p, idxOfP, idxInP);
 
 		particle.get("w") <== weight;
 		particle.get("s") <== state_next;
