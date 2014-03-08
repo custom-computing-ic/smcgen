@@ -89,6 +89,13 @@ public class KMath {
 		return min(minTreeStream(smc,src,left,middle),minTreeStream(smc,src,middle+1,right));
 	}
 
+	public static DFEVar minTreeStream8(SmcKernel smc, DFEVar src) {
+		DFEVar min2 = min(src,smc.stream.offset(src, 1));
+		DFEVar min4 = min(min2,smc.stream.offset(min2, 2));
+		DFEVar min8 = min(min4,smc.stream.offset(min4, 4));
+		return min8;
+	}
+
 	// Guassian random number generator
 	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, DFEVar std) {
 

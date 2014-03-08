@@ -120,7 +120,7 @@ public class Func{
 			DFEVar sin_h = KMath.sin(h_curr);
 			DFEVar dist = dist2Obj(smc,x_robot,y_robot,cos_h,sin_h,ax,ay,bx,by);
 			// Hold distance to walls
-			DFEVar obsrvWall = Reductions.streamHold(KMath.minTreeStream(smc,dist,0,Def.NWall-1),idxInP===Def.NWall-1);
+			DFEVar obsrvWall = Reductions.streamHold(KMath.minTreeStream8(smc,dist),idxInP===Def.NWall-1);
 			// Take distances to moving objects into account
 			obsrvEst[i] <== KMath.min(obsrvWall, KMath.minTreeStream(smc,dist,0,Def.Obj-1));
 		}
@@ -132,8 +132,10 @@ public class Func{
 
 		DFEVar dy = by-ay;
 		DFEVar dx = bx-ax;
-		DFEVar pa = dy.cast(Def.fixed_long_t) * (ax-x).cast(Def.fixed_long_t) - dx.cast(Def.fixed_long_t) * (ay-y).cast(Def.fixed_long_t);
-		DFEVar pb = (dy * cos_h - dx * sin_h).cast(Def.fixed_long_t);
+		DFEVar pa = dy.cast(Def.float_t) * (ax-x).cast(Def.float_t) - dx.cast(Def.float_t) * (ay-y).cast(Def.float_t);
+		smc.optimization.pushDSPFactor(0);
+		DFEVar pb = (dy * cos_h - dx * sin_h).cast(Def.float_t);
+		smc.optimization.popDSPFactor();
 		DFEVar temp = pb===0 ? 31 : pa/pb;
 		DFEVar dist = temp < 0 ? 31 : temp.cast(Def.fixed_t);
 		DFEVar x_check = x + dist * cos_h;
