@@ -58,7 +58,7 @@ public class SmcManager extends CustomManager {
 
 		engine_interface.setScalar("SmcKernel", "itl_inner", itl_inner);
 		engine_interface.setScalar("SmcKernel", "NP", NP);
-		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
+		//engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
 		engine_interface.setScalar("SmcKernel", "S", S);
 		engine_interface.setLMemLinearWrapped("particle_mem_to_kernel",
 				engine_interface.addConstant(0),
