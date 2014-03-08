@@ -74,5 +74,6 @@ public class Def {
 	// Application vectors
 	public static final DFEVectorType<DFEVar> wall_t = new DFEVectorType<DFEVar>(fixed_t, NWall);
 	public static final DFEVectorType<DFEVar> sensor_t = new DFEVectorType<DFEVar>(fixed_t, NSensor);
+	public static final DFEVectorType<DFEVar> sensor_long_t = new DFEVectorType<DFEVar>(float_t, NSensor);
 
 }
