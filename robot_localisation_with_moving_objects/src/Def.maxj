@@ -12,6 +12,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEFix.SignMode;
 public class Def {
 
 	static final DFEType float_t = KernelLib.dfeFloat(8, 24);
+	static final DFEType float_short_t = KernelLib.dfeFloat(7,20);
 	static final DFEType fixed_t = KernelLib.dfeFixOffset(26, -20, SignMode.TWOSCOMPLEMENT);
 	static final DFEType fixed_long_t = KernelLib.dfeFixOffset(30, -20, SignMode.TWOSCOMPLEMENT);
 
