@@ -135,9 +135,9 @@ public class Func{
 		DFEVar dy = by-ay;
 		DFEVar dx = bx-ax;
 		DFEVar pa = dy.cast(Def.fixed_long_t) * (ax-x).cast(Def.fixed_long_t) - dx.cast(Def.fixed_long_t) * (ay-y).cast(Def.fixed_long_t);
-		smc.optimization.pushDSPFactor(0);
+		//smc.optimization.pushDSPFactor(0);
 		DFEVar pb = dy * cos_h - dx * sin_h;
-		smc.optimization.popDSPFactor();
+		//smc.optimization.popDSPFactor();
 		DFEVar temp = pb===0 ? 31 : pa.cast(Def.float_short_t)/pb.cast(Def.float_short_t);
 		DFEVar dist = temp < 0 ? 31 : temp.cast(Def.fixed_t);
 		DFEVar x_check = x + dist * cos_h;
