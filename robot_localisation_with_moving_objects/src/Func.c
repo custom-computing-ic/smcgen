@@ -35,7 +35,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 	for (int i=0; i<NBoard; i++){
 		actions_write[i] = malloc(sizeof(Smc_ram_actions_t));
 		actions_write[i]->param_NP = NP;
-		actions_write[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard;
+		actions_write[i]->instream_particle_mem_from_cpu = state_in + i*slotOfAllP*SS/NBoard;
 	}
 	Smc_ram_run_array(engines, actions_write); // for NBoard FPGAs
 	//Smc_ram(NP, state_in); // for one FPGA
@@ -55,7 +55,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		actions[i]->instream_ref_in = ref_in;
 		actions[i]->instream_seed_in = seed;
 		actions[i]->outstream_state_out = state_out;
-		actions[i]->outstream_weight_out = weight;
+		actions[i]->outstream_weight_out = weightObj;
 	}
 	Smc_run_array(engines, actions); // for NBoard FPGAs
 	//Smc(NP, S, itl_inner, obsrv_in, ref_in, seed, state_out, weightObj); // for one FPGA
