@@ -25,76 +25,8 @@ Springer, 2001.
 
 ### Example applications
 
-#### 1. Robot localisation
+#### 1. [Stochastic volatility] (./tree/master/stochastic_volatility)
 
-##### To view the source code, go to robot_localisation/src/
-* Application specific functions are described in `Func.maxj` and `Func.c`.
-```
-/* Func.maxj */
-/* User customised sampling function */
-public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct c_in, DFEVector<DFEVar> seeds){
-	...
-}
-/* User customised weighting function */
-public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar e_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p){
-	...
-}
-```
-* Design and system parameters are described in `Def.maxj` and `Def.h`.
-```
-/* Def.maxj */
-public class Def {
-	// State Type
-	public static final DFEStructType state_t = new DFEStructType(
-			new StructFieldType("x", compType),
-			new StructFieldType("y", compType),
-			new StructFieldType("h", compType)
-			);
-	public static int state_slot = 3;
+#### 2. [Robot localisation] (./tree/master/robot_localisation)
 
-	// Control Type
-	public static final DFEStructType control_t = new DFEStructType(
-			new StructFieldType("d", compType),
-			new StructFieldType("r", compType)
-			);
-	public static int control_slot = 2;
-
-	// Design Parameters
-	public static int NPMin = 2048;
-	public static int NPMax = 8192;
-	public static int NA = 1;
-	public static int H = 1;
-	public static double S = 0.5;
-
-	// System Parameters
-	public static int NC = 2; // Between 1 and 4 inclusive
-	public static int Clk = 200;
-	...
-}
-```
-```
-/* Def.h */
-/* Number of particles */
-#ifndef NP
-#pragma message "NP has been set to 4992"
-#define NP	4096
-#endif
-...
-```
-##### To simulate, build and run the design, got to robot_localisation/build/
-* Type `make runsim` to simulate.
-* Type `make build` to compile, it can take several hours.
-* Type `make run` to run, enjoy!
-
-
-#### 2. Stochastic volatility
-
-##### To view the source code, go to stochastic_volatility/src/
-* Application specific functions are described in `Func.maxj` and `Func.c`.
-* Design and system parameters are described in `Def.maxj` and `Def.h`.
-
-##### To simulate, build and run the design, got to stochastic_volatility/build/
-* Type `make runsim` to simulate.
-* Type `make build` to compile, it can take several hours.
-* Type `make run` to run, enjoy!
-
+#### 3. [Robot localisation with moving objects] (./tree/master/robot_localisation_with_moving_objects)
