@@ -34,16 +34,20 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 #ifdef FPGA_resampling // Do resampling on FPGA
 	
+	/*
+	// Remove comment to use onboard DRAM
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
 	Smc_ram(NP, state_in);
 	gettimeofday(&tv2, NULL);
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+	*/
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	//Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
+	Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_in, state_out);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -63,6 +67,8 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
 	float *weight_sum = (float *)malloc(NA*sizeof(float));
 
+	/*
+	// Remove comment to use onboard DRAM
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
 	Smc_ram_actions_t *actions_write[NBoard];
@@ -76,6 +82,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	gettimeofday(&tv2, NULL);
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+	*/
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
@@ -89,6 +96,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		actions[i]->instream_seed_in = seed;
 		actions[i]->outstream_state_out = state_out;
 		actions[i]->outstream_weight_out = weight;
+		actions[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard; // Comment to use onboard DRAM
 	}
 	Smc_run_array(engines, actions); // for NBoard FPGAs
 	//Smc(NP, S, itl_inner, obsrv_in, seed, state_out, weight); // for one FPGA
