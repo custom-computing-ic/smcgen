@@ -20,7 +20,7 @@ public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct r_in, 
 	...
 }
 /* User customised weighting function */
-public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
+public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p, DFEVar S) {
 	...
 }
 ```

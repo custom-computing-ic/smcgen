@@ -138,7 +138,7 @@ class SmcKernel extends Kernel {
 			Weighting: calculate normalised weights of particles
 			User please customises Func.maxj:weighting
 		*/
-		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p);
+		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p, S);
 
 		particle.get("w") <== weight;
 		particle.get("s") <== state_next;

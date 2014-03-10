@@ -1,5 +1,7 @@
-/* vim: set filetype=java : */
-/* User has to customise this file */
+/***
+	Code of application specific functions for the FPGA engine.
+	User has to customise this file.
+*/
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
@@ -7,7 +9,9 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
 public class Func{
 
-	/* User customised sampling function */
+	/***
+		User customised sampling function
+	*/
 	public static DFEStruct sampling(SmcKernel smc, DFEStruct s_in, DFEStruct seeds, DFEVar S) {
 
 		DFEStruct s_out = Def.state_t.newInstance(smc);
@@ -21,7 +25,9 @@ public class Func{
 		return s_out;
 	}
 
-	/* User customised weighting function */
+	/***
+		User customised weighting function
+	*/
 	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p) {
 
 		// State input
