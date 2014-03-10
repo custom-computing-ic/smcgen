@@ -39,6 +39,10 @@ int main(int argc, char *argv[]){
 	int *seed = (int *)malloc(NC*SS*16*3*sizeof(int));
 	float *obsrv_in = (float *)malloc(NSensor*sizeof(float));
 
+	// Load multiple FPGAs
+	max_file_t *maxfile = Smc_init();
+	max_engarray_t *engines = max_load_array(maxfile,NBoard,"*");
+
 	for (int cnt=0; cnt<NTest; cnt++){ // Run for ten times to get the average error
 		
 		init(NP, slotOfAllP, argv[1], obsrv, argv[2], ref, state);
@@ -59,7 +63,7 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 				// Invoke FPGA kernel
 				printf("Calling FPGA kernel...\n");
-				smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out);
+				smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out,maxfile,engines);
 #else
 				printf("Calling CPU function...\n");
 				smcCPU(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
@@ -71,6 +75,10 @@ int main(int argc, char *argv[]){
 		}
 	}
 	check(argv[3], NP, itl_outer);
+
+	// Release FPGA resources
+	max_unload_array(engines);
+	max_file_free(maxfile);
 
 	free(obsrv);
 	free(ref);

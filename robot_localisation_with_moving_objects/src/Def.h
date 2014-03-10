@@ -59,6 +59,11 @@
 #define NC	2
 #endif
 
+/* Number of FPGA boards */
+#ifndef NBoard
+#define NBoard	1
+#endif
+
 /* Number of state slots */
 #ifndef SS
 #define SS 3

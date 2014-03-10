@@ -61,10 +61,15 @@
 #define NA	1
 #endif
 
-/* Number of FPGA cores */
+/* Number of FPGA cores per FPGA board */
 /* NC_inner * NC_P */
 #ifndef NC
 #define NC	2
+#endif
+
+/* Number of FPGA boards */
+#ifndef NBoard
+#define NBoard	1
 #endif
 
 /* Number of state slots */
