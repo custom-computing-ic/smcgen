@@ -91,6 +91,12 @@ public class Func{
 		DFEVar x_robot = Reductions.streamHold(x, idxInP===0);
 		DFEVar y_robot = Reductions.streamHold(y, idxInP===0);
 		DFEVar h_base = Reductions.streamHold(h, idxInP===0);
+		smc.optimization.limitFanout(x, 15);
+		smc.optimization.limitFanout(y, 15);
+		smc.optimization.limitFanout(h, 15);
+		smc.optimization.limitFanout(x_robot, 15);
+		smc.optimization.limitFanout(y_robot, 15);
+		smc.optimization.limitFanout(h_base, 15);
 
 		// Map information in ROMs
 		double axMap[] = new double[Def.NWall];
