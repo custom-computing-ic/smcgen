@@ -87,7 +87,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> seeds = io.input("seed_in", Def.seeds_input_t, init); // seeds for random number generators
 		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_io_t, h===0); // state input, only the first horizon (h==0) is taken from the input
 		DFEStruct c_in = io.input("ref_in", Def.ref_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // reference input, taken once per time step
-		DFEVector<DFEVar> o_in = io.input("obsrv_in", Def.sensor_long_t, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
+		DFEVector<DFEVar> o_in = io.input("obsrv_in", Def.sensor_long_t, n===0 & h===0 & p < Def.NA); // observation input
 
 		// Calculate weights
 		DFEVector<DFEStruct> particle = Def.particle_array_t.newInstance(this);
