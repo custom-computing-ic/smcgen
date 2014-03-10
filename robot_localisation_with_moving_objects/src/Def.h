@@ -25,10 +25,10 @@
 /* Number of robot particles */
 // 16384
 #ifndef NPMin
-#define NPMin 5000
+#define NPMin 10240
 #endif
 #ifndef NPMax
-#define NPMax 25000
+#define NPMax 10240
 #endif
 
 /* Number of moving object particles per robot particles */
