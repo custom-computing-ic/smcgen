@@ -25,8 +25,8 @@ Springer, 2001.
 
 ### Example applications
 
-#### 1. [Stochastic volatility] (./tree/master/stochastic_volatility)
+#### 1. [Stochastic volatility] (stochastic_volatility)
 
-#### 2. [Robot localisation] (./tree/master/robot_localisation)
+#### 2. [Robot localisation] (robot_localisation)
 
-#### 3. [Robot localisation with moving objects] (./tree/master/robot_localisation_with_moving_objects)
+#### 3. [Robot localisation with moving objects] (robot_localisation_with_moving_objects)
