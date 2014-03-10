@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	A sequential Monte Carlo FPGA kernel.
+*/
 
 import com.maxeler.maxcompiler.v0.utils.MathUtils;
 import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
@@ -120,13 +122,17 @@ class SmcKernel extends Kernel {
 		DFEStruct state_current = Def.state_t.newInstance(this);
 		DFEStruct state_next = Def.state_t.newInstance(this);
 
-		// Sampling: calculate next state using current state
-		// User please customises Func.maxj:sampling
+		/***
+		 	Sampling: calculate next state using current state
+			User please customises Func.maxj:sampling
+		*/
 		state_current <== h===0 ? state_in : stream.offset(state_next, -1*Def.NA*Def.NPMin-Def.NA*offsetNP);
 		state_next <== Func.sampling(this, state_current, seeds, S);
 
-		// Weighting: calculate normalised weights of particles
-		// User please customises Func.maxj:weighting
+		/***
+			Weighting: calculate normalised weights of particles
+			User please customises Func.maxj:weighting
+		*/
 		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p);
 
 		particle.get("w") <== weight;

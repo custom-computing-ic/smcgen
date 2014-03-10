@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	Gaussian random number generator.
+*/
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEFix.SignMode;
@@ -9,7 +11,6 @@ import com.maxeler.maxcompiler.v2.utils.MathUtils;
 
 public class NrandomCore extends KernelLib {
 
-	//define the type
 	final DFEType b128 = dfeRawBits(128);
 	final DFEType u31 = dfeUInt(31);
 	private final DFEVar randOut;
@@ -22,29 +23,29 @@ public class NrandomCore extends KernelLib {
 	public NrandomCore(KernelLib owner, int wE, int wF, DFEVar randIn) {
 		super(owner);
 
-		//we need 42 bit for the triangle distribution, so need 41 bit for each random number
+		// Need 42 bit for the triangle distribution, so need 41 bit for each random number
 		DFEVar temp1 = randIn.slice(0, 41);
 		DFEVar temp2 = randIn.slice(41, 41);
 
 		DFEVar iTemp1 = temp1.cast( dfeUInt(41) ).cast( dfeUInt(42) );
 		DFEVar iTemp2 = temp2.cast( dfeUInt(41) ).cast( dfeUInt(42) );
 
-		//the output of the triangle distribution
+		// Output of the triangle distribution
 		DFEVar triDist = iTemp1 + iTemp2;
 
-		//temp3 is for the random threshold, need 11 bit
+		// Temp3 is for the random threshold, need 11 bit
 		DFEVar temp3 = randIn.slice(82, 11);
 		DFEVar th_rand = temp3.cast( dfeUInt(11) );
 
-		//temp4 is the one for comparing the threshold value
+		// Temp4 is the one for comparing the threshold value
 		DFEVar temp4 = randIn.slice(82+11, 25);
 		DFEVar cmp_threshold = temp4.cast( dfeUInt(25) );
 
-		//temp5 is pos / negative choice
+		// Temp5 is pos / negative choice
 		DFEVar temp5 = randIn.slice(82+11+25, 1 );
 		DFEVar neg = temp5.cast( dfeUInt(1) ).eq(0);
 
-		//the rom
+		// Rom
 		Bits[] content = new Bits[2048];
 		content[0] = new Bits(36);
 		content[0].setBits("d80e13801");
@@ -4144,7 +4145,7 @@ public class NrandomCore extends KernelLib {
 		content[2047].setBits("0000001dd");
 
 
-		//the address for the rom
+		// Address for the rom
 		DFEVar t1 = mem.rom( th_rand.cast(dfeUInt(MathUtils.bitsToAddress(2048))), dfeUInt(36), content  );
 
 		DFEVar alias = t1.slice(0, 11).cast( dfeUInt(11) );
@@ -4156,10 +4157,10 @@ public class NrandomCore extends KernelLib {
 
 		DFEVar tempOut = (head.cat( triDist )).cast(dfeFixOffset(53,-50,SignMode.UNSIGNED));
 
-		//now convert it to floating point
+		// Convert to floating point
 		DFEVar tempOut2 = tempOut.cast( dfeFloat( wE, wF ) );
 
-		//neg half of them
+		// Neg half of them
 		randOut = neg ? tempOut2 : -tempOut2;
 	}
 }

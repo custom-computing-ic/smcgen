@@ -1,6 +1,12 @@
+/***
+	Code of application specific functions for the CPU host.
+	User has to customise this file.
+*/
+
 #ifndef FUNC
 #define FUNC
 
+/*** State struct */
 typedef struct state_t
 {
 	float x;
@@ -8,6 +14,7 @@ typedef struct state_t
 	float h;
 }state_t;
 
+/*** Reference struct */
 typedef struct control_t
 {
 	float d;

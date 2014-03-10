@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	Generate resamplied particle index based on CDF from Weight2CDFKernel.
+*/
 
 import com.maxeler.maxcompiler.v0.utils.MathUtils;
 import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;

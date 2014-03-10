@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	User has to customise this file to define data types and parameters.
+*/
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
@@ -10,9 +12,10 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
 
 public class Def {
 
+	/*** Computation precision */
 	static final DFEType float_t = KernelLib.dfeFloat(8, 24);
 
-	// Seeds Type
+	/*** Seeds struct */
 	public static final DFEStructType seeds_t = new DFEStructType(
 		new StructFieldType("a", KernelLib.dfeRawBits(128)),
 		new StructFieldType("b", KernelLib.dfeRawBits(128)),
@@ -20,7 +23,7 @@ public class Def {
 	);
 	public static int seed_slot = 3;
 
-	// State Type
+	/*** State struct */
 	public static final DFEStructType state_t = new DFEStructType(
 		new StructFieldType("x", float_t),
 		new StructFieldType("y", float_t),
@@ -28,42 +31,42 @@ public class Def {
 	);
 	public static int state_slot = 3;
 
-	// Control Type
+	/*** Reference struct */
 	public static final DFEStructType ref_t = new DFEStructType(
 		new StructFieldType("d", float_t),
 		new StructFieldType("r", float_t)
 	);
 	public static int ref_slot = 2;
 
-	// Particle Type
+	/*** Particle struct */
 	public static final DFEStructType particle_t = new DFEStructType(
 		new StructFieldType("w", float_t),
 		new StructFieldType("s", state_t)
 	);
 
-	// Design Parameters
+	/*** Design Parameters */
 	public static int NPMin = 2048;
 	public static int NPMax = 8192;
 	public static int NA = 1;
 	public static int H = 1;
 	public static double S = 1;
 
-	// System Parameters
+	/*** System Parameters */
 	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
 	public static int NC_P = 2; // Parallelisation along NP, should be divisor of NP
 	public static int Clk_core = 150;
 	public static int Clk_mem = 400;
 	public static int FPGA_resampling = 0; // 1: resampling on FPGA; 0: resampling on CPU
 
+	/*** Application Parameters */
+	public static int NWall = 8;
+		
 	// Vectors for multiple cores
 	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);
 	public static final DFEVectorType<DFEStruct> particle_array_t = new DFEVectorType<DFEStruct>(particle_t,NC_inner*NC_P);
 	public static final DFEVectorType<DFEVar> weight_io_t = new DFEVectorType<DFEVar>(float_t,NC_P);
 	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
 
-	// Application Parameters
-	public static int NWall = 8;
-		
 	// Application vectors
 	public static final DFEVectorType<DFEVar> wall_t = new DFEVectorType<DFEVar>(float_t, NWall);
 

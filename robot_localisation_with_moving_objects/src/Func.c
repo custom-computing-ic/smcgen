@@ -1,3 +1,8 @@
+/***
+	Code of application specific functions for the CPU host.
+	User has to customise this file.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,9 +17,7 @@
 
 extern dsfmt_t dsfmt[NPMax*slotOfP];
 
-/* FPGA only functions */
-
-// Call FPGA SMC core
+/*** FPGA mode: Call SMC core */
 void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
@@ -52,9 +55,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 
 }
 
-/* CPU only functions */
-
-// Call CPU SMC core
+/*** CPU only mode: Call CPU SMC core */
 void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
@@ -130,7 +131,52 @@ void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int i
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
-// Resample particles
+/*** CPU only mode: Estimate sensor value (wall) */
+float estWall(float x, float y, float h){
+
+	float ax[8] = {0,0,18,18,0,8,6,12};
+	float ay[8] = {0,12,12,0,6,6,6,6};
+	float bx[8] = {0,18,18,0,4,16,6,12};
+	float by[8] = {12,12,0,0,6,6,12,12};
+
+	float min_dist = 999.9;
+	for (int i=0; i<8; i++){
+		float dist = dist2Obj(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
+		if (dist<min_dist)
+			min_dist = dist;
+	}
+	return min_dist;
+}
+
+/*** CPU only mode: Estimate sensor value (moving objects) */
+float estObj(float x, float y, float h, float ox, float oy){
+
+	return dist2Obj(x,y,cos(h),sin(h),ox-0.2,oy-0.2,ox+0.2,oy+0.2);
+}
+
+/*** CPU only mode: Calculate distance to objects */
+float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
+
+	float dy = by-ay;
+	float dx = bx-ax;
+	float pa = dy * (ax-x) - dx * (ay-y);
+	float pb = dy * cos_h - dx * sin_h;
+	float temp = (pb==0) ? 999.9 : pa/pb;
+	float dist = (temp<0) ? 999.9 : temp;
+	float x_check = x + dist * cos_h;
+	float y_check = y + dist * sin_h;
+	int cond_a = ((x_check-ax)>=-0.01 & (x_check-bx)<=0.01) ? 1 : 0;
+	int cond_b = ((x_check-ax)<=0.01 & (x_check-bx)>=-0.01) ? 1 : 0;
+	int cond_c = ((y_check-ay)>=-0.01 & (y_check-by)<=0.01) ? 1 : 0;
+	int cond_d = ((y_check-ay)<=0.01 & (y_check-by)>=-0.01) ? 1 : 0;
+
+	if ((cond_a || cond_b) && (cond_c || cond_d))
+		return dist;
+	else
+		return 999.9;
+}
+
+/*** Resample particles */
 void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 
 	// Resampling of moving object particles
@@ -163,6 +209,7 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 	memcpy(state, temp, slotOfAllP*SS*sizeof(float));
 }
 
+/*** Resample particles of moving objects */
 float resampleObj(float* state, float* weightObj){
 
 	float *sum_pdf = (float *)malloc((NPObj+1)*sizeof(float));
@@ -197,54 +244,7 @@ float resampleObj(float* state, float* weightObj){
 	return weightR;
 }
 
-// Estimate sensor value (wall)
-float estWall(float x, float y, float h){
-
-	float ax[8] = {0,0,18,18,0,8,6,12};
-	float ay[8] = {0,12,12,0,6,6,6,6};
-	float bx[8] = {0,18,18,0,4,16,6,12};
-	float by[8] = {12,12,0,0,6,6,12,12};
-
-	float min_dist = 999.9;
-	for (int i=0; i<8; i++){
-		float dist = dist2Obj(x,y,cos(h),sin(h),ax[i],ay[i],bx[i],by[i]);
-		if (dist<min_dist)
-			min_dist = dist;
-	}
-	return min_dist;
-}
-
-// Estimate sensor value (moving objects)
-float estObj(float x, float y, float h, float ox, float oy){
-
-	return dist2Obj(x,y,cos(h),sin(h),ox-0.2,oy-0.2,ox+0.2,oy+0.2);
-}
-
-// Calculate distance
-float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
-
-	float dy = by-ay;
-	float dx = bx-ax;
-	float pa = dy * (ax-x) - dx * (ay-y);
-	float pb = dy * cos_h - dx * sin_h;
-	float temp = (pb==0) ? 999.9 : pa/pb;
-	float dist = (temp<0) ? 999.9 : temp;
-	float x_check = x + dist * cos_h;
-	float y_check = y + dist * sin_h;
-	int cond_a = ((x_check-ax)>=-0.01 & (x_check-bx)<=0.01) ? 1 : 0;
-	int cond_b = ((x_check-ax)<=0.01 & (x_check-bx)>=-0.01) ? 1 : 0;
-	int cond_c = ((y_check-ay)>=-0.01 & (y_check-by)<=0.01) ? 1 : 0;
-	int cond_d = ((y_check-ay)<=0.01 & (y_check-by)>=-0.01) ? 1 : 0;
-
-	if ((cond_a || cond_b) && (cond_c || cond_d))
-		return dist;
-	else
-		return 999.9;
-}
-
-/* Common functions */
-
-// Read input files
+/*** Read input files */
 void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, float* ref, float* state){
 
 	// Read observations
@@ -292,7 +292,7 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 	}
 }
 
-// Output particle values
+/*** Output data */
 void output(int cnt, int NP, int step, float* state){
 
 	FILE *fpXest;
@@ -319,6 +319,12 @@ void output(int cnt, int NP, int step, float* state){
 	fclose(fpXest);
 }
 
+/*** Commit changes to the particles */
+void update(int slotOfAllP, float* state_current, float* state_next){
+	memcpy(state_current, state_next, slotOfAllP*SS*sizeof(float));
+}
+
+/*** Check estimated states against true states */
 void check(char *stateFile, int NP, int itl_outer){
 
 	char buf[20];
@@ -364,12 +370,7 @@ void check(char *stateFile, int NP, int itl_outer){
 
 }
 
-// Commit changes to the particles
-void update(int slotOfAllP, float* state_current, float* state_next){
-	memcpy(state_current, state_next, slotOfAllP*SS*sizeof(float));
-}
-
-// Gaussian random number generator
+/*** Gaussian random number generator */
 float nrand(float sigma, int l){
 
 	float x, y, w;

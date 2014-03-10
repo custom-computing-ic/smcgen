@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	Mathematical operators for the FPGA engine.
+*/
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath.Range;

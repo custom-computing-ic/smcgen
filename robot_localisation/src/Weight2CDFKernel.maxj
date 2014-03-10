@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	Build a CDF using weight from the SMC kernel.
+*/
 
 import java.util.ArrayList;
 import com.maxeler.maxcompiler.v0.utils.MathUtils;

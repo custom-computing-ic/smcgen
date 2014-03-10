@@ -1,3 +1,8 @@
+/***
+	Code of application specific functions for the CPU host.
+	User has to customise this file.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,9 +17,7 @@
 
 extern dsfmt_t dsfmt[NPMax];
 
-/* FPGA only functions */
-
-// Call FPGA SMC core
+/*** FPGA mode: Call SMC core */
 void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 
 	struct timeval tv1, tv2;
@@ -82,7 +85,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 }
 
-// Rearrange particles based on the resampled indices
+/*** FPGA mode: Rearrange particles based on the resampled indices */
 void resampleFPGA(int NP, float* state, int* index){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
@@ -107,9 +110,7 @@ void resampleFPGA(int NP, float* state, int* index){
 
 }
 
-/* CPU only functions */
-
-// Call CPU SMC core
+/*** CPU only mode: Call CPU SMC core */
 void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
 
 	struct timeval tv1, tv2;
@@ -141,7 +142,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
-// Estimate sensor value
+/*** CPU only mode: Estimate sensor value */
 float est(float x, float y, float h){
 	
 	float ax[8] = {0,0,18,18,0,8,6,12};
@@ -158,7 +159,7 @@ float est(float x, float y, float h){
 	return min_dist;
 }
 
-// Calculate distance to wall
+/*** CPU only mode: Calculate distance to wall */
 float dist2Wall(float x, float y, float cos_h, float sin_h, float ax, float ay, float bx, float by){
 
 	float dy = by-ay;
@@ -180,7 +181,7 @@ float dist2Wall(float x, float y, float cos_h, float sin_h, float ax, float ay, 
 		return 99.0;
 }
 
-// Resample particles
+/*** CPU only mode: Resample particles */
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
@@ -206,9 +207,7 @@ void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
 }
 
-/* Common functions */
-
-// Read input files
+/*** Read input files */
 void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, float* state){
 
 	// Read observations
@@ -249,7 +248,7 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 	}
 }
 
-// Output particle values
+/*** Output data */
 void output(int NP, int step, float* state){
 
 	FILE *fpXest;
@@ -275,6 +274,17 @@ void output(int NP, int step, float* state){
 	fclose(fpXest);
 }
 
+/*** Commit changes to the particles */
+void update(int NP, float* state_current, float* state_next){
+	for(int a=0; a<NA; a++){
+		for(int p=0; p<NP; p++){
+			for(int s=0; s<SS; s++)
+				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
+		}
+	}
+}
+
+/*** Check estimated states against true states */
 void check(char *stateFile){
 
 	FILE *fpX;
@@ -308,17 +318,7 @@ void check(char *stateFile){
 
 }
 
-// Commit changes to the particles
-void update(int NP, float* state_current, float* state_next){
-	for(int a=0; a<NA; a++){
-		for(int p=0; p<NP; p++){
-			for(int s=0; s<SS; s++)
-				state_current[p*SS*NA+a*SS+s] = state_next[p*SS*NA+a*SS+s];
-		}
-	}
-}
-
-// Gaussian random number generator
+/*** Gaussian random number generator */
 float nrand(float sigma, int l){
 
 	float x, y, w;

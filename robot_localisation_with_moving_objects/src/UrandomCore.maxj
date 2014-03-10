@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	Uniform random number generator.
+*/
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count;
@@ -8,11 +10,9 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 
 public class UrandomCore extends KernelLib {
 
-	//define the type
 	final DFEType b128 = dfeRawBits(128);
 	final DFEType b32 = dfeRawBits(32);
 
-	//randOut and init
 	private final DFEVar randOut;
 	private final DFEVar init;
 
@@ -29,7 +29,7 @@ public class UrandomCore extends KernelLib {
 	public UrandomCore(KernelLib owner, DFEVar seed) {
 		super(owner);
 
-		//create a one hot counter
+		// Create a one hot counter
 		Count.Params paramsOne = control.count.makeParams(2)
 			.withWrapMode(Count.WrapMode.STOP_AT_MAX)
 			.withMax(3);
@@ -37,7 +37,7 @@ public class UrandomCore extends KernelLib {
 
 		init = init_counter.getCount() < 3;
 
-		//the delayed version of randOut
+		// Delayed version of randOut
 		DFEVar lastRand = b128.newInstance(this);
 
 		randOut = init ? seed : (lastRand[17]^lastRand[64]^lastRand[110])

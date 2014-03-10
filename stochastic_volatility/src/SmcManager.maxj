@@ -1,4 +1,6 @@
-/* vim: set filetype=java : */
+/***
+	Manager for the sequential Monte Carlo FPGA kernel.
+*/
 
 import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
 import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
