@@ -18,7 +18,7 @@
 extern dsfmt_t dsfmt[NPMax*slotOfP];
 
 /*** FPGA mode: Call SMC core */
-void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out, maxfile_t* maxfile, max_engarray_t* engines){
+void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out, max_file_t* maxfile, max_engarray_t* engines){
 
 	struct timeval tv1, tv2;
 
@@ -37,7 +37,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		actions_write[i]->param_NP = NP;
 		actions_write[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard;
 	}
-	Smc_ram(engines, actions_write); // for NBoard FPGAs
+	Smc_ram_run_array(engines, actions_write); // for NBoard FPGAs
 	//Smc_ram(NP, state_in); // for one FPGA
 	gettimeofday(&tv2, NULL);
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
@@ -47,15 +47,15 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 	gettimeofday(&tv1, NULL);
 	Smc_actions_t *actions[NBoard];
 	for (int i=0; i<NBoard; i++){
-		action[i] = malloc(sizeof(Smc_actions_t));
-		action[i]->param_NP = NP;
-		action[i]->param_S = S;
-		action[i]->param_itl_inner = itl_inner;
-		action[i]->instream_obsrv_in = obsrv_in;
-		action[i]->instream_ref_in = ref_in;
-		action[i]->instream_seed_in = seed;
-		action[i]->outstream_state_out = state_out;
-		action[i]->outstream_weight_out = weight;
+		actions[i] = malloc(sizeof(Smc_actions_t));
+		actions[i]->param_NP = NP;
+		actions[i]->param_S = S;
+		actions[i]->param_itl_inner = itl_inner;
+		actions[i]->instream_obsrv_in = obsrv_in;
+		actions[i]->instream_ref_in = ref_in;
+		actions[i]->instream_seed_in = seed;
+		actions[i]->outstream_state_out = state_out;
+		actions[i]->outstream_weight_out = weight;
 	}
 	Smc_run_array(engines, actions); // for NBoard FPGAs
 	//Smc(NP, S, itl_inner, obsrv_in, ref_in, seed, state_out, weightObj); // for one FPGA

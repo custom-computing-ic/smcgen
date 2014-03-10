@@ -24,7 +24,7 @@ typedef struct ref_t
 #ifdef FPGA_resampling
 void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
 #else
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, maxfile_t* maxfile, max_engarray_t* engines);
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_file_t* maxfile, max_engarray_t* engines);
 #endif
 void resampleFPGA(int NP, float* state_out, int* index);
 void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out);
