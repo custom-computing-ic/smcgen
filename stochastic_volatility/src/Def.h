@@ -30,9 +30,6 @@
 
 /* Number of particles */
 // NP is from run-time argument
-//#ifndef NP
-//#define NP	6144
-//#endif
 #ifndef NPMin
 #define NPMin	96
 #endif
@@ -49,12 +46,6 @@
 #ifndef itl_outer
 #define itl_outer 1
 #endif
-
-/* Spread of Gaussian random numbers */
-// S is from run-time argument
-//#ifndef S
-//#define S	1
-//#endif
 
 /* Number of agents */
 #ifndef NA

@@ -159,7 +159,7 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
 }
 
-/*** CPU only mode: Resample particles */
+/*** Resample particles using CPU */
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));

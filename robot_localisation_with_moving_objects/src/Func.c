@@ -196,7 +196,7 @@ float dist2Obj(float x, float y, float cos_h, float sin_h, float ax, float ay, f
 		return 999.9;
 }
 
-/*** Resample particles */
+/*** Resample particles using CPU */
 void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 
 	// Resampling of moving object particles

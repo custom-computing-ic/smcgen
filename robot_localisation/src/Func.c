@@ -212,7 +212,7 @@ float dist2Wall(float x, float y, float cos_h, float sin_h, float ax, float ay, 
 		return 99.0;
 }
 
-/*** CPU only mode: Resample particles */
+/*** Resample particles using CPU */
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 
 	float *temp = (float *)malloc(NA*NP*SS*sizeof(float));
