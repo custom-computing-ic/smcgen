@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
 #ifndef FPGA_resampling
-			smcFPGA(NP,S,i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out,maxfile,engines);
+			smcFPGA(NP,S,i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out,engines);
 #else
 			smcFPGA(NP,S,i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
 #endif

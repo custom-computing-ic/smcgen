@@ -22,7 +22,7 @@ extern dsfmt_t dsfmt[NPMax];
 #ifdef FPGA_resampling
 void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 #else
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_file_t* maxfile, max_engarray_t* engines){
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_engarray_t* engines){
 #endif
 
 	struct timeval tv1, tv2;
@@ -47,7 +47,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
 	//Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
-	Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_in, state_out);
+	Smc(NP, S, itl_inner, obsrv_in, rand_num, state_in, seed, index_out, state_out);
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -69,23 +69,13 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 
 	/*
 	// Remove comment to use onboard DRAM
-	// Copy states to LMEM
-	gettimeofday(&tv1, NULL);
-	Smc_ram_actions_t *actions_write[NBoard];
+	Smc_ram_actions_t *actions_ram[NBoard];
 	for (int i=0; i<NBoard; i++){
-		actions_write[i] = malloc(sizeof(Smc_ram_actions_t));
-		actions_write[i]->param_NP = NP;
-		actions_write[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard;
+		actions_ram[i] = malloc(sizeof(Smc_ram_actions_t));
+		actions_ram[i]->param_NP = NP;
+		actions_ram[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard;
 	}
-	Smc_ram_run_array(engines, actions_write); // for NBoard FPGAs
-	//Smc_ram(NP, state_in); // for one FPGA
-	gettimeofday(&tv2, NULL);
-	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 	*/
-
-	// Invoke FPGA kernel
-	gettimeofday(&tv1, NULL);
 	Smc_actions_t *actions[NBoard];
 	for (int i=0; i<NBoard; i++){
 		actions[i] = malloc(sizeof(Smc_actions_t));
@@ -98,8 +88,19 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		actions[i]->outstream_weight_out = weight;
 		actions[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard; // Comment to use onboard DRAM
 	}
+	/*
+	// Remove comment to use onboard DRAM
+	// Copy states to LMEM
+	gettimeofday(&tv1, NULL);
+	Smc_ram_run_array(engines, actions_ram); // for NBoard FPGAs
+	gettimeofday(&tv2, NULL);
+	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+	*/
+
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
 	Smc_run_array(engines, actions); // for NBoard FPGAs
-	//Smc(NP, S, itl_inner, obsrv_in, seed, state_out, weight); // for one FPGA
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -120,6 +121,13 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
+	for (int i=0; i<NBoard; i++){
+		//free(actions_ram[i]); // Remove comment to use onboard DRAM
+		free(actions[i]);
+	}
+	free(weight);
+	free(weight_sum);
+
 #endif
 
 }
@@ -136,6 +144,8 @@ void resampleFPGA(int NP, float* state, int* index){
 		}
 	}
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
+
+	free(temp);
 }
 
 /*** CPU only mode: Call CPU SMC core */
@@ -165,6 +175,9 @@ void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, floa
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+
+	free(weight);
+	free(weight_sum);
 }
 
 /*** Resample particles using CPU */
@@ -189,6 +202,9 @@ void resampleCPU(int NP, float* state, float* weight, float* weight_sum){
 		}
 	}
 	memcpy(state, temp, sizeof(float)*NA*NP*SS);
+
+	free(temp);
+	free(sum_pdf);
 }
 
 /*** Read input files */

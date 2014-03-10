@@ -23,6 +23,7 @@ int main(int argc, char *argv[]){
 	int NP = atoi(argv[4]);
 	float S = atof(argv[5]);
 	int itl_outer = atoi(argv[6]);
+	int itl_inner;
 
 	int slotOfAllP = NP*slotOfP;
 	
@@ -38,6 +39,7 @@ int main(int argc, char *argv[]){
 	float *ref_in = (float *)malloc(RS*2*sizeof(float));
 	int *seed = (int *)malloc(NC*SS*16*3*sizeof(int));
 	float *obsrv_in = (float *)malloc(NSensor*sizeof(float));
+	float *weightObj = (float *)malloc(NP*NPObj*sizeof(float));
 
 	// Load multiple FPGAs
 	max_file_t *maxfile = Smc_init();
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]){
 			for (int i=0; i<itl_outer; i++) {
 
 				// Determine inner loop iteration, a number divisible by NC
-				int itl_inner = 1;
+				itl_inner = 1;
 				// Allocate references of the current time step
 				ref_in[0] = ref[RS*t];
 				ref_in[1] = ref[RS*t+1];
@@ -63,10 +65,10 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 				// Invoke FPGA kernel
 				printf("Calling FPGA kernel...\n");
-				smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out,maxfile,engines);
+				smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out,weightObj,engines);
 #else
 				printf("Calling CPU function...\n");
-				smcCPU(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
+				smcCPU(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,obsrv_in,state_out,weightObj);
 #endif
 
 			}
@@ -87,6 +89,7 @@ int main(int argc, char *argv[]){
 	free(ref_in);
 	free(seed);
 	free(obsrv_in);
+	free(weightObj);
 
 	return 0;
 }

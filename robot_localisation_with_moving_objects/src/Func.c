@@ -18,33 +18,16 @@
 extern dsfmt_t dsfmt[NPMax*slotOfP];
 
 /*** FPGA mode: Call SMC core */
-void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out, max_file_t* maxfile, max_engarray_t* engines){
+void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out, float* weightObj, max_engarray_t* engines){
 
 	struct timeval tv1, tv2;
 
-	float *weightObj = (float *)malloc(NP*sizeof(float));
-
-#ifdef debug
-	for(int p=0; p<NP; p++)
-		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
-#endif
-
-	// Copy states to LMEM
-	gettimeofday(&tv1, NULL);
-	Smc_ram_actions_t *actions_write[NBoard];
+	Smc_ram_actions_t *actions_ram[NBoard];
 	for (int i=0; i<NBoard; i++){
-		actions_write[i] = malloc(sizeof(Smc_ram_actions_t));
-		actions_write[i]->param_NP = NP;
-		actions_write[i]->instream_particle_mem_from_cpu = state_in + i*slotOfAllP*SS/NBoard;
+		actions_ram[i] = malloc(sizeof(Smc_ram_actions_t));
+		actions_ram[i]->param_NP = NP;
+		actions_ram[i]->instream_particle_mem_from_cpu = state_in + i*slotOfAllP*SS/NBoard;
 	}
-	Smc_ram_run_array(engines, actions_write); // for NBoard FPGAs
-	//Smc_ram(NP, state_in); // for one FPGA
-	gettimeofday(&tv2, NULL);
-	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
-
-	// Invoke FPGA kernel
-	gettimeofday(&tv1, NULL);
 	Smc_actions_t *actions[NBoard];
 	for (int i=0; i<NBoard; i++){
 		actions[i] = malloc(sizeof(Smc_actions_t));
@@ -57,8 +40,21 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		actions[i]->outstream_state_out = state_out;
 		actions[i]->outstream_weight_out = weightObj;
 	}
+#ifdef debug
+	for(int p=0; p<NP; p++)
+		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
+#endif
+
+	// Copy states to LMEM
+	gettimeofday(&tv1, NULL);
+	Smc_ram_run_array(engines, actions_ram); // for NBoard FPGAs
+	gettimeofday(&tv2, NULL);
+	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
 	Smc_run_array(engines, actions); // for NBoard FPGAs
-	//Smc(NP, S, itl_inner, obsrv_in, ref_in, seed, state_out, weightObj); // for one FPGA
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
@@ -73,17 +69,21 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
+	for (int i=0; i<NBoard; i++){
+		free(actions_ram[i]);
+		free(actions[i]);
+	}
+
 }
 
 /*** CPU only mode: Call CPU SMC core */
-void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out){
+void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out, float* weightObj){
 
 	struct timeval tv1, tv2;
 
 	float h_step = 2.0*Pi/(NSensor*1.0);
 
 	float *obsrvTmp = (float *)malloc(NP*NSensor*sizeof(float));
-	float *weightObj = (float *)malloc(NP*NPObj*sizeof(float));
 
 	gettimeofday(&tv1, NULL);
 	// Sampling
@@ -149,6 +149,9 @@ void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int i
 	gettimeofday(&tv2, NULL);
 	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("CPU function finished in %lu us.\n", (long unsigned int)kernel_time);
+
+	free(obsrvTmp);
+
 }
 
 /*** CPU only mode: Estimate sensor value (wall) */
@@ -227,6 +230,10 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 		memcpy(temp+p*slotOfP*SS, state+(k-1)*slotOfP*SS, slotOfP*SS*sizeof(float));
 	}
 	memcpy(state, temp, slotOfAllP*SS*sizeof(float));
+
+	free(weightR);
+	free(sum_pdf);
+	free(temp);
 }
 
 /*** Resample particles of moving objects */
@@ -260,6 +267,10 @@ float resampleObj(float* state, float* weightObj){
 		weightR += weightObjTmp[p];
 	}
 	memcpy(state, temp, Obj*NPObj*SS*sizeof(float));
+
+	free(sum_pdf);
+	free(temp);
+	free(weightObjTmp);
 
 	return weightR;
 }
