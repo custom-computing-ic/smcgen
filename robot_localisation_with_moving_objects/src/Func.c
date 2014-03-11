@@ -206,7 +206,7 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 	float *weightR = (float *)malloc(NP*sizeof(float));
 #pragma omp parallel for num_threads(THREADS)
 	for (int p=0; p<NP; p++){
-		weightR[p] = resampleObj(state+p*slotOfP*SS+1, weightObj+p*NPObj);
+		weightR[p] = resampleObj(state+p*slotOfP*SS+SS, weightObj+p*NPObj);
 	}
 	float weightR_sum = 0;
 	for (int p=0; p<NP; p++){

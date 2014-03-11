@@ -126,6 +126,10 @@ public class Func{
 		DFEVar ay = wallCycle ? ayRom.read(addr) : y-0.2;
 		DFEVar bx = wallCycle ? bxRom.read(addr) : x+0.2;
 		DFEVar by = wallCycle ? byRom.read(addr) : y+0.2;
+		smc.optimization.limitFanout(ax, 15);
+		smc.optimization.limitFanout(ay, 15);
+		smc.optimization.limitFanout(bx, 15);
+		smc.optimization.limitFanout(by, 15);
 
 		DFEVector<DFEVar> obsrvEst = Def.sensor_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){

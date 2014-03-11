@@ -66,11 +66,13 @@ class SmcKernel extends Kernel {
 				.withMax(Def.slotOfP)
 				);
 		DFEVar idxInP = idxInP_counter.getCount(); // index inside a robot particle
+		optimization.limitFanout(idxInP, 15);
 		Counter idxOfP_counter = control.count.makeCounter(
 				control.count.makeParams(32)
 				.withEnable(idxInP_counter.getWrap())
 				);
 		DFEVar idxOfP = idxOfP_counter.getCount(); // index of a robot particle
+		optimization.limitFanout(idxOfP, 15);
 		Counter weight_valid_counter = control.count.makeCounter(
 				control.count.makeParams(32)
 				.withEnable(idxInP>0)

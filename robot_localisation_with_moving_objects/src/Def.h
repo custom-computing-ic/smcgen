@@ -9,7 +9,7 @@
 /* FPGA usage control */
 /* enable: use FPGA; disable: use CPU for all processes */
 #ifndef Use_FPGA
-#define Use_FPGA 
+//#define Use_FPGA 
 #endif
 
 /* Number of CPU threads */
@@ -25,10 +25,10 @@
 /* Number of robot particles */
 // 16384
 #ifndef NPMin
-#define NPMin 10240
+#define NPMin 25000
 #endif
 #ifndef NPMax
-#define NPMax 10240
+#define NPMax 25000
 #endif
 
 /* Number of moving object particles per robot particles */
