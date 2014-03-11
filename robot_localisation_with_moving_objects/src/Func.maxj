@@ -120,7 +120,7 @@ public class Func{
 		Memory<DFEVar> byRom = smc.mem.alloc(Def.fixed_t,Def.NWall);
 		byRom.setContents(byMap);
 
-		DFEVar wallCycle = idxInP < 8;
+		DFEVar wallCycle = idxInP < Def.NWall;
 		DFEVar addr = idxInP.cast(KernelLib.dfeUInt(MathUtils.bitsToRepresent(Def.NWall-1)));
 		DFEVar ax = wallCycle ? axRom.read(addr) : x-0.2;
 		DFEVar ay = wallCycle ? ayRom.read(addr) : y-0.2;

@@ -69,7 +69,7 @@ class SmcKernel extends Kernel {
 				).getCount()<3;
 		DFEVector<DFEStruct> seeds = io.input("seed_in", Def.seeds_input_t, init); // seeds for random number generators
 		DFEVector<DFEStruct> s_in = io.input("state_in", Def.state_io_t, h===0); // state input, only the first horizon (h==0) is taken from the input
-		DFEStruct c_in = io.input("ref_in", Def.ref_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // reference input, taken once per time step
+		DFEStruct r_in = io.input("ref_in", Def.ref_t, n===0 & h===0 & p<=(Def.NA==1? 1 : 0)); // reference input, taken once per time step
 		DFEVar o_in = io.input("obsrv_in", Def.float_t, n===0 & h===0 & p < (Def.NA<4? 4 : Def.NA)); // observation input
 
 		// Calculate weights
@@ -79,7 +79,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> state_out = Def.state_io_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], c_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP, S); // SMC core computation
+				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], r_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP, S); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
 			if (Def.NC_inner==1){
 				DFEVar temp_w = particle[j].get("w");
@@ -116,11 +116,11 @@ class SmcKernel extends Kernel {
 		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;
 	}
 
-	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct c_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP, DFEVar S){
+	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct r_in, DFEVar o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, OffsetExpr offsetNP, DFEVar S){
 		
 		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
-		DFEStruct ref_in = getControl(a, c_in, n===0 & h===0 & p===0);
+		DFEStruct ref_in = getControl(a, r_in, n===0 & h===0 & p===0);
 		DFEVar obsrv_in = o_in;
 		DFEVar weight_in = w_in;
 
@@ -146,7 +146,7 @@ class SmcKernel extends Kernel {
 		return particle;
 	}
 
-	private DFEStruct getControl(DFEVar a, DFEStruct r_in, DFEVar write) {
+	private DFEStruct getRef(DFEVar a, DFEStruct r_in, DFEVar write) {
 		if (Def.NA>1){
 			Memory<DFEStruct> memo = mem.alloc(Def.ref_t, Def.NA);
 			DFEVar address = a;
