@@ -316,8 +316,10 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
 			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}else{ // particles of the moving objects
-			state[p*SS] = 8+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(18-8);
-			state[p*SS+1] = 6+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(12-6);
+			//state[p*SS] = 8+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(18-8);
+			//state[p*SS+1] = 6+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(12-6);
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
 			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
@@ -397,7 +399,7 @@ void check(char *stateFile, int NP, int itl_outer){
 	}
 
 	printf("Average error: %f\n", fabs(total_error)/(NT*NTest*1.0));
-	printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*150000000.0)+((NP*slotOfP*SS+NP*NPObj)*sizeof(float))/2000000000.0));
+	printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*100000000.0)+((NP*slotOfP*SS+NP*NPObj)*sizeof(float))/1500000000.0)*1.5);
 
 }
 
