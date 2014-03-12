@@ -1,6 +1,6 @@
 ### About
 
-This is a simple example of using the SMC engine for localisation of a mobile robot.
+This is a simple example of using the SMC engine for localisation of a mobile robot in an environment with moving objects.
 
 ### Input
 
