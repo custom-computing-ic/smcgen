@@ -50,13 +50,12 @@ public class Func{
 	/***
 		User customised weighting function
 	*/
-	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p, DFEVar idxInP, DFEVar idxOfP) {
+	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p, DFEVar idxInP) {
 
 		// Observation input
 		DFEVector<DFEVar> obsrv = Def.sensor_fixed_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
 			obsrv[i] <== o_in[i].cast(Def.fixed_t);
-			smc.optimization.limitFanout(obsrv[i], 10);
 		}
 		DFEVector<DFEVar> obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
 
@@ -65,7 +64,6 @@ public class Func{
 		DFEVector<DFEVar> base = Def.sensor_fixed_long_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
 			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i]).cast(Def.fixed_long_t);
-			smc.optimization.limitFanout(base[i], 10);
 		}
 		DFEVar score = idxInP>=Def.NWall ? KMath.exp((KMath.addTreeVector(base,0,19)/-200.0).cast(Def.float_t)) : 0;
 		// Weight accumulation
@@ -94,12 +92,12 @@ public class Func{
 		DFEVar x_robot = Reductions.streamHold(x, idxInP===0);
 		DFEVar y_robot = Reductions.streamHold(y, idxInP===0);
 		DFEVar h_base = Reductions.streamHold(h, idxInP===0);
-		smc.optimization.limitFanout(x, 15);
-		smc.optimization.limitFanout(y, 15);
-		smc.optimization.limitFanout(h, 15);
-		smc.optimization.limitFanout(x_robot, 15);
-		smc.optimization.limitFanout(y_robot, 15);
-		smc.optimization.limitFanout(h_base, 15);
+		smc.optimization.limitFanout(x, 20);
+		smc.optimization.limitFanout(y, 20);
+		smc.optimization.limitFanout(h, 20);
+		smc.optimization.limitFanout(x_robot, 20);
+		smc.optimization.limitFanout(y_robot, 20);
+		smc.optimization.limitFanout(h_base, 20);
 
 		// Map information in ROMs
 		double axMap[] = new double[Def.NWall];
@@ -129,10 +127,10 @@ public class Func{
 		DFEVar ay = wallCycle ? ayRom.read(addr) : y-0.2;
 		DFEVar bx = wallCycle ? bxRom.read(addr) : x+0.2;
 		DFEVar by = wallCycle ? byRom.read(addr) : y+0.2;
-		smc.optimization.limitFanout(ax, 15);
-		smc.optimization.limitFanout(ay, 15);
-		smc.optimization.limitFanout(bx, 15);
-		smc.optimization.limitFanout(by, 15);
+		smc.optimization.limitFanout(ax, 20);
+		smc.optimization.limitFanout(ay, 20);
+		smc.optimization.limitFanout(bx, 20);
+		smc.optimization.limitFanout(by, 20);
 
 		DFEVector<DFEVar> obsrvEst = Def.sensor_fixed_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
@@ -144,7 +142,6 @@ public class Func{
 			DFEVar obsrvWall = Reductions.streamHold(KMath.minTreeStream8(smc,dist),idxInP===Def.NWall-1);
 			// Take distances to moving objects into account
 			obsrvEst[i] <== KMath.min(obsrvWall, KMath.minTreeStream(smc,dist,0,Def.Obj-1));
-			smc.optimization.limitFanout(obsrvEst[i], 10);
 		}
 
 		return obsrvEst;
