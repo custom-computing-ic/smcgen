@@ -53,16 +53,16 @@ public class Func{
 	public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEVar n, DFEVar h, DFEVar p, DFEVar idxInP, DFEVar idxOfP) {
 
 		// Observation input
-		DFEVector<DFEVar> obsrv = Def.sensor_t.newInstance(smc);
+		DFEVector<DFEVar> obsrv = Def.sensor_fixed_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++)
 			obsrv[i] <== o_in[i].cast(Def.fixed_t);
 		DFEVector<DFEVar> obsrvHold = Reductions.streamHold(obsrv, n===0 & h===0 & p===0);
 
 		// Score calculation
 		DFEVector<DFEVar> obsrvEst = est(smc,s_in,idxInP);
-		DFEVector<DFEVar> base = Def.sensor_t.newInstance(smc);
+		DFEVector<DFEVar> base = Def.sensor_fixed_long_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
-			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i]);
+			base[i] <== KMath.abs(obsrvEst[i]-obsrvHold[i]).cast(Def.fixed_long_t);
 		}
 		DFEVar score = idxInP>=Def.NWall ? KMath.exp((KMath.addTreeVector(base,0,19)/-200.0).cast(Def.float_t)) : 0;
 		// Weight accumulation
@@ -131,7 +131,7 @@ public class Func{
 		smc.optimization.limitFanout(bx, 15);
 		smc.optimization.limitFanout(by, 15);
 
-		DFEVector<DFEVar> obsrvEst = Def.sensor_t.newInstance(smc);
+		DFEVector<DFEVar> obsrvEst = Def.sensor_fixed_t.newInstance(smc);
 		for (int i=0; i<Def.NSensor; i++){
 			DFEVar h_curr = h_base + Def.h_step*i;
 			DFEVar cos_h = KMath.cos(h_curr);
