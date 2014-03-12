@@ -1,16 +1,16 @@
-## About
+### About
 
 This is a simple example of using the SMC engine for localisation of a mobile robot.
 
-## Input
+### Input
 
  * `src/data_y.txt` - observations (sensor readings), based on true states (positions) `src/data_x.txt`.
 
-## Output
+### Output
 
  * `build/data_xest.txt` - estimated states.
 
-## Functions
+### Functions
 
  * Application specific functions are described in `src/Func.maxj` and `src/Func.c`.
 ```
@@ -37,7 +37,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 ...
 ```
 
-## Paramters
+### Paramters
 
 * Design and system parameters are described in `src/Def.maxj` and `src/Def.h`.
 ```
@@ -177,7 +177,7 @@ public class Def {
 #endif
 ```
 
-## How to run
+### How to run
 
  * Simulation:
  	* `make runsim`
