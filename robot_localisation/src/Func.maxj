@@ -32,7 +32,7 @@ public class Func{
 		s_out.get("h") <== h + KMath.nrand(smc, seed_c, rot, S*0.1);
 
 		// Uncomment the line below for debugging
-		//smc.debug.printf("Position: %f %f %f\n", x, y, h);
+		//smc.debug.simPrintf("Position: %f %f %f\n", x, y, h);
 
 		return s_out;
 	}
@@ -55,8 +55,8 @@ public class Func{
 		DFEVar weight = succeed ? score*w_in : 0;
 
 		// Uncomment the line below for debugging
-		//smc.debug.printf("Score: %f\n", obsrvEst);
-		//smc.debug.printf("Weight %f\n", weight);
+		//smc.debug.simPrintf("Score: %f\n", obsrvEst);
+		//smc.debug.simPrintf("Weight %f\n", weight);
 
 		return weight;
 	}
@@ -120,7 +120,7 @@ public class Func{
 		DFEVar cond_d = (y_check-ay)<=0.01 & (y_check-by)>=-0.01;
 		DFEVar cond_e = ((cond_a | cond_b) & (cond_c | cond_d));
 
-		//smc.debug.printf("%f %f %f\n", x_check, y_check, dist);
+		//smc.debug.simPrintf("%f %f %f\n", x_check, y_check, dist);
 
 		return cond_e ? dist : smc.constant.var(Def.float_t,99);
 	}

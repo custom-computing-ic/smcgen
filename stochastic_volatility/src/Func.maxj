@@ -43,7 +43,7 @@ public class Func{
 		// Weight accumulation
 		DFEVar weight = score*w_in;
 
-		//smc.debug.printf("Obsrv_in: %f State: %f Var: %f Score: %f\n", obsrvHold, state, KMath.exp(state/2.0), score);
+		//smc.debug.simPrintf("Obsrv_in: %f State: %f Var: %f Score: %f\n", obsrvHold, state, KMath.exp(state/2.0), score);
 		
 		return weight;
 
