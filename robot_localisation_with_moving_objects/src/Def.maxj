@@ -18,6 +18,7 @@ public class Def {
 	static final DFEType float_short_t = KernelLib.dfeFloat(7,20);
 	static final DFEType fixed_t = KernelLib.dfeFixOffset(26, -20, SignMode.TWOSCOMPLEMENT);
 	static final DFEType fixed_long_t = KernelLib.dfeFixOffset(30, -20, SignMode.TWOSCOMPLEMENT);
+	static final DFEType fixed_longlong_t = KernelLib.dfeFixOffset(36, -20, SignMode.TWOSCOMPLEMENT);
 
 	/*** Seeds struct */
 	public static final DFEStructType seeds_t = new DFEStructType(
@@ -56,7 +57,7 @@ public class Def {
 
 	/*** System Parameters */
 	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
-	public static int NC_P = 2; // Parallelisation along NP, should be divisor of NP
+	public static int NC_P = 1; // Parallelisation along NP, should be divisor of NP
 	public static int Clk_core = 100;
 	public static int Clk_mem = 333;
 
@@ -76,8 +77,8 @@ public class Def {
 
 	// Application vectors
 	public static final DFEVectorType<DFEVar> wall_t = new DFEVectorType<DFEVar>(fixed_t, NWall);
-	public static final DFEVectorType<DFEVar> sensor_fixed_t = new DFEVectorType<DFEVar>(fixed_t, NSensor);
-	public static final DFEVectorType<DFEVar> sensor_fixed_long_t = new DFEVectorType<DFEVar>(fixed_long_t, NSensor);
 	public static final DFEVectorType<DFEVar> sensor_float_t = new DFEVectorType<DFEVar>(float_t, NSensor);
+	public static final DFEVectorType<DFEVar> sensor_fixed_t = new DFEVectorType<DFEVar>(fixed_t, NSensor);
+	public static final DFEVectorType<DFEVar> sensor_fixed_longlong_t = new DFEVectorType<DFEVar>(fixed_longlong_t, NSensor);
 
 }

@@ -92,7 +92,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> state_out = Def.state_io_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], r_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, /*offsetNP,*/ S, idxInP); // SMC core computation
+				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], r_in, o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, /*offsetNP,*/ S, idxInP, weight_valid); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
 			if (Def.NC_inner==1){
 				DFEVar temp_w = particle[j].get("w");
@@ -129,7 +129,7 @@ class SmcKernel extends Kernel {
 		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;
 	}
 
-	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct r_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, /*OffsetExpr offsetNP,*/ DFEVar S, DFEVar idxInP){
+	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct r_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, /*OffsetExpr offsetNP,*/ DFEVar S, DFEVar idxInP, DFEVar weight_valid){
 		
 		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
@@ -151,7 +151,7 @@ class SmcKernel extends Kernel {
 			Weighting: calculate normalised weights of particles
 			User please customises Func.maxj:weighting
 		*/
-		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, n, h, p, idxInP);
+		DFEVar weight = Func.weighting(this, state_next, obsrv_in, weight_in, S, n, h, p, idxInP, weight_valid);
 
 		particle.get("w") <== weight;
 		particle.get("s") <== state_next;
