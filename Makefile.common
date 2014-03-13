@@ -38,6 +38,26 @@ JFLAGS=-cp $(MAXCOMPILERDIR)/lib/MaxCompiler.jar -1.6 -d .
 CFLAGS=-std=c99 -openmp -Wall -I${MAXCOMPILERDIR}/include -I${MAXCOMPILERDIR}/include/slic -I${MAXELEROSDIR}/include $(OTHERCFLAGS) -D_XOPEN_SOURCE=600
 LFLAGS=-L${MAXCOMPILERDIR}/lib -L${MAXELEROSDIR}/lib -lmaxeleros -lslic -lm -lpthread -openmp
 
+# ---- Default DFE ----
+DFEID=/dev/maxeler0
+
+#  # Files to remove on clean
+TRASH=*~ ../src/*~
+DIST_TRASH_SIM=Maxfiles.h *.class *sim.o *simc.o debug*
+DIST_TRASH_DFE=Maxfiles.h *.class *dfe.o *dfec.o debug*
+
+help:
+	@ echo "Available targets: "
+	@ echo "   runsim   -- build and run design in simulation (requires MaxCompiler license)"
+	@ echo "   stopsim  -- stop the currently running simulated device"
+	@ echo "   build    -- build the design in hardware (requires MaxCompiler license)"
+	@ echo "   run      -- run design in hardware (requires local access to a DFE)"
+	@ echo "   debug    -- debug a simulation design using MaxDebug"
+	@ echo "   debughw  -- debug a hardware design using MaxDebug (requries local access to DFE)"
+	@ echo "   help     -- print this help message"
+	@ echo "   cleansim, cleandfe, clean -- clean executables for simulation, hardware or both"
+	@ echo "   distcleansim, distcleanhw, distclean -- delete the entire sim, hw or both directories"
+
 all: runsim build
 
 .PHONY: stopsim run cleansim cleandfe debug debughw
@@ -102,20 +122,18 @@ run:
 # ---- Clean ----
 
 cleansim:
-	rm -f $(PRJ)_sim *~ ../src/*~
+	rm -f $(PRJ)_sim $(TRASH)
 
 cleandfe:
-	rm -f $(PRJ)_dfe *~ ../src/*~
+	rm -f $(PRJ)_dfe $(TRASH)
 
 clean: cleansim cleandfe
 
 distcleansim: cleansim
-	rm -f Maxfiles.h *.class *sim.o *simc.o
-	rm -rf $(PRJ)_$(DFEModel)_DFE_SIM
+	rm -rf $(DIST_TRASH_SIM) $(PRJ)_$(DFEModel)_DFE_SIM
 
 distcleandfe: cleandfe
-	rm -f Maxfiles.h *.class *.o *dfe.o *dfec.o
-	rm -rf $(PRJ)_$(DFEModel)_DFE
+	rm -rf $(DIST_TRASH_DFE) $(PRJ)_$(DFEModel)_DFE
 
 distclean: distcleansim distcleandfe
 
@@ -127,4 +145,4 @@ debug:
 	maxdebug -v -g $(PRJ)Graph -s $(PRJ)Graph -c -k $(KERNEL) -d $(USER)a0:$(USER)a $(SIMMAXDIR)/$(PRJ).max
 
 debughw:
-	maxdebug -v -g $(PRJ)Graph -s $(PRJ)Graph -c -k $(KERNEL) -d /dev/maxeler0 $(DFEMAXDIR)/$(PRJ).max
+	maxdebug -v -g $(PRJ)Graph -s $(PRJ)Graph -c -k $(KERNEL) -d $(DFEID) $(DFEMAXDIR)/$(PRJ).max
