@@ -56,7 +56,7 @@
 /* Number of FPGA cores */
 /* NC_inner * NC_P */
 #ifndef NC
-#define NC	1
+#define NC	2
 #endif
 
 /* Number of FPGA boards */
