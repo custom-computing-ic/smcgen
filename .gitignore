@@ -2,6 +2,7 @@
 */build/*
 !*/build/Makefile
 */optimiser
+*/test*
 
 # Ignore temporary files
 *~
