@@ -62,9 +62,11 @@ public class Func{
 		// Score calculation
 		DFEVector<DFEVar> obsrvEst = est(smc,s_in,idxInP, weight_valid);
 		DFEVector<DFEVar> base = Def.sensor_fixed_longlong_t.newInstance(smc);
+		//smc.optimization.pushDSPFactor(0);
 		for (int i=0; i<Def.NSensor; i++){
-			base[i] <== KMath.powSq(obsrvEst[i].cast(Def.fixed_longlong_t)-obsrvHold[i].cast(Def.fixed_longlong_t));
+			base[i] <== KMath.powSq((obsrvEst[i]-obsrvHold[i]).cast(Def.fixed_longlong_t));
 		}
+		//smc.optimization.popDSPFactor();
 		DFEVar sum = KMath.addTreeVector(base,0,19).cast(Def.float_t);
 		DFEVar score = idxInP>=Def.NWall ? KMath.exp(sum/-10.0*Def.NSensor*S) : 0;
 		// Weight accumulation
