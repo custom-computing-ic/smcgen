@@ -18,7 +18,7 @@ public class Def {
 	static final DFEType float_short_t = KernelLib.dfeFloat(7,20);
 	static final DFEType fixed_t = KernelLib.dfeFixOffset(26, -20, SignMode.TWOSCOMPLEMENT);
 	static final DFEType fixed_long_t = KernelLib.dfeFixOffset(30, -20, SignMode.TWOSCOMPLEMENT);
-	static final DFEType fixed_longlong_t = KernelLib.dfeFixOffset(36, -20, SignMode.TWOSCOMPLEMENT);
+	static final DFEType fixed_longlong_t = KernelLib.dfeFixOffset(30, -20, SignMode.TWOSCOMPLEMENT);
 
 	/*** Seeds struct */
 	public static final DFEStructType seeds_t = new DFEStructType(
