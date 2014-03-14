@@ -127,6 +127,14 @@ class SmcKernel extends Kernel {
 		}
 		io.output("weight_out", Def.weight_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1) & weight_valid) <== weight_out;
 		io.output("state_out", Def.state_io_t, n.cast(dfeUInt(32))===(KMath.ceil(itl_inner/(Def.NC_inner*1.0))-1) & h===(Def.H-1)) <== state_out;
+
+
+		DFEVar test_x = s_in[0].get("x");
+		DFEVar test_y = s_in[0].get("y");
+		
+		// Uncomment the line below for debugging
+		//debug.simPrintf(weight_valid, "(%f, %f) %f\n", Reductions.streamHold(test_x,idxInP===0), Reductions.streamHold(test_y,idxInP===0), weight_out[0]);
+		debug.dfePrintf(weight_valid, "(%f, %f) %f\n", Reductions.streamHold(test_x,idxInP===0), Reductions.streamHold(test_y,idxInP===0), weight_out[0]);
 	}
 
 	private DFEStruct SmcCore(DFEStruct s_in, DFEStruct r_in, DFEVector<DFEVar> o_in, DFEVar w_in, DFEStruct seeds, DFEVar n, DFEVar h, DFEVar p, DFEVar a, /*OffsetExpr offsetNP,*/ DFEVar S, DFEVar idxInP, DFEVar weight_valid){

@@ -210,7 +210,6 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 #ifdef debug
 		printf("(%f %f) %f\n", *(state+p*slotOfP*SS), *(state+p*slotOfP*SS+1), weightR[p]);
 #endif
-		printf("(%f %f) %f\n", *(state+p*slotOfP*SS), *(state+p*slotOfP*SS+1), weightR[p]);
 	}
 	float weightR_sum = 0;
 	for (int p=0; p<NP; p++){
@@ -316,16 +315,13 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 	for (int p=0; p<slotOfAllP; p++){
 		int idxInP = p%slotOfP; // Index inside a particle
 		if (idxInP==0){ // robot particles
-			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*8;//18;
-			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*8;//12;
-			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*3;//18;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*3;//12;
+			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*0;//2*Pi;
 		}else{ // particles of the moving objects
-			state[p*SS] = 8+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(18-8);
-			state[p*SS+1] = 6+((float) dsfmt_genrand_close_open(&dsfmt[p]))*(12-6);
-			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
-			//state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-			//state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
-			//state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS] = 18;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS+1] = 12;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
 }
