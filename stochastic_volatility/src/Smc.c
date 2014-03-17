@@ -28,13 +28,13 @@ int main(int argc, char *argv[]){
 	// Other array values
 	float *state_in = state;
 	float *state_out = (float *)malloc(NA*NP*SS*sizeof(float));
-#if defined NA==1 || defined NA==2 || defined NA==3
+#if NA==1 || NA==2 || NA==3
 	float *rand_num = (float *)malloc(4*sizeof(float));
 #else
 	float *rand_num = (float *)malloc(NA*sizeof(float));
 #endif
 	int *seed = (int *)malloc(NC*SS*16*3*sizeof(int));
-#if defined NA==1 || defined NA==2 || defined NA==3
+#if NA==1 || NA==2 || NA==3
 	float *obsrv_in = (float *)malloc(4*sizeof(float));
 #else
 	float *obsrv_in = (float *)malloc(NA*sizeof(float));

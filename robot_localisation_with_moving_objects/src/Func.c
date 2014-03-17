@@ -62,11 +62,15 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 	// Resample particles
 	gettimeofday(&tv1, NULL);
 	if(outer_idx==itl_outer-1){
+#if NC>1
 		orderParticles(NP, state_out, weightObj);
+#endif
 		resampleCPU(NP, slotOfAllP, state_out, weightObj);
 	}
 	else{
+#if NC>1
 		orderParticles(NP, state_in, weightObj);
+#endif
 		resampleCPU(NP, slotOfAllP, state_in, weightObj);
 	}
 	gettimeofday(&tv2, NULL);
