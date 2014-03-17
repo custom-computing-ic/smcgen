@@ -54,6 +54,9 @@ DEBUG_FLAGS?=
 
 ALL_FLAGS = $(CFLAGS) $(EXTRA_CFLAGS) $(DEBUG_FLAGS)
 
+# ---- Run-time arguments ----
+ARGS?=
+
 # ---- Default DFE ----
 DFEID=/dev/maxeler0
 
