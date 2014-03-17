@@ -65,6 +65,7 @@ int main(int argc, char *argv[]){
 #ifdef Use_FPGA
 				// Invoke FPGA kernel
 				printf("Calling FPGA kernel...\n");
+				reOrderParticles(NP, state_in);
 				smcFPGA(NP,slotOfAllP,S,itl_outer,i,itl_inner,state_in,ref_in,seed,obsrv_in,state_out,weightObj,engines);
 #else
 				printf("Calling CPU function...\n");

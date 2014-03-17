@@ -61,10 +61,14 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 
 	// Resample particles
 	gettimeofday(&tv1, NULL);
-	if(outer_idx==itl_outer-1)
+	if(outer_idx==itl_outer-1){
+		orderParticles(NP, state_out, weightObj);
 		resampleCPU(NP, slotOfAllP, state_out, weightObj);
-	else
+	}
+	else{
+		orderParticles(NP, state_in, weightObj);
 		resampleCPU(NP, slotOfAllP, state_in, weightObj);
+	}
 	gettimeofday(&tv2, NULL);
 	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
@@ -74,6 +78,41 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		free(actions[i]);
 	}
 
+}
+
+void orderParticles(int NP, float* state, float* weightObj){
+	float *temp = (float *)malloc(NP*slotOfP*SS*sizeof(float));
+	float *tempW = (float *)malloc(NP*NPObj*sizeof(float));
+	for(int i=0; i<NP/NC; i=i+NC){
+		for(int j=0; j<slotOfP; j++){
+			for(int k=0; k<NC; k++){
+				temp[(i+k)*slotOfP*SS+j*SS]  = state[i*slotOfP*SS*NC+j*NC*SS+k*SS]; 	
+				temp[(i+k)*slotOfP*SS+j*SS+1] = state[i*slotOfP*SS*NC+j*NC*SS+k*SS+1];
+				temp[(i+k)*slotOfP*SS+j*SS+2] = state[i*slotOfP*SS*NC+j*NC*SS+k*SS+2];
+			}
+		}
+		for(int j=0; j<NPObj; j++){
+			for(int k=0; k<NC; k++){
+				tempW[(i+k)*NPObj+j] = weightObj[i*NPObj*NC+j*NC+k];
+			}
+		}
+	}
+	memcpy(state, temp, NP*slotOfP*SS*sizeof(float));
+	memcpy(weightObj, tempW, NP*NPObj*sizeof(float));
+}
+
+void reOrderParticles(int NP, float* state){
+	float *temp = (float *)malloc(NP*slotOfP*SS*sizeof(float));
+	for(int i=0; i<NP/NC; i=i+NC){
+		for(int j=0; j<slotOfP; j++){
+			for(int k=0; k<NC; k++){
+				temp[i*slotOfP*SS*NC+j*NC*SS+k*SS] 	 = state[(i+k)*slotOfP*SS+j*SS];
+				temp[i*slotOfP*SS*NC+j*NC*SS+k*SS+1] = state[(i+k)*slotOfP*SS+j*SS+1];
+				temp[i*slotOfP*SS*NC+j*NC*SS+k*SS+2] = state[(i+k)*slotOfP*SS+j*SS+2];
+			}
+		}
+	}
+	memcpy(state, temp, NP*slotOfP*SS*sizeof(float));
 }
 
 /*** CPU only mode: Call CPU SMC core */
@@ -315,13 +354,13 @@ void init(int NP, int slotOfAllP, char* obsrvFile, float* obsrv, char* refFile, 
 	for (int p=0; p<slotOfAllP; p++){
 		int idxInP = p%slotOfP; // Index inside a particle
 		if (idxInP==0){ // robot particles
-			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*3;//18;
-			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*3;//12;
-			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*0;//2*Pi;
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}else{ // particles of the moving objects
-			state[p*SS] = 18;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
-			state[p*SS+1] = 12;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
-			state[p*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
+			state[p*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
 }

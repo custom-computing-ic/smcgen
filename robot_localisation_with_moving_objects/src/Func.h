@@ -22,6 +22,8 @@ typedef struct ref_t
 }ref_t;
 
 void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, int* seed, float* obsrv_in, float* state_out, float* weightObj, max_engarray_t* engines);
+void orderParticles(int NP, float* state, float* weightObj);
+void reOrderParticles(int NP, float* state);
 void resampleFPGA(int NP, float* state_out, int* index);
 void smcCPU(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out, float* weightObj);
 void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj);
