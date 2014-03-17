@@ -80,15 +80,14 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 
 }
 
+/*** FPGA only mode: arrange particle in order accepted by FPGA kernel when NC>=2 */
 void orderParticles(int NP, float* state, float* weightObj){
 	float *temp = (float *)malloc(NP*slotOfP*SS*sizeof(float));
 	float *tempW = (float *)malloc(NP*NPObj*sizeof(float));
 	for(int i=0; i<NP/NC; i=i+NC){
 		for(int j=0; j<slotOfP; j++){
 			for(int k=0; k<NC; k++){
-				temp[(i+k)*slotOfP*SS+j*SS]  = state[i*slotOfP*SS*NC+j*NC*SS+k*SS]; 	
-				temp[(i+k)*slotOfP*SS+j*SS+1] = state[i*slotOfP*SS*NC+j*NC*SS+k*SS+1];
-				temp[(i+k)*slotOfP*SS+j*SS+2] = state[i*slotOfP*SS*NC+j*NC*SS+k*SS+2];
+				memcpy(temp+(i+k)*slotOfP*SS+j*SS, state+i*slotOfP*SS*NC+j*NC*SS+k*SS, SS*sizeof(float));
 			}
 		}
 		for(int j=0; j<NPObj; j++){
@@ -99,20 +98,22 @@ void orderParticles(int NP, float* state, float* weightObj){
 	}
 	memcpy(state, temp, NP*slotOfP*SS*sizeof(float));
 	memcpy(weightObj, tempW, NP*NPObj*sizeof(float));
+	free(temp);
+	free(tempW);
 }
 
+/*** FPGA only mode: restore particle in normal order for CPU when NC>=2 */
 void reOrderParticles(int NP, float* state){
 	float *temp = (float *)malloc(NP*slotOfP*SS*sizeof(float));
 	for(int i=0; i<NP/NC; i=i+NC){
 		for(int j=0; j<slotOfP; j++){
 			for(int k=0; k<NC; k++){
-				temp[i*slotOfP*SS*NC+j*NC*SS+k*SS] 	 = state[(i+k)*slotOfP*SS+j*SS];
-				temp[i*slotOfP*SS*NC+j*NC*SS+k*SS+1] = state[(i+k)*slotOfP*SS+j*SS+1];
-				temp[i*slotOfP*SS*NC+j*NC*SS+k*SS+2] = state[(i+k)*slotOfP*SS+j*SS+2];
+				memcpy(temp+i*slotOfP*SS*NC+j*NC*SS+k*SS, state+(i+k)*slotOfP*SS+j*SS, SS*sizeof(float));
 			}
 		}
 	}
 	memcpy(state, temp, NP*slotOfP*SS*sizeof(float));
+	free(temp);;
 }
 
 /*** CPU only mode: Call CPU SMC core */
