@@ -84,6 +84,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 void orderParticles(int NP, float* state, float* weightObj){
 	float *temp = (float *)malloc(NP*slotOfP*SS*sizeof(float));
 	float *tempW = (float *)malloc(NP*NPObj*sizeof(float));
+#pragma omp parallel for num_threads(THREADS)
 	for(int i=0; i<NP/NC; i=i+NC){
 		for(int j=0; j<slotOfP; j++){
 			for(int k=0; k<NC; k++){
@@ -105,6 +106,7 @@ void orderParticles(int NP, float* state, float* weightObj){
 /*** FPGA only mode: restore particle in normal order for CPU when NC>=2 */
 void reOrderParticles(int NP, float* state){
 	float *temp = (float *)malloc(NP*slotOfP*SS*sizeof(float));
+#pragma omp parallel for num_threads(THREADS)
 	for(int i=0; i<NP/NC; i=i+NC){
 		for(int j=0; j<slotOfP; j++){
 			for(int k=0; k<NC; k++){
