@@ -18,11 +18,12 @@ public class SmcManager extends CustomManager {
 	public SmcManager(SmcEngineParameters engineParameters) {
 		super(engineParameters);
 
-		addStreamToOnCardMemory("particle_mem", MemoryAccessPattern.LINEAR_1D) <== addStreamFromCPU("particle_mem_from_cpu");
+		//addStreamToOnCardMemory("particle_mem", MemoryAccessPattern.LINEAR_1D) <== addStreamFromCPU("particle_mem_from_cpu"); // Remove comment to use onboard DRAM
 
 		KernelBlock smcBlock = addKernel(new SmcKernel(makeKernelParameters("SmcKernel")));
 
-		smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D);
+		//smcBlock.getInput("state_in") <== addStreamFromOnCardMemory("particle_mem_to_kernel", MemoryAccessPattern.LINEAR_1D); // Remove comment to use onboard DRAM
+		smcBlock.getInput("state_in") <== addStreamFromCPU("particle_mem_from_cpu"); // Comment to use onboard DRAM
 		smcBlock.getInput("ref_in") <== addStreamFromCPU("ref_in");
 		smcBlock.getInput("obsrv_in") <== addStreamFromCPU("obsrv_in");
 		smcBlock.getInput("seed_in") <== addStreamFromCPU("seed_in");
@@ -40,11 +41,13 @@ public class SmcManager extends CustomManager {
 		}
 
 		createSLiCinterface(modeDefault());
-		createSLiCinterface(modeLMem());
+		//createSLiCinterface(modeLMem()); // Remove comment to use onboard DRAM
 
 		configBuild(engineParameters);
 	}
 
+	/*
+	// Remove comment to use onboard DRAM
 	private GeneratedInterface modeLMem() {
 		EngineInterface engine_interface = new EngineInterface("ram");
 		CPUTypes   type = CPUTypes.FLOAT;
@@ -59,6 +62,7 @@ public class SmcManager extends CustomManager {
 
 		return engine_interface;
 	}
+	*/
 
 	private static EngineInterface modeDefault() {
 		EngineInterface engine_interface = new EngineInterface();
@@ -72,12 +76,15 @@ public class SmcManager extends CustomManager {
 		engine_interface.setScalar("SmcKernel", "NP", NP);
 		engine_interface.setOffset("SmcKernel", "offsetNP", NP-Def.NPMin);
 		engine_interface.setScalar("SmcKernel", "S", S);
+		/*
+		// Remove comment to use onboard DRAM
 		engine_interface.setLMemLinearWrapped("particle_mem_to_kernel",
 				engine_interface.addConstant(0),
 				NP * Def.NA * Def.state_slot * size,
 				itl_inner * NP * Def.NA * Def.state_slot * size,
 				engine_interface.addConstant(0));
 		engine_interface.setTicks("SmcKernel", InterfaceMath.ceil(itl_inner/(Def.NC_inner*1.0)).cast(CPUTypes.INT32) * (NP/(Def.NC_P*1.0)).cast(CPUTypes.INT32) * Def.NA * Def.H);
+		*/
 		if(Def.FPGA_resampling==1){
 			engine_interface.setScalar("Weight2CDFKernel", "NP", NP);
 			engine_interface.setScalar("CDF2IndexKernel", "NP", NP);
@@ -86,7 +93,8 @@ public class SmcManager extends CustomManager {
 		}
 
 		// Inputs and outputs
-		engine_interface.setStream("state_in", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size);
+		//engine_interface.setStream("state_in", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size); // Remove comment to use onboard DRAM
+		engine_interface.setStream("particle_mem_from_cpu", CPUTypes.FLOAT, NP * Def.NA * Def.state_slot * size); // Comment to use onboard DRAM
 		engine_interface.setStream("ref_in", CPUTypes.FLOAT, Def.NA * Def.ref_slot * size * (Def.NA==1 ? 2 : 1));
 		engine_interface.setStream("obsrv_in", CPUTypes.FLOAT, Def.NA * size * (Def.NA==1 ? 4 : Def.NA==2 ? 2 : Def.NA==3 ? 4/3 : 1));
 		engine_interface.setStream("seed_in", CPUTypes.INT32, Def.NC_inner * Def.seed_slot * 16 * Def.NC_inner * Def.NC_P * 3); // 16: byte of a 128-bit seed; 3: init in the first 3 cycles
@@ -98,8 +106,8 @@ public class SmcManager extends CustomManager {
 			engine_interface.setStream("weight_out", CPUTypes.FLOAT, Def.NA * NP * size);
 		}
 
-		engine_interface.ignoreLMem("particle_mem");
-		engine_interface.ignoreStream("particle_mem_from_cpu");
+		//engine_interface.ignoreLMem("particle_mem"); // Remove comment to use onboard DRAM
+		//engine_interface.ignoreStream("particle_mem_from_cpu"); // Remove comment to use onboard DRAM
 
 		return engine_interface;
 	}

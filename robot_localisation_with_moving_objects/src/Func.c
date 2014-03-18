@@ -22,12 +22,15 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 
 	struct timeval tv1, tv2;
 
+	/*
+	// Remove comment to use onboard DRAM
 	Smc_ram_actions_t *actions_ram[NBoard];
 	for (int i=0; i<NBoard; i++){
 		actions_ram[i] = malloc(sizeof(Smc_ram_actions_t));
 		actions_ram[i]->param_NP = NP;
 		actions_ram[i]->instream_particle_mem_from_cpu = state_in + i*slotOfAllP*SS/NBoard;
 	}
+	*/
 	Smc_actions_t *actions[NBoard];
 	for (int i=0; i<NBoard; i++){
 		actions[i] = malloc(sizeof(Smc_actions_t));
@@ -39,18 +42,22 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		actions[i]->instream_seed_in = seed;
 		actions[i]->outstream_state_out = state_out;
 		actions[i]->outstream_weight_out = weightObj;
+		actions[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard; // Comment to use onboard DRAM
 	}
 #ifdef debug
 	for(int p=0; p<NP; p++)
 		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
 #endif
 
+	/*
+	// Remove comment to use onboard DRAM
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
 	Smc_ram_run_array(engines, actions_ram); // for NBoard FPGAs
 	gettimeofday(&tv2, NULL);
 	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+	*/
 
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
@@ -78,7 +85,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
 	for (int i=0; i<NBoard; i++){
-		free(actions_ram[i]);
+		//free(actions_ram[i]); // Remove comment to use onboard DRAM
 		free(actions[i]);
 	}
 
