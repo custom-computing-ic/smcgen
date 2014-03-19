@@ -22,10 +22,8 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 
 	struct timeval tv1, tv2;
 	unsigned long long lmem_time, kernel_time, resampling_time;
-	float *weight = (float *)malloc(NA*NP*sizeof(float));
-	float *weight_sum = (float *)malloc(NA*sizeof(float));
 
-#ifdef debug
+#if debug==1
 	for(int p=0; p<NP; p++)
 		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
 #endif
@@ -48,7 +46,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 	for (int i=0; i<NBoard; i++){
 		actions_read_w[i] = malloc(sizeof(Smc_read_w_actions_t));
 		actions_read_w[i]->param_NP = NP;
-		actions_read_w[i]->outstream_weight_out = weight + i*NPObj*NP/NBoard;
+		actions_read_w[i]->outstream_weight_out = weightObj + i*NPObj*NP/NBoard;
 	}
 #endif
 	Smc_actions_t *actions[NBoard];
@@ -63,7 +61,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 #if Use_DRAM==0
 		actions[i]->instream_state_in = state_in + i*slotOfAllP*SS/NBoard;
 		actions[i]->outstream_state_out = state_out + i*slotOfAllP*SS/NBoard;
-		actions[i]->outstream_weight_out = weight + i*NPObj*NP/NBoard;
+		actions[i]->outstream_weight_out = weightObj + i*NPObj*NP/NBoard;
 #endif
 	}
 
@@ -107,18 +105,18 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		resampleCPU(NP, slotOfAllP, state_in, weightObj);
 	}
 	gettimeofday(&tv2, NULL);
-	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
 	/* Free up memory */
 	for (int i=0; i<NBoard; i++){
 #if Use_DRAM==1
-		free(actions_ram[i]);
+		free(actions_write[i]);
+		free(actions_read[i]);
+		free(actions_read_w[i]);
 #endif
 		free(actions[i]);
 	}
-	free(weight);
-	free(weight_sum);
 
 }
 
@@ -291,7 +289,7 @@ void resampleCPU(int NP, int slotOfAllP, float* state, float* weightObj){
 #pragma omp parallel for num_threads(THREADS)
 	for (int p=0; p<NP; p++){
 		weightR[p] = resampleObj(state+p*slotOfP*SS+SS, weightObj+p*NPObj);
-#ifdef debug
+#if debug==1
 		printf("(%f %f) %f\n", *(state+p*slotOfP*SS), *(state+p*slotOfP*SS+1), weightR[p]);
 #endif
 	}

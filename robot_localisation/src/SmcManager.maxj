@@ -97,17 +97,19 @@ public class SmcManager extends CustomManager {
 
 	private GeneratedInterface readWeight() {
 		EngineInterface engine_interface = new EngineInterface("read_w");
-		CPUTypes   type = CPUTypes.FLOAT;
-		int        size = type.sizeInBytes();
+		CPUTypes   typeI = CPUTypes.FLOAT;
+		CPUTypes   typeF = CPUTypes.FLOAT;
+		int        sizeI = typeI.sizeInBytes();
+		int        sizeF = typeF.sizeInBytes();
 
 		InterfaceParam NP = engine_interface.addParam("NP", CPUTypes.INT);
 
-		if(Def.FPGA_resampling==0){
-			engine_interface.setLMemLinear("weight_out_from_mem", NP * Def.NA * size, NP * Def.NA * size);
-			engine_interface.setStream("weight_out", type, NP * Def.NA * size);
+		if(Def.FPGA_resampling==1){
+			engine_interface.setLMemLinear("index_out_from_mem", NP * Def.NA * Def.state_slot * sizeI * 2, NP * Def.NA * sizeI);
+			engine_interface.setStream("index_out", typeI, NP * Def.NA * sizeI);
 		}else{
-			engine_interface.setLMemLinear("index_out_from_mem", NP * Def.NA * size, NP * Def.NA * size);
-			engine_interface.setStream("index_out", type, NP * Def.NA * size);
+			engine_interface.setLMemLinear("weight_out_from_mem", NP * Def.NA * Def.state_slot * sizeF * 2, NP * Def.NA * sizeF);
+			engine_interface.setStream("weight_out", typeF, NP * Def.NA * sizeF);
 		}
 
 		engine_interface.ignoreAll(Direction.IN_OUT);
@@ -143,14 +145,14 @@ public class SmcManager extends CustomManager {
 			engine_interface.ignoreLMem("state_out_from_mem");
 			if(Def.FPGA_resampling==1){
 				engine_interface.setLMemLinearWrapped("index_out_to_mem",
-						NP * Def.NA * size,
+						NP * Def.NA * Def.state_slot * size * 2,
 						NP * Def.NA * size,
 						itl_inner * NP * Def.NA * size,
 						engine_interface.addConstant(0));
 				engine_interface.ignoreLMem("index_out_from_mem");
 			}else{
 				engine_interface.setLMemLinearWrapped("weight_out_to_mem",
-						NP * Def.NA * size,
+						NP * Def.NA * Def.state_slot * size * 2,
 						NP * Def.NA * size,
 						itl_inner * NP * Def.NA * size,
 						engine_interface.addConstant(0));

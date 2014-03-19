@@ -54,7 +54,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		actions_read_w[i] = malloc(sizeof(Smc_read_w_actions_t));
 		actions_read_w[i]->param_NP = NP;
 #if FPGA_resampling==1
-		actions_read_w[i]->outstream_index_out = index_out;
+		actions_read_w[i]->outstream_index_out = index_out + i*NA*NP/NBoard;
 #else
 		actions_read_w[i]->outstream_weight_out = weight + i*NA*NP/NBoard;
 #endif
@@ -75,7 +75,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		actions[i]->instream_state_in = state_in + i*NA*NP*SS/NBoard;
 		actions[i]->outstream_state_out = state_out + i*NA*NP*SS/NBoard;
 #if FPGA_resampling==1
-		actions[i]->outstream_weight_out = index_out;
+		actions[i]->outstream_index_out = index_out + i*NA*NP/NBoard;
 #else
 		actions[i]->outstream_weight_out = weight + i*NA*NP/NBoard;
 #endif
@@ -141,7 +141,9 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	/* Free up memory */
 	for (int i=0; i<NBoard; i++){
 #if Use_DRAM==1
-		free(actions_ram[i]);
+		free(actions_write[i]);
+		free(actions_read[i]);
+		free(actions_read_w[i]);
 #endif
 		free(actions[i]);
 	}

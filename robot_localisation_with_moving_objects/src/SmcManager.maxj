@@ -88,7 +88,7 @@ public class SmcManager extends CustomManager {
 
 		InterfaceParam NP = engine_interface.addParam("NP", CPUTypes.INT);
 
-		engine_interface.setLMemLinear("weight_out_from_mem", NP * Def.NPObj * Def.NA * size, NP * Def.NPObj * Def.NA * size);
+		engine_interface.setLMemLinear("weight_out_from_mem", NP * Def.slotOfP * Def.NA * Def.state_slot * size * 2, NP * Def.NPObj * Def.NA * size);
 		engine_interface.setStream("weight_out", type, NP * Def.NPObj * Def.NA * size);
 
 		engine_interface.ignoreAll(Direction.IN_OUT);
@@ -124,7 +124,7 @@ public class SmcManager extends CustomManager {
 					engine_interface.addConstant(0));
 			engine_interface.ignoreLMem("state_out_from_mem");
 			engine_interface.setLMemLinearWrapped("weight_out_to_mem",
-					NP * Def.NPObj * Def.NA * size,
+					NP * Def.slotOfP * Def.NA * Def.state_slot * size * 2,
 					NP * Def.NPObj * Def.NA * size,
 					itl_inner * NP * Def.NPObj * Def.NA * size,
 					engine_interface.addConstant(0));
