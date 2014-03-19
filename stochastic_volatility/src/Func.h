@@ -21,11 +21,7 @@ typedef struct control_t
 	float r;
 }control_t;
 
-#ifdef FPGA_resampling
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out);
-#else
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_engarray_t* engines);
-#endif
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, float* state_out, max_engarray_t* engines);
 void resampleFPGA(int NP, float* state_out, int* index);
 void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* obsrv_in, float* state_out);
 void resampleCPU(int NP, float* state, float* weight, float* weight_sum);

@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
 #endif
 	int *index_out = (int *)malloc(NA*NP*sizeof(int));
 
-#ifndef FPGA_resampling
+#if FPGA_resampling==0
 	// Load multiple FPGAs
 	// Mutliple FPGAs mode is only supported when resampling in processed on CPU
 	max_file_t *maxfile = Smc_init();
