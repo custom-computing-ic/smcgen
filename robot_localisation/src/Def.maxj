@@ -56,7 +56,7 @@ public class Def {
 	public static int Clk_core = 150;
 	public static int Clk_mem = 350;
 	public static int FPGA_resampling = 0; // 1: resampling on FPGA; 0: resampling on CPU
-	public static int Use_DRAM = 0; // 1: use onboard DRAM for state IO; 0: stream in/out state directly via PCIe
+	public static int Use_DRAM = 0; // 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host
 
 	/*** Application Parameters */
 	public static int NWall = 8;

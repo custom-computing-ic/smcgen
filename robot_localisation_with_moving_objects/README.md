@@ -88,7 +88,7 @@ public class Def {
 	public static int NC_P = 2; // Parallelisation along NP, should be divisor of NP
 	public static int Clk_core = 100; // FPGA core clock frequency
 	public static int Clk_mem = 333; // FPGA onboard DRAM frequency
-	public static int FPGA_resampling = 0; // 1: resampling on FPGA; 0: resampling on CPU
+	public static int Use_DRAM = 0; // 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host
 
 	/*** Application Parameters */
 	public static int NWall = 8;
@@ -103,87 +103,58 @@ public class Def {
 ```
 /* Def.h */
 /* Debug mode */
-#ifndef debug
-//#define debug
-#endif
+#define debug 0
 
 /* FPGA usage control */
-/* enable: use FPGA; disable: use CPU for all processes */
-#ifndef Use_FPGA
-#define Use_FPGA 
-#endif
+/* 1: use FPGA; 0: use CPU for all processes */
+#define Use_FPGA 1
+
+/* FPGA onboard DRAM control*/
+/* 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host */
+#define Use_DRAM 0
 
 /* Number of CPU threads */
-#ifndef THREADS
 #define THREADS	4
-#endif
 
 /* Number of steps */
-#ifndef NT
 #define NT		1
-#endif
 
 /* Number of robot particles */
-// 16384
-#ifndef NPMin
-#define NPMin 5000
-#endif
-#ifndef NPMax
-#define NPMax 25000
-#endif
+#define NPMin 5008
+#define NPMax 25008
 
 /* Number of moving object particles per robot particles */
-#ifndef NPObj
 #define NPObj 1017
-#endif
 
 /* Number of moving objects */
-#ifndef Obj
 #define Obj 7
-#endif
 
 /* Number of slots in a particle */
 // 1+Obj*NPObj
 // R:|0,1,...,Obj-1|...|0,1,...,Obj-1|
-#ifndef slotOfP
 #define slotOfP 7120
-#endif
 
 /* Horizon length */
-#ifndef H
 #define H  	1
-#endif
 
 /* Number of FPGA cores */
 /* NC_inner * NC_P */
-#ifndef NC
 #define NC	2
-#endif
 
 /* Number of FPGA boards */
-#ifndef NBoard
 #define NBoard	1
-#endif
 
 /* Number of state slots */
-#ifndef SS
 #define SS 3
-#endif
 
 /* Number of reference slots */
-#ifndef RS
 #define RS 2
-#endif
 
 /* Number of sensors on a robot */
-#ifndef NSensor
 #define NSensor 20
-#endif
 
 /* Number of test to get the average error */
-#ifndef NTest
 #define NTest 5
-#endif
 ```
 
 ### How to run

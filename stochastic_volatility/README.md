@@ -79,65 +79,56 @@ public class Def {
 	public static int Clk_core = 150; // FPGA core clock frequency
 	public static int Clk_mem = 400; // FPGA onboard DRAM frequency
 	public static int FPGA_resampling = 0; // 1: resampling on FPGA; 0: resampling on CPU
+	public static int Use_DRAM = 0; // 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host
 	...
 }
 ```
 ```
 /* Def.h */
 /* Debug mode */
-#ifndef debug
-//#define debug
-#endif
+#define debug 0
 
 /* FPGA usage control */
-/* enable: use FPGA; disable: use CPU for all processes */
-#ifndef Use_FPGA
-#define Use_FPGA 
-#endif
+/* 1: use FPGA; 0: use CPU for all processes */
+#define Use_FPGA 1
 
 /* Resampling control*/
-/* enable: resampling on FPGA; disable: resampling on CPU */
-#ifndef FPGA_resampling
-//#define FPGA_resampling 
-#endif
+/* 1: resampling on FPGA; 0: resampling on CPU */
+#define FPGA_resampling 0
+
+/* FPGA onboard DRAM control*/
+/* 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host */
+#define Use_DRAM 0
 
 /* Number of CPU threads */
-#ifndef THREADS
 #define THREADS	4
-#endif
 
 /* Number of steps */
-#ifndef NT
 #define NT		10
-#endif
 
 /* Number of particles */
 // NP is from run-time argument
-//#ifndef NP
-//#define NP	6144
-//#endif
-#ifndef NPMin
 #define NPMin	96
-#endif
-#ifndef NPMax
 #define NPMax	4096
-#endif
-...
+
+/* Horizon length */
+#define H  	1
+
+/* Outer loop */
+#define itl_outer 1
+
+/* Number of agents */
+#define NA	1
+
 /* Number of FPGA cores */
 /* NC_inner * NC_P */
-#ifndef NC
 #define NC	16
-#endif
 
 /* Number of FPGA boards */
-#ifndef NBoard
 #define NBoard	1
-#endif
 
 /* Number of state slots */
-#ifndef SS
 #define SS 1
-#endif
 ```
 
 ### How to run

@@ -13,7 +13,7 @@
 #define FPGA_resampling  0
 
 /* FPGA onboard DRAM control*/
-/* 1: use onboard DRAM for state IO; 0: stream in/out state directly via PCIe */
+/* 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host */
 #define Use_DRAM 0
 
 /* Number of CPU threads */
