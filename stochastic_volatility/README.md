@@ -77,7 +77,7 @@ public class Def {
 	public static int NC_inner = 1; // Parallelisation along itl_inner, between 1 and 4 inclusive
 	public static int NC_P = 16; // Parallelisation along NP, should be divisor of NP
 	public static int Clk_core = 150; // FPGA core clock frequency
-	public static int Clk_mem = 400; // FPGA onboard DRAM frequency
+	public static int Clk_mem = 350; // FPGA onboard DRAM frequency (MAX3: 300,333,350,400; MAX4:333,400,533)
 	public static int FPGA_resampling = 0; // 1: resampling on FPGA; 0: resampling on CPU
 	public static int Use_DRAM = 0; // 1: use onboard DRAM for state IO; 0: stream in/out state directly from/to host
 	...
