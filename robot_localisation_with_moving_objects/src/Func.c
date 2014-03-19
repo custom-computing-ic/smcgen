@@ -481,8 +481,8 @@ void check(char *stateFile, int NP, int itl_outer){
 		fclose(fpXest);
 	}
 
-	printf("Average error: %f\n", fabs(total_error)/(NT*NTest*1.0));
-	printf("Time: %f\n", itl_outer*(NP*slotOfP/(NC*100000000.0)+((NP*slotOfP*SS+NP*NPObj)*sizeof(float))/1500000000.0)*1.5);
+	printf("Average error (m): %f\n", fabs(total_error)/(NT*NTest*1.0));
+	printf("Estimated run-time (s): %f\n", itl_outer*(NP*slotOfP/(NC*Clk*1.0E6)*fmin(1,BW*1.0E6/(sizeof(float)*SS*Clk*1.0E6))+(NP*slotOfP)*alpha));
 
 }
 

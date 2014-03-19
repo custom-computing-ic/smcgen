@@ -55,6 +55,15 @@
 /* Number of test to get the average error */
 #define NTest 5
 
+/* FPGA clock frequency in MHz*/
+#define Clk 120
+
+/* Bandwidth between CPU and FPGA in MB/s (one direction) */
+#define BW 1800
+
+/* CPU speed scaling factor */
+#define alpha 1.1E-8
+
 #define Pi 3.14159265359
 
 #endif

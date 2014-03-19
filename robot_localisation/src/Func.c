@@ -390,7 +390,7 @@ void check(char *stateFile){
 		step_error = sqrt(pow(x_est-x,2)+pow(y_est-y,2));
 		total_error += step_error;
 	}
-	printf("Average error: %f\n", fabs(total_error)/(NT*1.0));
+	printf("Average error (m): %f\n", fabs(total_error)/(NT*1.0));
 	fclose(fpX);
 	fclose(fpXest);
 
