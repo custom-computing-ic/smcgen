@@ -319,7 +319,7 @@ void init(int NP, char* obsrvFile, float* obsrv, char* refFile, float* ref, floa
 		for(int p=0; p<NP; p++){
 			state[p*SS*NA+a*SS] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
 			state[p*SS*NA+a*SS+1] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*12;
-			state[p*SS*NA+a*SS+2] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
+			state[p*SS*NA+a*SS+2] = ((float) dsfmt_genrand_close_open(&dsfmt[p]))*2*Pi;
 		}
 	}
 }

@@ -14,7 +14,7 @@
 
 /* FPGA onboard DRAM control*/
 /* 1: use onboard DRAM for state IO; 0: stream in/out state directly via PCIe */
-#define Use_DRAM 0
+#define Use_DRAM 1
 
 /* Number of CPU threads */
 #define THREADS	4
