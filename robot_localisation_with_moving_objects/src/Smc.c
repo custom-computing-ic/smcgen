@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 					seed[j] = 7-j;
 				// Allocate observation value of the current time step
 				memcpy(obsrv_in, obsrv+t*NSensor, NSensor*sizeof(float));
-#ifdef Use_FPGA
+#if Use_FPGA==1
 				// Invoke FPGA kernel
 				printf("Calling FPGA kernel...\n");
 #if NC>1

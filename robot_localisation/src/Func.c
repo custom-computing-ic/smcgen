@@ -90,12 +90,14 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	gettimeofday(&tv2, NULL);
 	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copied data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
+#endif
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
 	Smc_run_array(engines,actions);
 	gettimeofday(&tv2, NULL);
 	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+#if Use_DRAM==1
 	// Copy states from LMEM
 	gettimeofday(&tv1, NULL);
 	Smc_read_run_array(engines,actions_read);
@@ -103,13 +105,6 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	gettimeofday(&tv2, NULL);
 	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copied data from LMEM in %lu us.\n", (long unsigned int)lmem_time);
-#else
-	// Invoke FPGA kernel
-	gettimeofday(&tv1, NULL);
-	Smc_run_array(engines,actions);
-	gettimeofday(&tv2, NULL);
-	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
 #endif
 
 	/* Do resampling on FPGA */

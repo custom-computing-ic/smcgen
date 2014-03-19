@@ -13,7 +13,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
-//import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Stream.OffsetExpr;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Stream.OffsetExpr;
 
 class SmcKernel extends Kernel {
 
@@ -24,7 +24,7 @@ class SmcKernel extends Kernel {
 		DFEVar itl_inner = io.scalarInput("itl_inner", dfeUInt(32)); // determined at run-time
 		DFEVar NP = io.scalarInput("NP", dfeUInt(MathUtils.bitsToRepresent(Def.NPMax-1))); // determined at run-time
 		DFEVar S = io.scalarInput("S", Def.float_t); // determined at run-time
-		//OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
+		OffsetExpr offsetNP = stream.makeOffsetParam("offsetNP",0,Def.NPMax-Def.NPMin); // determined at run-time
 		Counter a_counter = control.count.makeCounter(
 					control.count.makeParams(
 						MathUtils.bitsToRepresent(Def.NA))
