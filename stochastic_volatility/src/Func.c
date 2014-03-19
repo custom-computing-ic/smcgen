@@ -19,39 +19,74 @@
 extern dsfmt_t dsfmt[NPMax];
 
 /*** FPGA mode: Call SMC core */
-#ifdef FPGA_resampling
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
-#else
 void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_engarray_t* engines){
-#endif
 
 	struct timeval tv1, tv2;
+	unsigned long long lmem_time, kernel_time, resampling_time;
 
-#ifdef debug
+#if debug==1
 	for(int p=0; p<NP; p++)
 		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
 #endif
 
-#ifdef FPGA_resampling // Do resampling on FPGA
+/* Do resampling on FPGA */
+#if FPGA_resampling==1
 	
-	/*
-	// Remove comment to use onboard DRAM
+#if Use_DRAM==1
+	Smc_write_actions_t *actions_write;
+	actions_write = malloc(sizeof(Smc_write_actions_t));
+	actions_write->param_NP = NP;
+	actions_write->instream_state_in = state_in;
+	Smc_read_actions_t *actions_read;
+	actions_read = malloc(sizeof(Smc_read_actions_t));
+	actions_read->param_NP = NP;
+	actions_read->outstream_state_out = state_out;
+	Smc_read_w_actions_t *actions_read_w;
+	actions_read_w = malloc(sizeof(Smc_read_w_actions_t));
+	actions_read_w->param_NP = NP;
+	actions_read_w->outstream_weight_out = index_out;
+#endif
+	Smc_actions_t *actions;
+	actions = malloc(sizeof(Smc_actions_t));
+	actions->param_NP = NP;
+	actions->param_S = S;
+	actions->param_itl_inner = itl_inner;
+	actions->instream_obsrv_in = obsrv_in;
+	actions->instream_rand = rand_num;
+	actions->instream_seed_in = seed;
+#if Use_DRAM==0
+	actions->instream_state_in = state_in;
+	actions->outstream_state_out = state_out;
+	actions->outstream_weight_out = index_out;
+#endif
+#if Use_DRAM==1
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
-	Smc_ram(NP, state_in);
+	Smc_write_run(engines,actions_write);
 	gettimeofday(&tv2, NULL);
-	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
-	*/
-
+	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copied data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	//Smc(NP, S, itl_inner, obsrv_in, rand_num, seed, index_out, state_out);
-	Smc(NP, S, itl_inner, obsrv_in, rand_num, state_in, seed, index_out, state_out);
+	Smc_run(engines,actions);
 	gettimeofday(&tv2, NULL);
-	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
-	
+	// Copy states from LMEM
+	gettimeofday(&tv1, NULL);
+	Smc_read_run(engines,actions_read);
+	Smc_read_w_run(engines,actions_read_w);
+	gettimeofday(&tv2, NULL);
+	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copied data from LMEM in %lu us.\n", (long unsigned int)lmem_time);
+#else
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
+	Smc_run(engines,actions);
+	gettimeofday(&tv2, NULL);
+	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+#endif
 	// Rearrange particles
 	gettimeofday(&tv1, NULL);
 	if(outer_idx==itl_outer-1)
@@ -59,23 +94,35 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	else
 		resampleFPGA(NP, state_in, index_out);
 	gettimeofday(&tv2, NULL);
-	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
-#else // Do resampling on CPU
+/* Do resampling on CPU */
+#else
 	
 	float *weight = (float *)malloc(NA*NP*sizeof(float));
 	float *weight_sum = (float *)malloc(NA*sizeof(float));
 
-	/*
-	// Remove comment to use onboard DRAM
-	Smc_ram_actions_t *actions_ram[NBoard];
+#if Use_DRAM==1
+	Smc_write_actions_t *actions_write[NBoard];
 	for (int i=0; i<NBoard; i++){
-		actions_ram[i] = malloc(sizeof(Smc_ram_actions_t));
-		actions_ram[i]->param_NP = NP;
-		actions_ram[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard;
+		actions_write[i] = malloc(sizeof(Smc_write_actions_t));
+		actions_write[i]->param_NP = NP;
+		actions_write[i]->instream_state_in = state_in + i*NA*NP*SS/NBoard;
 	}
-	*/
+	Smc_read_actions_t *actions_read[NBoard];
+	for (int i=0; i<NBoard; i++){
+		actions_read[i] = malloc(sizeof(Smc_read_actions_t));
+		actions_read[i]->param_NP = NP;
+		actions_read[i]->outstream_state_out = state_out + i*NA*NP*SS/NBoard;
+	}
+	Smc_read_w_actions_t *actions_read_w[NBoard];
+	for (int i=0; i<NBoard; i++){
+		actions_read_w[i] = malloc(sizeof(Smc_read_w_actions_t));
+		actions_read_w[i]->param_NP = NP;
+		actions_read_w[i]->outstream_weight_out = weight + i*NA*NP/NBoard;
+	}
+#endif
 	Smc_actions_t *actions[NBoard];
 	for (int i=0; i<NBoard; i++){
 		actions[i] = malloc(sizeof(Smc_actions_t));
@@ -84,26 +131,40 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		actions[i]->param_itl_inner = itl_inner;
 		actions[i]->instream_obsrv_in = obsrv_in;
 		actions[i]->instream_seed_in = seed;
-		actions[i]->outstream_state_out = state_out;
-		actions[i]->outstream_weight_out = weight;
-		actions[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard; // Comment to use onboard DRAM
+#if Use_DRAM==0
+		actions[i]->instream_state_in = state_in + i*NA*NP*SS/NBoard;
+		actions[i]->outstream_state_out = state_out + i*NA*NP*SS/NBoard;
+		actions[i]->outstream_weight_out = weight + i*NA*NP/NBoard;
+#endif
 	}
-	/*
-	// Remove comment to use onboard DRAM
+#if Use_DRAM==1
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
-	Smc_ram_run_array(engines, actions_ram); // for NBoard FPGAs
+	Smc_write_run_array(engines, actions_write); // for NBoard FPGAs
 	gettimeofday(&tv2, NULL);
-	unsigned long long lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
-	printf("Copyed data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
-	*/
-
+	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copied data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
 	Smc_run_array(engines, actions); // for NBoard FPGAs
 	gettimeofday(&tv2, NULL);
-	unsigned long long kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+	// Copy states from LMEM
+	gettimeofday(&tv1, NULL);
+	Smc_read_run_array(engines, actions_read); // for NBoard FPGAs
+	Smc_read_w_run_array(engines, actions_read_w); // for NBoard FPGAs
+	gettimeofday(&tv2, NULL);
+	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("Copied data from LMEM in %lu us.\n", (long unsigned int)lmem_time);
+#else
+	// Invoke FPGA kernel
+	gettimeofday(&tv1, NULL);
+	Smc_run_array(engines, actions); // for NBoard FPGAs
+	gettimeofday(&tv2, NULL);
+	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
+#endif
 
 	// Resample particles
 	gettimeofday(&tv1, NULL);
@@ -118,11 +179,13 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 	else
 		resampleCPU(NP, state_in, weight, weight_sum);
 	gettimeofday(&tv2, NULL);
-	unsigned long long resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
+	resampling_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Resampling finished in %lu us.\n", (long unsigned int)resampling_time);
 
 	for (int i=0; i<NBoard; i++){
-		//free(actions_ram[i]); // Remove comment to use onboard DRAM
+#if Use_DRAM==1
+		free(actions_ram[i]);
+#endif
 		free(actions[i]);
 	}
 	free(weight);
@@ -230,7 +293,7 @@ void init(int NP, char *obsrvFile, float* obsrv, float* state){
 	// Initialise states
 	for(int a=0; a<NA; a++){
 		for(int p=0; p<NP; p++){
-			state[p*SS*NA+a*SS] = 0;//((float) dsfmt_genrand_close_open(&dsfmt[p]))*18;
+			state[p*SS*NA+a*SS] = 0;
 		}
 	}
 }

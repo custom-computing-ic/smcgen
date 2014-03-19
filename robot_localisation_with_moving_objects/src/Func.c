@@ -42,7 +42,7 @@ void smcFPGA(int NP, int slotOfAllP, float S, int itl_outer, int outer_idx, int 
 		actions[i]->instream_seed_in = seed;
 		actions[i]->outstream_state_out = state_out;
 		actions[i]->outstream_weight_out = weightObj;
-		actions[i]->instream_particle_mem_from_cpu = state_in + i*NA*NP*SS/NBoard; // Comment to use onboard DRAM
+		actions[i]->instream_particle_mem_from_cpu = state_in + i*slotOfAllP*SS/NBoard; // Comment to use onboard DRAM
 	}
 #ifdef debug
 	for(int p=0; p<NP; p++)

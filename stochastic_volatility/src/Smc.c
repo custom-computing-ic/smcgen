@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
 #endif
 	int *index_out = (int *)malloc(NA*NP*sizeof(int));
 
-#ifndef FPGA_resampling
+#if FPGA_resampling==0
 	// Load multiple FPGAs
 	// Mutliple FPGAs mode is only supported when resampling in processed on CPU
 	max_file_t *maxfile = Smc_init();
@@ -65,10 +65,10 @@ int main(int argc, char *argv[]){
 			for(int a=0; a<NA; a++){
 				obsrv_in[a] = obsrv[NA*t+a];
 			}
-#ifdef Use_FPGA
+#if Use_FPGA==1
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-#ifndef FPGA_resampling
+#if FPGA_resampling==0
 			smcFPGA(NP,S,i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out,engines);
 #else
 			smcFPGA(NP,S,i,itl_inner,state_in,rand_num,seed,obsrv_in,index_out,state_out);
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
 	}
 	check(argv[2]);
 
-#ifndef FPGA_resampling
+#if FPGA_resampling==0
 	// Release FPGA resources
 	max_unload_array(engines);
 	max_file_free(maxfile);
