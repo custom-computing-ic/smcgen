@@ -35,7 +35,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		printf("State particle %d: (%f %f %f)\n", p, state_in[p*SS], state_in[p*SS+1], state_in[p*SS+2]);
 #endif
 
-	// Set up actions
+	/* Set up actions */
 #if Use_DRAM==1
 	Smc_write_actions_t *actions_write[NBoard];
 	for (int i=0; i<NBoard; i++){
@@ -54,7 +54,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 		actions_read_w[i] = malloc(sizeof(Smc_read_w_actions_t));
 		actions_read_w[i]->param_NP = NP;
 #if FPGA_resampling==1
-		actions_read_w[i]->outstream_weight_out = index_out;
+		actions_read_w[i]->outstream_index_out = index_out;
 #else
 		actions_read_w[i]->outstream_weight_out = weight + i*NA*NP/NBoard;
 #endif
@@ -82,7 +82,7 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 #endif
 	}
 
-/* Do core parts on FPGA */
+	/* Do core parts on FPGA */
 #if Use_DRAM==1
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);

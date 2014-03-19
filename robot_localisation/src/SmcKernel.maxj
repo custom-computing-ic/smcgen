@@ -120,7 +120,7 @@ class SmcKernel extends Kernel {
 		
 		DFEStruct particle = Def.particle_t.newInstance(this);
 		DFEStruct state_in = s_in;
-		DFEStruct ref_in = getControl(a, r_in, n===0 & h===0 & p===0);
+		DFEStruct ref_in = getRef(a, r_in, n===0 & h===0 & p===0);
 		DFEVar obsrv_in = o_in;
 		DFEVar weight_in = w_in;
 
