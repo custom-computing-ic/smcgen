@@ -482,7 +482,11 @@ void check(char *stateFile, int NP, int itl_outer){
 	}
 
 	printf("Average error (m): %f\n", fabs(total_error)/(NT*NTest*1.0));
-	printf("Estimated run-time (s): %f\n", itl_outer*(NP*slotOfP/(NC*Clk*1.0E6)*fmin(1,BW*1.0E6/(sizeof(float)*SS*Clk*1.0E6))+(NP*slotOfP)*alpha));
+#if Use_DRAM==1
+	printf("Estimated run-time (s): %f\n", itl_outer*(NP*slotOfP/(NC*Clk*1.0E6)+(NP*slotOfP*SS*sizeof(float)*2+NP*NPObj*sizeof(float))/(BW*1.0E6)+NP*slotOfP*alpha));
+#else
+	printf("Estimated run-time (s): %f\n", itl_outer*(NP*slotOfP/(NC*Clk*1.0E6)*fmin(1,BW*1.0E6/(sizeof(float)*SS*Clk*1.0E6))+NP*slotOfP*alpha));
+#endif
 
 }
 
