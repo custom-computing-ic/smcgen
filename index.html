@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>SMCGen by thomasccp</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>SMCGen</h1>
+        <h2>Generating Reconfigurable Design for Sequential Monte Carlo Applications</h2>
+        <a href="https://github.com/thomasccp/smc_maxeler" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h2>
+<a name="sequential-monte-carlo-for-fpga-accelerators" class="anchor" href="#sequential-monte-carlo-for-fpga-accelerators"><span class="octicon octicon-link"></span></a>Sequential Monte Carlo for FPGA accelerators</h2>
+
+<p>This repository consist of a design flow for generating efficient implementation of reconfigurable SMC designs. 
+Users can use it to develop efficient multiple-FPGA SMC applications without any knowledge of FPGA/reconfigurable computing. 
+The design flow consists of a parametrisable SMC computation engine, and a software template which enables efficient mapping of a variety of SMC designs to FPGAs.</p>
+
+<p>We have a paper describing the details about this design flow:</p>
+
+<ul>
+<li>Thomas C.P. Chau, Maciej Kurek, James Stanley Targett, Jake Humphrey, Georgios Skouroupathis, Alison Eele, Jan Maciejowski, Benjamin Cope, Kathryn Cobden, Philip Leong, Peter Y.K. Cheung and Wayne Luk, "SMCGen: Generating Reconfigurable Design for Sequential Monte Carlo Applications," in International Symposium on Field-Programmable Custom Computing Machines (FCCM), page to appear, 2014.</li>
+</ul><h3>
+<a name="sequential-monte-carlo" class="anchor" href="#sequential-monte-carlo"><span class="octicon octicon-link"></span></a>Sequential Monte Carlo</h3>
+
+<p>Sequential Monte Carlo (SMC) method is a simulation-based approach to compute posterior distributions.
+SMC methods often work well on applications considered intractable by other methods due to high dimensionality, but they are computationally demanding.</p>
+
+<p>For details of SMC method, please refer to <a href="http://www.springer.com/statistics/physical+%26+information+science/book/978-0-387-95146-1">Sequential Monte Carlo methods in practice</a> written by Arnaud Doucet.
+Springer, 2001.</p>
+
+<h3>
+<a name="system-requirements" class="anchor" href="#system-requirements"><span class="octicon octicon-link"></span></a>System requirements</h3>
+
+<ol>
+<li>Maxeler MaxCompiler version 2013.2.2 or above.</li>
+<li>One of the Maxeler FPGA accelerator platforms below:
+
+<ul>
+<li>MaxWorkstation with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)</li>
+<li>MPC-C500 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)</li>
+<li>MPC-X1000 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)</li>
+<li>MPC-X2000 with maia dataflow engines (Altera Stratix V GS 5SGSD8 FPGAs)</li>
+</ul>
+</li>
+<li>GCC 4.4 or newer.</li>
+<li>Intel Compiler 12.1 or newer.</li>
+</ol><h3>
+<a name="example-applications" class="anchor" href="#example-applications"><span class="octicon octicon-link"></span></a>Example applications</h3>
+
+<h4>
+<a name="1-stochastic-volatility" class="anchor" href="#1-stochastic-volatility"><span class="octicon octicon-link"></span></a>1. <a href="https://github.com/thomasccp/smc_maxeler/tree/master/stochastic_volatility">Stochastic volatility</a>
+</h4>
+
+<h4>
+<a name="2-robot-localisation" class="anchor" href="#2-robot-localisation"><span class="octicon octicon-link"></span></a>2. <a href="https://github.com/thomasccp/smc_maxeler/tree/master/robot_localisation">Robot localisation</a>
+</h4>
+
+<h4>
+<a name="3-robot-localisation-with-moving-objects" class="anchor" href="#3-robot-localisation-with-moving-objects"><span class="octicon octicon-link"></span></a>3. <a href="https://github.com/thomasccp/smc_maxeler/tree/master/robot_localisation_with_moving_objects">Robot localisation with moving objects</a>
+</h4>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/thomasccp/smc_maxeler/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/thomasccp/smc_maxeler/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/thomasccp/smc_maxeler"></a> is maintained by <a href="https://github.com/thomasccp">thomasccp</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+            <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("smc_maxeler");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
