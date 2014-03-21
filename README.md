@@ -4,6 +4,9 @@ This repository consist of a design flow for generating efficient implementation
 Users can use it to develop efficient multiple-FPGA SMC applications without any knowledge of FPGA/reconfigurable computing. 
 The design flow consists of a parametrisable SMC computation engine, and a software template which enables efficient mapping of a variety of SMC designs to FPGAs.
 
+We have a paper describing details about this design flow:
+ * Thomas C.P. Chau, Maciej Kurek, James Stanley Targett, Jake Humphrey, Georgios Skouroupathis, Alison Eele, Jan Maciejowski, Benjamin Cope, Kathryn Cobden, Philip Leong, Peter Y.K. Cheung and Wayne Luk, "SMCGen: Generating Reconfigurable Design for Sequential Monte Carlo Applications," in International Symposium on Field-Programmable Custom Computing Machines (FCCM), page to appear, 2014.
+
 ### Sequential Monte Carlo
 
 Sequential Monte Carlo (SMC) method is a simulation-based approach to compute posterior distributions.
