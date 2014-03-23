@@ -17,14 +17,16 @@ Springer, 2001.
 
 ### System requirements
 
-1. Maxeler MaxCompiler version 2013.2.2 or above.
-2. One of the Maxeler FPGA accelerator platforms below:
+1. CentOS 5/6 (x86_64) or Red Hat Enterprise Linux 5/6 (x86_64).
+2. GNU Make 3.80+ & GCC 3.4+ & Intel Compiler 12.1+ (optional).
+4. Xilinx ISE 13.3 (for Xilinx-based FPGAs).
+5. Altera Quartus 13.0 (for Altera-based FPGAs).
+6. Maxeler MaxCompiler version 2013.2.2+.
+7. One of the Maxeler FPGA accelerator platforms below:
 	- MaxWorkstation with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
 	- MPC-C500 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
 	- MPC-X1000 with vectis dataflow engines (Xilinx Virtex-6 XC6VSX475T FPGAs)
 	- MPC-X2000 with maia dataflow engines (Altera Stratix V GS 5SGSD8 FPGAs)
-3. GCC 4.4 or newer.
-4. Intel Compiler 12.1 or newer.
 
 ### Example applications
 
