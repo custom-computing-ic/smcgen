@@ -40,6 +40,6 @@ Springer, 2001.
 1. Make sure you have a [GitHub] (https://github.com/) account.
 1. Click [Fork] (https://github.com/custom-computing-ic/smcgen/fork) to create a starting point of the project for your own.
 2. Commit your code to the forked repository.
-3. Perform a [pull request] (https://github.com/custom-computing-ic/smcgen/compare/) on GitHub.
+3. Perform a pull request on GitHub.
 
 ##### * For details about contributing, also check [GitHub Help] (https://help.github.com/articles/fork-a-repo).
