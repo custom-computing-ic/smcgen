@@ -42,4 +42,4 @@ Springer, 2001.
 2. Commit your code to the forked repository.
 3. Perform a [pull request] (https://github.com/custom-computing-ic/smcgen/compare/) on GitHub.
 
-#### * For details, check [GitHub Help] (https://help.github.com/articles/fork-a-repo).
+##### * For details about contributing, also check [GitHub Help] (https://help.github.com/articles/fork-a-repo).
