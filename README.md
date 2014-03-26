@@ -35,3 +35,10 @@ Springer, 2001.
 #### 2. [Robot localisation] (robot_localisation)
 
 #### 3. [Robot localisation with moving objects] (robot_localisation_with_moving_objects)
+
+### How to contribute?
+1. Make sure you have a [GitHub] (https://github.com/) account.
+1. Click [Fork] (https://github.com/custom-computing-ic/smcgen/fork) to create a starting point of the project for your own.
+2. Commit your code to the forked repository.
+3. Perform a [pull request] (https://github.com/custom-computing-ic/smcgen/compare/) on GitHub.
+#### For details, check [GitHub Help] (https://help.github.com/articles/fork-a-repo).
