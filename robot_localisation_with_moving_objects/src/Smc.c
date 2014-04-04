@@ -43,7 +43,8 @@ int main(int argc, char *argv[]){
 
 	// Load multiple FPGAs
 	max_file_t *maxfile = Smc_init();
-	max_engarray_t *engines = max_load_array(maxfile,NBoard,"*");
+	//max_engarray_t *engines = max_load_array(maxfile,NBoard,"*");
+	max_group_t *engines = max_load_group(maxfile, MAXOS_EXCLUSIVE, "group@local:*", NBoard);
 
 	for (int cnt=0; cnt<NTest; cnt++){ // Run for ten times to get the average error
 		

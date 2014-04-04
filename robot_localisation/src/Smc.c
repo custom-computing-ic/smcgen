@@ -53,7 +53,8 @@ int main(int argc, char *argv[]){
 	// Load multiple FPGAs
 	// Mutliple FPGAs mode is only supported when resampling in processed on CPU
 	max_file_t *maxfile = Smc_init();
-	max_engarray_t *engines = max_load_array(maxfile,NBoard,"*");
+	//max_engarray_t *engines = max_load_array(maxfile,NBoard,"*");
+	max_group_t *engines = max_load_group(maxfile, MAXOS_EXCLUSIVE, "group@local:*", NBoard);
 
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
