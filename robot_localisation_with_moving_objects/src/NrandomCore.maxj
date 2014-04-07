@@ -20,7 +20,7 @@ public class NrandomCore extends KernelLib {
 		return randOut;
 	}
 
-	public NrandomCore(KernelLib owner, int wE, int wF, DFEVar randIn) {
+	public NrandomCore(KernelLib owner, DFEVar randIn) {
 		super(owner);
 
 		// Need 42 bit for the triangle distribution, so need 41 bit for each random number
@@ -4158,7 +4158,7 @@ public class NrandomCore extends KernelLib {
 		DFEVar tempOut = (head.cat( triDist )).cast(dfeFixOffset(53,-50,SignMode.UNSIGNED));
 
 		// Convert to floating point
-		DFEVar tempOut2 = tempOut.cast( dfeFloat( wE, wF ) );
+		DFEVar tempOut2 = tempOut.cast(Def.float_t);
 
 		// Neg half of them
 		randOut = neg ? tempOut2 : -tempOut2;

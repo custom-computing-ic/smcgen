@@ -102,7 +102,7 @@ public class KMath {
 	public static DFEVar nrand(SmcKernel smc, DFEVar seed, DFEVar mean, DFEVar std) {
 
 		UrandomCore urng = new UrandomCore(smc, seed);
-		NrandomCore nrng = new NrandomCore(smc, 8, 24, urng.getRandOut());
+		NrandomCore nrng = new NrandomCore(smc, urng.getRandOut());
 
 		return (nrng.getOutput()*std).cast(Def.fixed_t) + mean;
 	}
