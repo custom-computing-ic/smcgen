@@ -75,7 +75,7 @@ class SmcKernel extends Kernel {
 		DFEVector<DFEStruct> state_out = Def.state_io_t.newInstance(this);
 		for(int i=0; i<Def.NC_inner; i++)
 			for(int j=0; j<Def.NC_P; j++)
-				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], o_in, w_in[j], seeds[i*Def.NC_inner+j], n, h, p, a, offsetNP, S); // SMC core computation
+				particle[i*Def.NC_P+j] <== SmcCore(s_in[j], o_in, w_in[j], seeds[i*Def.NC_P+j], n, h, p, a, offsetNP, S); // SMC core computation
 		for(int j=0; j<Def.NC_P; j++){
 			if (Def.NC_inner==1){
 				DFEVar temp_w = particle[j].get("w");
