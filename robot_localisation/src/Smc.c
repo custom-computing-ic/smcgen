@@ -53,8 +53,7 @@ int main(int argc, char *argv[]){
 	// Load multiple FPGAs
 	// Mutliple FPGAs mode is only supported when resampling in processed on CPU
 	max_file_t *maxfile = Smc_init();
-	//max_engarray_t *engines = max_load_array(maxfile,NBoard,"*");
-	max_group_t *engines = max_load_group(maxfile, MAXOS_EXCLUSIVE, "group@local:*", NBoard);
+	max_group_t *group = max_load_group(maxfile, MAXOS_EXCLUSIVE, "group@local:*", NBoard);
 
 	for(int t=0; t<NT; t++){
 		for (int i=0; i<itl_outer; i++) {
@@ -79,7 +78,7 @@ int main(int argc, char *argv[]){
 #if Use_FPGA==1
 			// Invoke FPGA kernel
 			printf("Calling FPGA kernel...\n");
-			smcFPGA(NP,S,i,itl_inner,state_in,ref_in,rand_num,seed,obsrv_in,state_out,engines);
+			smcFPGA(NP,S,i,itl_inner,state_in,ref_in,rand_num,seed,obsrv_in,state_out,group);
 #else
 			printf("Calling CPU function...\n");
 			smcCPU(NP,S,i,itl_inner,state_in,ref_in,obsrv_in,state_out);
@@ -92,7 +91,7 @@ int main(int argc, char *argv[]){
 	check(argv[3]);
 
 	// Release FPGA resources
-	max_unload_group(engines);
+	max_unload_group(group);
 	max_file_free(maxfile);
 
 	free(obsrv);

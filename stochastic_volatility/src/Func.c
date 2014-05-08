@@ -19,8 +19,9 @@
 extern dsfmt_t dsfmt[NPMax];
 
 /*** FPGA mode: Call SMC core */
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, float* state_out, max_group_t* engines){
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* rand_num, int* seed, float* obsrv_in, float* state_out, max_group_t* group){
 
+	max_engine_t *engines[NBoard];
 	struct timeval tv1, tv2;
 	unsigned long long lmem_time, kernel_time, resampling_time;
 #if FPGA_resampling==1
@@ -86,22 +87,34 @@ void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, flo
 #if Use_DRAM==1
 	// Copy states to LMEM
 	gettimeofday(&tv1, NULL);
-	Smc_write_run_group(engines,*actions_write);
+	for (int i=0; i<NBoard; i++){
+		engines[i] = max_lock_any(group);
+		Smc_write_run(engines[i], actions_write[i]);
+		max_unlock(engines[i]);
+	}
 	gettimeofday(&tv2, NULL);
 	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copied data to LMEM in %lu us.\n", (long unsigned int)lmem_time);
 #endif
 	// Invoke FPGA kernel
 	gettimeofday(&tv1, NULL);
-	Smc_run_group(engines,*actions);
+	for (int i=0; i<NBoard; i++){
+		engines[i] = max_lock_any(group);
+		Smc_run(engines[i], actions[i]);
+		max_unlock(engines[i]);
+	}
 	gettimeofday(&tv2, NULL);
 	kernel_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("FPGA kernel finished in %lu us.\n", (long unsigned int)kernel_time);
 #if Use_DRAM==1
 	// Copy states from LMEM
 	gettimeofday(&tv1, NULL);
-	Smc_read_run_group(engines,*actions_read);
-	Smc_read_w_run_group(engines,*actions_read_w);
+	for (int i=0; i<NBoard; i++){
+		engines[i] = max_lock_any(group);
+		Smc_read_run(engines[i], actions_read[i]);
+		Smc_read_w_run(engines[i], actions_read_w[i]);
+		max_unlock(engines[i]);
+	}
 	gettimeofday(&tv2, NULL);
 	lmem_time = (tv2.tv_sec - tv1.tv_sec)*1000000 + (tv2.tv_usec - tv1.tv_usec);
 	printf("Copied data from LMEM in %lu us.\n", (long unsigned int)lmem_time);
