@@ -21,7 +21,7 @@ typedef struct ref_t
 	float r;
 }ref_t;
 
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, float* state_out, max_engarray_t* engines);
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, float* state_out, max_group_t* engines);
 void resampleFPGA(int NP, float* state_out, int* index);
 void smcCPU(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* obsrv_in, float* state_out);
 float est(float x, float y, float h);

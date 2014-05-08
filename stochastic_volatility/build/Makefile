@@ -30,7 +30,7 @@ KERNEL=$(PRJ)Kernel
 MANAGER=$(PRJ)Manager
 
 # Application specific compile flags
-EXTRA_CFLAGS=-I../src/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1 
+EXTRA_CFLAGS=-I../../common/dSFMT-src-2.2.1 -DDSFMT_MEXP=521 -DHAVE_SSE2=1 
 
 # Runtime arguments
 NP=768

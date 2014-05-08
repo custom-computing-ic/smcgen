@@ -30,7 +30,7 @@ public static DFEVar weighting(SmcKernel smc, DFEStruct s_in, DFEVar o_in, DFEVa
 #ifdef FPGA_resampling
 void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out){
 #else
-void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_file_t* maxfile, max_engarray_t* engines){
+void smcFPGA(int NP, float S, int outer_idx, int itl_inner, float* state_in, float* ref_in, float* rand_num, int* seed, float* obsrv_in, int* index_out, float* state_out, max_file_t* maxfile, max_group_t* engines){
 #endif
 	...
 }

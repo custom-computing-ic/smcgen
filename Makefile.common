@@ -100,7 +100,7 @@ $(SIMMAXDIR)/$(PRJ).max: $(ENGINEFILES)
 $(PRJ)_sim.o: $(SIMMAXDIR)/$(PRJ).max
 	$(SLICCOMPILE) $< $@  
 
-$(PRJ)_dSFMT_sim.o: ../src/dSFMT-src-2.2.1/dSFMT.c
+$(PRJ)_dSFMT_sim.o: ../../common/dSFMT-src-2.2.1/dSFMT.c
 	$(CC) $< $(ALL_FLAGS) -I$(SIMMAXDIR) -D__SIM__ -DDESIGN_NAME=$(PRJ) -c -o $@
 
 $(PRJ)_func_sim.o: ../src/Func.c
@@ -134,7 +134,7 @@ $(DFEMAXDIR)/$(PRJ).max: $(ENGINEFILES)
 $(PRJ)_dfe.o: $(DFEMAXDIR)/$(PRJ).max
 	$(SLICCOMPILE) $< $@  
 
-$(PRJ)_dSFMT_dfe.o: ../src/dSFMT-src-2.2.1/dSFMT.c
+$(PRJ)_dSFMT_dfe.o: ../../common/dSFMT-src-2.2.1/dSFMT.c
 	$(CC) $< $(ALL_FLAGS) -I$(DFEMAXDIR) -DDESIGN_NAME=$(PRJ) -c -o $@
 
 $(PRJ)_func_dfe.o: ../src/Func.c

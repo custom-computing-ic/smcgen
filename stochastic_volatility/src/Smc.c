@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
 	check(argv[2]);
 
 	// Release FPGA resources
-	max_unload_array(engines);
+	max_unload_group(engines);
 	max_file_free(maxfile);
 
 	free(obsrv);
