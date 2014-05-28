@@ -125,4 +125,52 @@ public class Func{
 		return cond_e ? dist : smc.constant.var(Def.float_t,99);
 	}
 
+	public static DFEVector<DFEStruct> state_conv_in(SmcKernel smc, DFEVector<DFEStruct> s_in) {
+		
+		DFEVector<DFEStruct> s_out = Def.state_int_t.newInstance(smc);
+
+		for(int j=0; j<Def.NC_P; j++){
+			s_out[j].get("x") <== s_in[j].get("x").cast(Def.float_t);
+			s_out[j].get("y") <== s_in[j].get("y").cast(Def.float_t);
+			s_out[j].get("h") <== s_in[j].get("h").cast(Def.float_t);
+		}
+		return s_out;
+	}
+
+	public static DFEStruct ref_conv_in(SmcKernel smc, DFEStruct r_in) {
+		
+		DFEStruct r_out = Def.ref_t.newInstance(smc);
+
+		r_out.get("d") <== r_in.get("d").cast(Def.float_t);
+		r_out.get("r") <== r_in.get("r").cast(Def.float_t);
+
+		return r_out;
+	}
+
+	public static DFEVar obsrv_conv_in(SmcKernel smc, DFEVar o_in) {
+		
+		return o_in.cast(Def.float_t);
+	}
+
+	public static DFEVector<DFEVar> weight_conv_out(SmcKernel smc, DFEVector<DFEVar> w_in) {
+		
+		DFEVector<DFEVar> w_out = Def.weight_io_t.newInstance(smc);
+
+		for(int j=0; j<Def.NC_P; j++)
+			w_out[j] <== w_in[j].cast(Def.float_std_t);
+		return w_out;
+	}
+
+	public static DFEVector<DFEStruct> state_conv_out(SmcKernel smc, DFEVector<DFEStruct> s_in) {
+		
+		DFEVector<DFEStruct> s_out = Def.state_io_t.newInstance(smc);
+
+		for(int j=0; j<Def.NC_P; j++){
+			s_out[j].get("x") <== s_in[j].get("x").cast(Def.float_std_t);
+			s_out[j].get("y") <== s_in[j].get("y").cast(Def.float_std_t);
+			s_out[j].get("h") <== s_in[j].get("h").cast(Def.float_std_t);
+		}
+		return s_out;
+	}
+
 }

@@ -5,6 +5,7 @@
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVector;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 
 public class Func{
@@ -50,5 +51,36 @@ public class Func{
 	}
 
 	/* Other user functions */
-	
+	public static DFEVector<DFEStruct> state_conv_in(SmcKernel smc, DFEVector<DFEStruct> s_in) {
+		
+		DFEVector<DFEStruct> s_out = Def.state_int_t.newInstance(smc);
+
+		for(int j=0; j<Def.NC_P; j++)
+			s_out[j].get("x") <== s_in[j].get("x").cast(Def.float_t);
+		return s_out;
+	}
+
+	public static DFEVar obsrv_conv_in(SmcKernel smc, DFEVar o_in) {
+		
+		return o_in.cast(Def.float_t);
+	}
+
+	public static DFEVector<DFEVar> weight_conv_out(SmcKernel smc, DFEVector<DFEVar> w_in) {
+		
+		DFEVector<DFEVar> w_out = Def.weight_io_t.newInstance(smc);
+
+		for(int j=0; j<Def.NC_P; j++)
+			w_out[j] <== w_in[j].cast(Def.float_std_t);
+		return w_out;
+	}
+
+	public static DFEVector<DFEStruct> state_conv_out(SmcKernel smc, DFEVector<DFEStruct> s_in) {
+		
+		DFEVector<DFEStruct> s_out = Def.state_io_t.newInstance(smc);
+
+		for(int j=0; j<Def.NC_P; j++)
+			s_out[j].get("x") <== s_in[j].get("x").cast(Def.float_std_t);
+		return s_out;
+	}
+
 }

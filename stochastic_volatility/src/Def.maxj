@@ -13,7 +13,8 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEVectorType;
 public class Def {
 
 	/*** Computation precision */
-	static final DFEType float_t = KernelLib.dfeFloat(8, 24);
+	static final DFEType float_t = KernelLib.dfeFloat(8, 24); // Custom or reduced precision
+	static final DFEType float_std_t = KernelLib.dfeFloat(8, 24); // Nearest standard precision (multiple of 16 bits)
 
 	/*** Seeds struct */
 	public static final DFEStructType seeds_t = new DFEStructType(
@@ -24,6 +25,9 @@ public class Def {
 	/*** State struct */
 	public static final DFEStructType state_t = new DFEStructType(
 		new StructFieldType("x", float_t)
+	);
+	public static final DFEStructType state_std_t = new DFEStructType(
+		new StructFieldType("x", float_std_t)
 	);
 	public static int state_slot = 1;
 
@@ -50,7 +54,9 @@ public class Def {
 	// Vectors for multiple cores
 	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);
 	public static final DFEVectorType<DFEStruct> particle_array_t = new DFEVectorType<DFEStruct>(particle_t,NC_inner*NC_P);
-	public static final DFEVectorType<DFEVar> weight_io_t = new DFEVectorType<DFEVar>(float_t,NC_P);
-	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
+	public static final DFEVectorType<DFEVar> weight_int_t = new DFEVectorType<DFEVar>(float_t,NC_P);
+	public static final DFEVectorType<DFEStruct> state_int_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
+	public static final DFEVectorType<DFEVar> weight_io_t = new DFEVectorType<DFEVar>(float_std_t,NC_P);
+	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_std_t,NC_P);
 
 }

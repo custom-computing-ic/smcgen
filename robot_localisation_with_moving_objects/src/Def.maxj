@@ -14,7 +14,8 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEFix.SignMode;
 public class Def {
 
 	/*** Computation precision */
-	static final DFEType float_t = KernelLib.dfeFloat(8, 24);
+	static final DFEType float_t = KernelLib.dfeFloat(8, 24); // Custom or reduced precision
+	static final DFEType float_std_t = KernelLib.dfeFloat(8, 24); // Nearest standard precision (multiple of 16 bits)
 	static final DFEType float_short_t = KernelLib.dfeFloat(7,20);
 	static final DFEType fixed_t = KernelLib.dfeFixOffset(25, -19, SignMode.TWOSCOMPLEMENT);
 	static final DFEType fixed_long_t = KernelLib.dfeFixOffset(29, -19, SignMode.TWOSCOMPLEMENT);
@@ -34,12 +35,21 @@ public class Def {
 		new StructFieldType("y", float_t),
 		new StructFieldType("h", float_t)
 	);
+	public static final DFEStructType state_std_t = new DFEStructType(
+		new StructFieldType("x", float_std_t),
+		new StructFieldType("y", float_std_t),
+		new StructFieldType("h", float_std_t)
+	);
 	public static int state_slot = 3;
 
 	/*** Reference struct */
 	public static final DFEStructType ref_t = new DFEStructType(
 		new StructFieldType("d", float_t),
 		new StructFieldType("r", float_t)
+	);
+	public static final DFEStructType ref_std_t = new DFEStructType(
+		new StructFieldType("d", float_std_t),
+		new StructFieldType("r", float_std_t)
 	);
 	public static int ref_slot = 2;
 
@@ -73,12 +83,15 @@ public class Def {
 	// Vectors for multiple cores
 	public static final DFEVectorType<DFEStruct> seeds_input_t = new DFEVectorType<DFEStruct>(seeds_t,NC_inner*NC_P);
 	public static final DFEVectorType<DFEStruct> particle_array_t = new DFEVectorType<DFEStruct>(particle_t,NC_inner*NC_P);
-	public static final DFEVectorType<DFEVar> weight_io_t = new DFEVectorType<DFEVar>(float_t,NC_P);
-	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
+	public static final DFEVectorType<DFEVar> weight_int_t = new DFEVectorType<DFEVar>(float_t,NC_P);
+	public static final DFEVectorType<DFEStruct> state_int_t = new DFEVectorType<DFEStruct>(state_t,NC_P);
+	public static final DFEVectorType<DFEVar> weight_io_t = new DFEVectorType<DFEVar>(float_std_t,NC_P);
+	public static final DFEVectorType<DFEStruct> state_io_t = new DFEVectorType<DFEStruct>(state_std_t,NC_P);
 
 	// Application vectors
 	public static final DFEVectorType<DFEVar> wall_t = new DFEVectorType<DFEVar>(fixed_t, NWall);
 	public static final DFEVectorType<DFEVar> sensor_float_t = new DFEVectorType<DFEVar>(float_t, NSensor);
+	public static final DFEVectorType<DFEVar> sensor_float_std_t = new DFEVectorType<DFEVar>(float_std_t, NSensor);
 	public static final DFEVectorType<DFEVar> sensor_fixed_t = new DFEVectorType<DFEVar>(fixed_t, NSensor);
 	public static final DFEVectorType<DFEVar> sensor_fixed_longlong_t = new DFEVectorType<DFEVar>(fixed_longlong_t, NSensor);
 
