@@ -5,7 +5,7 @@ Users can use it to develop efficient multiple-FPGA SMC applications without any
 The design flow consists of a parametrisable SMC computation engine, and a software template which enables efficient mapping of a variety of SMC designs to FPGAs.
 
 We have a paper describing the details about SMCGen. If you refer to SMCGen in a published work, please cite the following paper:
- * Thomas C.P. Chau, Maciej Kurek, James Stanley Targett, Jake Humphrey, Georgios Skouroupathis, Alison Eele, Jan Maciejowski, Benjamin Cope, Kathryn Cobden, Philip Leong, Peter Y.K. Cheung and Wayne Luk, "SMCGen: Generating Reconfigurable Design for Sequential Monte Carlo Applications," in International Symposium on Field-Programmable Custom Computing Machines (FCCM), page to appear, 2014.
+ * Thomas C.P. Chau, Maciej Kurek, James Stanley Targett, Jake Humphrey, Georgios Skouroupathis, Alison Eele, Jan Maciejowski, Benjamin Cope, Kathryn Cobden, Philip Leong, Peter Y.K. Cheung and Wayne Luk, "SMCGen: Generating Reconfigurable Design for Sequential Monte Carlo Applications," in Proc. International Symposium on Field-Programmable Custom Computing Machines (FCCM), pp. 141-148, 2014. [pdf](http://thomasccp.github.io/html/publications/14/fccm14tc.pdf)
 
 ### Sequential Monte Carlo
 
